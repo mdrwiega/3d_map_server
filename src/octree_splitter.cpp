@@ -6,15 +6,15 @@
  *****************************************************************************/
 
 /**
- * This tool splits pointcloud (.pcd) into two parts
+ * This tool splits octree (.ot) into two parts
  * The plane of split is determined by three points:
  * p1=(x1,y1,z1), p2=(x2,y2,z2), p3=(x3,y3,z3)
  *
- * Usage: <input_file.pcd> <out1_file.pcd> <out2_file.pcd> x1 y1 z1 x2 y2 z2 x3 y3 z3
+ * Usage: <input_file.ot> <out1_file.ot> <out2_file.ot> x1 y1 z1 x2 y2 z2 x3 y3 z3
  *
  * Example:
- * ./pointcloud_splitter fr_079.pcd out1.pcd out2.pcd 0 4 0 4 4 0 0 4 4
- * It'll split the pointcloud through plane parallel to axis x at y equal to 4
+ * ./pointcloud_splitter fr_079.ot out1.ot out2.ot 0 4 0 4 4 0 0 4 4
+ * It'll split the octree through plane parallel to axis x at y equal to 4
  */
 
 #include <cstdlib>
@@ -23,6 +23,7 @@
 #include <Eigen/Dense>
 
 #include "pointcloud_utils.h"
+#include "octree_utils.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -30,9 +31,9 @@ using namespace Eigen;
 void printHelp(const char* progName)
 {
     std::cout << "Usage: " << progName
-            << " <in_file.pcd> <out_file1.pcd> <out_file2.pcd>"
+            << " <in_file.ot> <out_file1.ot> <out_file2.ot>"
             << " x1 y1 z1 x2 y2 z2 x3 y3 z3\n"
-            << "This program splits pointcloud into two parts.\n"
+            << "This program splits octree into two parts.\n"
             << "The plane of split is determined by three points.\n";
     exit(0);
 }
@@ -58,30 +59,20 @@ int main(int argc, char** argv)
     }
 
     const auto plane = calculatePlaneFromThreePoints(A);
-    const auto cloud = readPointCloudFromFile(inFilename);
+    auto tree = readOctreeFromFile(inFilename);
 
-    printPointcloudInfo(*cloud, inFilename);
+    auto cloud = convertOctreeToPointcloud(*tree);
+    printPointcloudInfo(cloud, inFilename);
 
-    PointCloud out1, out2;
-    splitPointcloud(plane, *cloud, out1, out2);
+    PointCloud::Ptr out1(new PointCloud);
+    PointCloud::Ptr out2(new PointCloud);
+    splitPointcloud(plane, cloud, *out1, *out2);
 
-    printPointcloudInfo(out1, outFilename1);
-    printPointcloudInfo(out2, outFilename2);
+    printPointcloudInfo(*out1, outFilename1);
+    printPointcloudInfo(*out2, outFilename2);
 
-    // Fill in the cloud data
-    out1.width    = out1.size();
-    out1.height   = 1;
-    out1.is_dense = false;
-    pcl::io::savePCDFileASCII (outFilename1, out1);
-    std::cout << "\nSaved " << out1.points.size () << " data points to "
-              << outFilename1 << std::endl;
-
-    out2.width    = out2.size();
-    out2.height   = 1;
-    out2.is_dense = false;
-    pcl::io::savePCDFileASCII (outFilename2, out2);
-    std::cout << "Saved " << out2.points.size () << " data points to "
-              << outFilename2 << std::endl;
+    writePointCloudAsOctreeToFile(out1, outFilename1);
+    writePointCloudAsOctreeToFile(out2, outFilename2);
 
     return 0;
 }

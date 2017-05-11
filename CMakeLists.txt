@@ -28,12 +28,12 @@ add_executable(octomap_tools src/main.cpp)
 target_link_libraries(octomap_tools ${catkin_LIBRARIES})
 
 add_executable(octree2pointcloud src/octree2pointcloud.cpp)
-target_link_libraries(octree2pointcloud ${catkin_LIBRARIES})
 
 add_executable(pointcloud2octree src/pointcloud2octree.cpp)
-target_link_libraries(pointcloud2octree ${catkin_LIBRARIES})
 
 add_executable(pointcloud_splitter src/pointcloud_splitter.cpp)
+
+add_executable(octree_splitter src/octree_splitter.cpp)
 
 add_executable(pointcloud_info src/pointcloud_info.cpp)
 
