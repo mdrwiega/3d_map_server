@@ -23,7 +23,7 @@
 #include <Eigen/Dense>
 
 #include "pointcloud_utils.h"
-#include "octree_utils.h"
+#include "OctreeUtils.hh"
 
 using namespace octomap_tools;
 using namespace Eigen;

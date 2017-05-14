@@ -25,9 +25,7 @@ void writePointCloudAsOctreeToFile(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
     Pointcloud scan;
 
     for (const auto& i : cloud->points)
-    {
         scan.push_back(i.x, i.y, i.z);
-    }
 
     std::unique_ptr<OcTree> tree(new OcTree(0.1));
 
@@ -40,10 +38,7 @@ void writePointCloudAsOctreeToFile(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
 
     std::cerr << "Writing OcTree file" << std::endl;
     if (!tree->write(fileName))
-    {
         std::cerr << "Error writing to " << fileName << std::endl;
-        exit(-2);
-    }
 }
 
 void printHelp(const char* progName)

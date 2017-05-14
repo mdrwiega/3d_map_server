@@ -15,7 +15,7 @@
 #include <memory>
 
 #include <octomap/octomap.h>
-#include "octree_utils.h"
+#include "OctreeUtils.hh"
 #include "pointcloud_utils.h"
 
 #include <pcl/io/pcd_io.h>

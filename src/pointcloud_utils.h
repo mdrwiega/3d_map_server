@@ -10,23 +10,27 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <stdexcept>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/common/common.h>
 
 #include <Eigen/Dense>
 
 namespace octomap_tools {
 
-using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+using Point = pcl::PointXYZ;
+using PointCloud = pcl::PointCloud<Point>;
+using PointCloudPtr = PointCloud::Ptr;
 
-PointCloud::Ptr readPointCloudFromFile(const std::string fileName)
+PointCloudPtr readPointCloudFromFile(const std::string fileName)
 {
-    PointCloud::Ptr cloud (new PointCloud);
+    PointCloudPtr cloud (new PointCloud);
 
-    if (pcl::io::loadPCDFile<pcl::PointXYZ> (fileName, *cloud) == -1)
+    if (pcl::io::loadPCDFile<Point> (fileName, *cloud) == -1)
     {
-        PCL_ERROR ("Couldn't read file %s \n", fileName.c_str());
+        std::cerr << "\nCouldn't read file " << fileName;
         return nullptr;
     }
     std::cout << "Loaded " << cloud->width * cloud->height
@@ -52,13 +56,9 @@ void splitPointcloud(const Eigen::Vector4f& plane,
     for (const auto& p : in.points)
     {
         if ((plane[0] * p.x + plane[1] * p.y + plane[2] * p.z + plane[3]) > 0)
-        {
             out1.push_back(p);
-        }
         else
-        {
             out2.push_back(p);
-        }
     }
 }
 
@@ -82,7 +82,7 @@ Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
     if (pointsAreCollinear(A))
     {
         std::cerr << "\nPoints are collinear. Please choose other points.\n";
-        std::exit(-1);
+        throw std::runtime_error("Points are collinear");
     }
 
     Eigen::Vector3f x = A.colPivHouseholderQr().solve(Eigen::Vector3f{-1,-1,-1});
@@ -92,37 +92,19 @@ Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
     return {x[0], x[1], x[2], 1};
 }
 
-void findPointcloudLimits(const PointCloud& cloud,
-        float& xMin, float& yMin, float& zMin, float& xMax, float& yMax, float& zMax)
-{
-    xMin = yMin = zMin = std::numeric_limits<float>::max();
-    xMax = yMax = zMax = std::numeric_limits<float>::min();
-
-    for (const auto &p : cloud)
-    {
-        if (p.x > xMax) xMax = p.x;
-        if (p.x < xMin) xMin = p.x;
-        if (p.y > yMax) yMax = p.y;
-        if (p.y < yMin) yMin = p.y;
-        if (p.z > zMax) zMax = p.z;
-        if (p.z < zMin) zMin = p.z;
-    }
-}
-
 void printPointcloudInfo(const PointCloud& cloud, const std::string& cloudName)
 {
-    float xMin, xMax, yMin, yMax, zMin, zMax;
-
-    findPointcloudLimits(cloud, xMin, yMin, zMin, xMax, yMax, zMax);
+    Point min, max;
+    pcl::getMinMax3D(cloud, min, max);
 
     std::cout << "\nPointcloud: " << cloudName
               << "\n---------------------------------------"
               << "\nHeader: " << cloud.header
-              << "Height: " << cloud.height
-              << "\nWidth: " << cloud.width << std::setprecision(3)
-              << "\nLimits x: (" << xMin << ", " << xMax << ")"
-              << "\nLimits y: (" << yMin << ", " << yMax << ")"
-              << "\nLimits z: (" << zMin << ", " << zMax << ")"
+              << "Height: " << cloud.height << "   Width: " << cloud.width
+              << std::setprecision(3)
+              << "\nLimits x: (" << min.x << ", " << max.x << ")"
+              << "\nLimits y: (" << min.y << ", " << max.y << ")"
+              << "\nLimits z: (" << min.z << ", " << max.z << ")"
               << "\n";
 }
 
