@@ -14,7 +14,7 @@
 
 #include <octomap/octomap.h>
 
-#include "pointcloud_utils.h"
+#include "utils/PointcloudUtils.h"
 
 using namespace octomap;
 using namespace octomap_tools;

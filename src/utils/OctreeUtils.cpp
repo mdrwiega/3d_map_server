@@ -6,6 +6,7 @@
  *****************************************************************************/
 
 #include "OctreeUtils.hh"
+#include "utils/Logger.hh"
 
 namespace octomap_tools {
 
@@ -26,16 +27,15 @@ Eigen::Matrix4f createTransformationMatrix(
 
     transform.col(3) = Vector4f{x, y, z, 1};
 
-    std::cout << "Transformation matrix\n" << transform << std::endl;
     return transform;
 }
 
 void writeOcTreeToFile(const octomap::OcTree& tree, const std::string& fileName)
 {
-    std::cout << "Writing OcTree file: " << fileName << std::endl;
+    LOG_INF() << "Writing OcTree file: " << fileName << std::endl;
     if (!tree.write(fileName))
     {
-        std::cerr << "Error writing to " << fileName << std::endl;
+        LOG_ERR() << "Error writing to " << fileName << std::endl;
         throw std::runtime_error("Error writing to " + fileName);
     }
 }
@@ -52,7 +52,7 @@ void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud, const std::string& fi
     octomap::point3d sensorPose{0,0,0};
     tree->insertPointCloud(scan, sensorPose);
 
-    std::cout << "Pruning octree\n\n";
+    LOG_INF() << "Pruning octree\n\n";
     tree->updateInnerOccupancy();
     tree->prune();
 
@@ -62,7 +62,7 @@ void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud, const std::string& fi
 PointCloud convertOctreeToPointcloud(octomap::OcTree& tree)
 {
     auto maxDepth = tree.getTreeDepth();
-    std::cout << "tree depth is " << maxDepth << std::endl;
+    LOG_INF() << "tree depth is " << maxDepth << std::endl;
 
     // Expansion of occupied nodes
      std::vector<octomap::OcTreeNode*> collapsedOccNodes;
@@ -79,7 +79,7 @@ PointCloud convertOctreeToPointcloud(octomap::OcTree& tree)
          {
              tree.expandNode(*it);
          }
-         std::cout << "expanded " << collapsedOccNodes.size() << " nodes" << std::endl;
+         LOG_INF() << "expanded " << collapsedOccNodes.size() << " nodes" << std::endl;
      } while(collapsedOccNodes.size() > 0);
 
     PointCloud cloud;
@@ -106,13 +106,13 @@ void tree2PointCloud(const octomap::OcTree *tree, pcl::PointCloud<pcl::PointXYZ>
 
 std::unique_ptr<octomap::OcTree> readOctreeFromFile(const std::string fileName)
 {
-    std::cout << "\nReading OcTree file: " << fileName
+    LOG_INF() << "\nReading OcTree file: " << fileName
               << "\n===========================\n";
     std::ifstream file(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
 
     if (!file.is_open())
     {
-        std::cerr << "Filestream to "<< fileName << " not open, nothing read.";
+        LOG_ERR() << "Filestream to "<< fileName << " not open, nothing read.";
         return nullptr;
     }
 
@@ -125,10 +125,9 @@ std::unique_ptr<octomap::OcTree> readOctreeFromFile(const std::string fileName)
         tree.reset(dynamic_cast<octomap::OcTree*>(octomap::AbstractOcTree::read(file)));
         if (!tree)
         {
-            OCTOMAP_WARNING_STR("Could not detect OcTree in file, trying .bt format.");
+            LOG_ERR() << "Error reading from file " << fileName << std::endl;
             file.clear();
             file.seekg(streampos);
-            std::cerr << "Error reading from file " << fileName << std::endl;
             return nullptr;
         }
     }
@@ -140,7 +139,7 @@ std::unique_ptr<octomap::OcTree> readOctreeFromFile(const std::string fileName)
             tree.reset(bTree.release());
         else
         {
-            std::cerr << "Could not detect binary OcTree format in file.";
+            LOG_ERR() << "Could not detect binary OcTree format in file.";
             return nullptr;
         }
     }

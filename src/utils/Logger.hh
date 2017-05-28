@@ -9,5 +9,9 @@
 
 #include <iostream>
 
-#define LOG_INFO_STREAM(msg) std::cout << msg;
-#define LOG_ERROR_STREAM(msg) std::cerr << msg;
+#define LOG_INF() std::cout << std::endl
+#define LOG_DBG() std::cout << std::endl
+#define LOG_WRN() std::cout << std::endl
+#define LOG_ERR() std::cerr << std::endl
+#define LOG_TEST() std::cout << std::endl
+

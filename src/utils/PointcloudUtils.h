@@ -15,6 +15,9 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+#include "utils/Logger.hh"
 
 #include <Eigen/Dense>
 
@@ -30,11 +33,11 @@ PointCloudPtr readPointCloudFromFile(const std::string fileName)
 
     if (pcl::io::loadPCDFile<Point> (fileName, *cloud) == -1)
     {
-        std::cerr << "\nCouldn't read file " << fileName;
+        LOG_ERR() << "\nCouldn't read file " << fileName;
         return nullptr;
     }
-    std::cout << "Loaded " << cloud->width * cloud->height
-            << " data points from " << fileName << std::endl;
+    LOG_INF() << "Loaded " << cloud->width * cloud->height
+              << " data points from " << fileName << std::endl;
     return cloud;
 }
 
@@ -81,31 +84,37 @@ Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
 {
     if (pointsAreCollinear(A))
     {
-        std::cerr << "\nPoints are collinear. Please choose other points.\n";
+        LOG_ERR() << "\nPoints are collinear. Please choose other points.\n";
         throw std::runtime_error("Points are collinear");
     }
 
     Eigen::Vector3f x = A.colPivHouseholderQr().solve(Eigen::Vector3f{-1,-1,-1});
-    std::cout << "\nThe plane:\n"
+    LOG_DBG() << "\nThe plane:\n"
               << x[0] << " x + " << x[1] << " y + " << x[2] << " z + 1 = 0\n";
 
     return {x[0], x[1], x[2], 1};
 }
 
-void printPointcloudInfo(const PointCloud& cloud, const std::string& cloudName)
+void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
 {
     Point min, max;
     pcl::getMinMax3D(cloud, min, max);
 
-    std::cout << "\nPointcloud: " << cloudName
+    LOG_INF() << "\nPointcloud: " << cloudName
               << "\n---------------------------------------"
-              << "\nHeader: " << cloud.header
-              << "Height: " << cloud.height << "   Width: " << cloud.width
+              << "\nSize: " << cloud.width * cloud.height
               << std::setprecision(3)
               << "\nLimits x: (" << min.x << ", " << max.x << ")"
               << "\nLimits y: (" << min.y << ", " << max.y << ")"
               << "\nLimits z: (" << min.z << ", " << max.z << ")"
               << "\n";
+}
+
+void visualizePointCloud(const PointCloud::Ptr cloud)
+{
+    pcl::visualization::CloudViewer viewer ("Cloud Viewer");
+    viewer.showCloud (cloud);
+    while (!viewer.wasStopped ()) { }
 }
 
 }

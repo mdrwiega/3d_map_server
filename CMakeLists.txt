@@ -6,40 +6,62 @@ option(BUILD_TESTS "Build and run unit tests. " ON)
 option(BUILD_BIN "Build binaries of tools." OFF)
 
 #set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS}")
+
+set(SRC_DIR "src")
+set(TOOLS_DIR ${SRC_DIR}/tools)
+
+#set(Boost_USE_STATIC_LIBS        ON)
 
 find_package( octomap REQUIRED )
 find_package( PCL REQUIRED )
 find_package( Eigen3 REQUIRED )
+#find_package( Boost REQUIRED)
+
+add_subdirectory(table_printer)
 
 include_directories(
+    ${SRC_DIR}
+    ${SRC_DIR}/table_printer/src
     ${OCTOMAP_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS} 
     ${Eigen3_INCLUDE_DIRS}
+#    ${Boost_INCLUDE_DIRS}
 )
 
 link_libraries(${OCTOMAP_LIBRARIES})
 link_libraries(${Eigen3_LIBRARIES})
 link_libraries(${PCL_LIBRARIES})
+#link_libraries(${Boost_LIBRARIES})
 
 if (BUILD_BIN)
-    add_executable(pointcloud2octree src/pointcloud2octree.cpp)
-    add_executable(pointcloud_splitter src/pointcloud_splitter.cpp)
-    add_executable(pointcloud_info src/pointcloud_info.cpp)
-
-    add_executable(octree2pointcloud
-        src/octree2pointcloud.cpp
-        src/OctreeUtils.cpp
+#     add_executable(pointcloud2octree
+#         ${TOOLS_DIR}/pointcloud2octree.cpp
+#     )
+#     add_executable(pointcloud_splitter
+#         ${TOOLS_DIR}/pointcloud_splitter.cpp
+#     )
+#     add_executable(pointcloud_info
+#         ${TOOLS_DIR}/pointcloud_info.cpp
+#     )
+#     add_executable(octree2pointcloud
+#         ${TOOLS_DIR}/octree2pointcloud.cpp
+#         ${SRC_DIR}/utils/OctreeUtils.cpp
+#     )
+#     add_executable(octree_splitter
+#         ${TOOLS_DIR}/octree_splitter.cpp
+#         ${SRC_DIR}/utils/OctreeUtils.cpp
+#     )
+    add_executable(find_octrees_tf
+        ${TOOLS_DIR}/find_octrees_tf.cpp
+        ${SRC_DIR}/OctomapMerger.cpp 
+        ${SRC_DIR}/utils/OctreeUtils.cpp
     )
 
-    add_executable(octree_splitter
-        src/octree_splitter.cpp
-        src/OctreeUtils.cpp
-    )
-
-    add_executable(octomap_merge src/octomap_merge.cpp
-        src/OctomapMerger.cpp 
-        src/OctreeUtils.cpp
+    add_executable(octomap_merge
+        ${TOOLS_DIR}/octomap_merge.cpp
+        ${SRC_DIR}/OctomapMerger.cpp
+        ${SRC_DIR}/utils/OctreeUtils.cpp
     )
 endif()
 

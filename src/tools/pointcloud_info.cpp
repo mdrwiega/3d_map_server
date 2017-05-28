@@ -11,7 +11,7 @@
  * Usage: <input_file.pcd>
  */
 
-#include "pointcloud_utils.h"
+#include "utils/PointcloudUtils.h"
 
 using namespace octomap_tools;
 
@@ -30,7 +30,6 @@ int main(int argc, char** argv)
     }
 
     const std::string inFilename = argv[1];
-
     auto cloud = readPointCloudFromFile(inFilename);
 
     printPointcloudInfo(*cloud, inFilename);

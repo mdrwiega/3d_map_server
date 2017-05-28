@@ -34,7 +34,7 @@ enable_testing()
 
 set(TESTED_SRC
     ${SRC_DIR}/OctomapMerger.cpp    
-    ${SRC_DIR}/OctreeUtils.cpp
+    ${SRC_DIR}/utils/OctreeUtils.cpp
 )
 
 file(GLOB TESTS_SRC "*.cpp")

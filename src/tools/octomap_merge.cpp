@@ -11,6 +11,7 @@
  * in form of: x y z roll pitch yaw
  *
  * Usage: <in_file1.ot> <in_file2.ot> <out_file.ot> x y z r p y
+ *        saveToFile voxelSize maxIter maxCorrespondenceDist fitnessEpsilon
  *
  * Example: ./octomap_merge
  */
@@ -21,7 +22,7 @@
 
 #include <Eigen/Dense>
 
-#include "OctreeUtils.hh"
+#include "utils/OctreeUtils.hh"
 #include "OctomapMerger.hh"
 
 using namespace octomap_tools;
@@ -37,7 +38,7 @@ void printHelp(const char* progName)
 
 int main(int argc, char** argv)
 {
-    if (argc != 10)
+    if (argc != 10 && argc != 15)
     {
         printHelp(argv[0]);
         return -1;
@@ -54,16 +55,22 @@ int main(int argc, char** argv)
     float pitch = std::atof(argv[8]);
     float yaw   = std::atof(argv[9]);
 
+    bool saveToFile = (0 != std::atof(argv[10]));
+    float voxelSize = std::atof(argv[11]);
+    int maxIterations = std::atoi(argv[12]);
+    float maxCorrespDist = std::atof(argv[13]);
+    float fitnessEps = std::atof(argv[14]);
+
     auto tree1 = readOctreeFromFile(inFilename1);
     auto tree2 = readOctreeFromFile(inFilename2);
 
     auto transform = createTransformationMatrix(x,y,z,roll, pitch, yaw);
 
     OctomapMerger merger;
-//    auto treeOut =
-    merger.mergeOctrees(*tree1, *tree2, transform);
+    auto treeOut = merger.mergeOctrees(*tree1, *tree2, transform);
 
-    //writeOcTreeToFile(*treeOut, outFilename);
+    if (saveToFile)
+        writeOcTreeToFile(*treeOut, outFilename);
 
     return 0;
 }
