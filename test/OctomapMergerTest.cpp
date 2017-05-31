@@ -21,7 +21,7 @@
 #include <pcl/registration/transforms.h>
 
 using namespace octomap_tools;
-namespace chrono = std::chrono;
+using namespace std::chrono;
 
 class OctomapMergerTest : public ::testing::Test
 {
@@ -81,6 +81,31 @@ public:
     };
 
     using EstimationsResults = std::vector<EstimationResult>;
+    template <typename T> struct Param { T min, max, multi; };
+
+    EstimationsConfs prepareParamsSet(
+            const Param<unsigned>& maxIter, const Param<float>& maxCorrDist,
+            const Param<float>& fitnessEps, const Param<float>& transEps,
+            const Param<float>& voxelSize, const Param<Point>& margin)
+    {
+        auto addPoints = [](const Point& i, const Point& j){
+            return Point{i.x+j.x, i.y+j.y, i.z+j.z};
+        };
+        auto comparePoints = [](const Point& i, const Point& j){
+            return i.x <= j.x && i.y <= j.y && i.z <= j.z;
+        };
+
+        EstimationsConfs params;
+
+        for (auto i = maxIter.min; i <= maxIter.max; i *= maxIter.multi)
+            for (auto j = maxCorrDist.min; j <= maxCorrDist.max; j *= maxCorrDist.multi)
+                for (auto k = fitnessEps.min; k <= fitnessEps.max; k *= fitnessEps.multi)
+                    for (auto l = transEps.min; l <= transEps.max; l *= transEps.multi)
+                        for (auto m = voxelSize.min; m <= voxelSize.max; m *= voxelSize.multi)
+                            for (auto n = margin.min; comparePoints(n, margin.max); n = addPoints(n, margin.multi))
+                                params.push_back(EstimationParams{i, j, k, l, m, n});
+        return params;
+    }
 
     void preprocessTestResults(EstimationsResults& results)
     {
@@ -89,9 +114,8 @@ public:
         for (size_t i = 0; i < results.size(); i++)
         {
             auto& q = results[i].quality;
-            auto t = results[i].transform.col(3).transpose();
-            Eigen::Matrix3f rot = results[i].transform.block(0, 0, 3, 3);
-            auto rpy = rot.eulerAngles(0,1,2).transpose();
+            auto t = results[i].transform.col(3);
+            auto rpy = results[i].transform.block<3,3>(0,0).eulerAngles(0,1,2);
 
             q.position.x() = t.x();
             q.position.y() = t.y();
@@ -127,7 +151,7 @@ public:
         });
     }
 
-    void printTestResults(const EstimationsResults& results)
+    void printTestResults(const EstimationsResults& results, std::string title)
     {
         table_printer::TablePrinter tp(&std::cout);
 
@@ -142,7 +166,7 @@ public:
             tp.AddColumn(i, colWidth);
         }
 
-        tp.PrintTitle("Test results");
+        tp.PrintTitle("Test results: " + title);
         tp.PrintHeader();
 
         for (auto res : results)
@@ -160,8 +184,6 @@ public:
 
         tp.PrintFooter();
     }
-
-    template <typename T> struct Param { T min, max, multi; };
 
     OctomapMerger merger;
 };
@@ -245,65 +267,90 @@ TEST_F(OctomapMergerTest, ExtractIntersectingPointClouds_CommonPartNotExist)
     EXPECT_EQ(cloud2filtered->size(), 0U);
 }
 
-TEST_F(OctomapMergerTest, GetTransformationBetweenPointclouds)
+TEST_F(OctomapMergerTest, GetTransformationBetweenPointclouds_TheSameClouds_OnlyTransformed)
 {
     auto sourceCloud = createCrossShapePointCloud(0.6, 0.2, 0.1, 0.02);
 
-    constexpr float x = 0.1, y = 0.1, z = 0.0, roll = 0.0, pitch = 0.0, yaw = 20 * M_PI / 180;
+    constexpr float x = 0.1, y = 0.1, z = -0.1;
+    constexpr float roll = 5.0 * M_PI / 180, pitch = 5.0 * M_PI / 180, yaw = 10.0 * M_PI / 180;
     auto tfInitial = createTransformationMatrix(x, y, z, roll, pitch, yaw);
 
     PointCloud targetCloud;
     pcl::transformPointCloud(sourceCloud, targetCloud, tfInitial);
 
-    // Prepare algoritm parameters set
-    EstimationsConfs params;
-    Param<unsigned> maxIter {100, 10000, 10};
-    Param<float>    maxCorrespDist {0.05, 3.2, 4};
-    Param<float>    fitnessEps {1e-7, 1, 10};
-    Param<float>    transEps {1e-12, 1e-6, 1e3};
-    Param<float>    voxelSize {0.02, 0.32, 4};
-    Param<Point>    margin {Point{0,0,0}, Point{1.5,1.5,1.5}, Point{.5,.5,.5}};
+    // Parameters ranges (min, max, multiplicator)
+    Param<unsigned> maxIter     {1000, 1000, 2};
+    Param<float>    maxCorrDist {1.0, 1.0, 2};
+    Param<float>    fitnessEps  {1e-5, 1e-5, 10};
+    Param<float>    transEps    {1e-12, 1e-12, 1e3};
+    Param<float>    voxelSize   {0.02, 0.08, 4};
+    Param<Point>    margin {Point{.5,.5,.5}, Point{1.0,1.0,1.0}, Point{.5,.5,.5}};
 
-    auto addPoints = [](const Point& i, const Point& j){ return Point{i.x+j.x, i.y+j.y, i.z+j.z}; };
-    auto comparePoints = [](const Point& i, const Point& j){ return i.x <= j.x && i.y <= j.y && i.z <= j.z; };
-
-    for (auto i = maxIter.min; i <= maxIter.max; i *= maxIter.multi)
-        for (auto j = maxCorrespDist.min; j <= maxCorrespDist.max; j *= maxCorrespDist.multi)
-            for (auto k = fitnessEps.min; k <= fitnessEps.max; k *= fitnessEps.multi)
-                for (auto l = transEps.min; l <= transEps.max; l *= transEps.multi)
-                    for (auto m = voxelSize.min; m <= voxelSize.max; m *= voxelSize.multi)
-                        for (auto n = margin.min; comparePoints(n, margin.max); n = addPoints(n, margin.multi))
-                            params.push_back(EstimationParams{i, j, k, l, m, n});
-
-    EstimationResult result = {{}, tfInitial, static_cast<std::chrono::milliseconds>(0)};
-    EstimationsResults results {result};
+    auto params = prepareParamsSet(maxIter, maxCorrDist, fitnessEps, transEps, voxelSize, margin);
+    EstimationsResults results {{{}, tfInitial, static_cast<milliseconds>(0)}};
 
     for (const auto& p : params)
     {
-        auto start = chrono::high_resolution_clock::now();
+        auto start = high_resolution_clock::now();
+        auto tfFinal = merger.computeTransBetweenPointclouds(sourceCloud, targetCloud, p);
+        auto diff = high_resolution_clock::now() - start;
+        results.push_back({p, tfFinal, duration_cast<milliseconds>(diff)});
 
-        auto tfFinal = merger.computeTransBetweenPointclouds(
-                sourceCloud, targetCloud, p);
+        auto rpy = tfFinal.block<3,3>(0, 0).eulerAngles(0,1,2);
+        constexpr float maxAbsError = 0.08;
 
-        auto diff = chrono::high_resolution_clock::now() - start;
-        result = {p, tfFinal, chrono::duration_cast<chrono::milliseconds>(diff)};
-        results.push_back(result);
-
-        auto vec = tfFinal.col(3).transpose();
-        Eigen::Matrix3f rot1 = tfFinal.block(0, 0, 3, 3);
-        auto rpy = rot1.eulerAngles(0,1,2).transpose();
-
-        constexpr float maxAbsError = 0.05;
-
-        EXPECT_NEAR(x, vec.x(), maxAbsError);
-        EXPECT_NEAR(y, vec.y(), maxAbsError);
-        EXPECT_NEAR(z, vec.z(), maxAbsError);
-
-        EXPECT_NEAR(roll, rpy.x(), maxAbsError);
-        EXPECT_NEAR(pitch, rpy.y(), maxAbsError);
-        EXPECT_NEAR(yaw, rpy.z(), maxAbsError);
+        EXPECT_NEAR(x, tfFinal(0,3), maxAbsError);
+        EXPECT_NEAR(y, tfFinal(1,3), maxAbsError);
+        EXPECT_NEAR(z, tfFinal(2,3), maxAbsError);
+        EXPECT_NEAR(roll,  rpy(0), maxAbsError);
+        EXPECT_NEAR(pitch, rpy(1), maxAbsError);
+        EXPECT_NEAR(yaw,   rpy(2), maxAbsError);
     }
 
     preprocessTestResults(results);
-    printTestResults(results);
+    printTestResults(results, "Cross pointcloud - test1");
+}
+
+TEST_F(OctomapMergerTest, GetTransformationBetweenPointclouds_CloudsDiffers)
+{
+    auto sourceCloud = createCrossShapePointCloud(0.6, 0.2, 0.1, 0.02);
+
+    constexpr float x = 0.1, y = 0.1, z = -0.1;
+    constexpr float roll = 5.0 * M_PI / 180, pitch = 5.0 * M_PI / 180, yaw = 10.0 * M_PI / 180;
+    auto tfInitial = createTransformationMatrix(x, y, z, roll, pitch, yaw);
+
+    PointCloud targetCloud;
+    pcl::transformPointCloud(sourceCloud, targetCloud, tfInitial);
+
+    // Parameters ranges (min, max, multiplicator)
+    Param<unsigned> maxIter     {1000, 1000, 2};
+    Param<float>    maxCorrDist {1.0, 1.0, 2};
+    Param<float>    fitnessEps  {1e-5, 1e-5, 10};
+    Param<float>    transEps    {1e-12, 1e-12, 1e3};
+    Param<float>    voxelSize   {0.02, 0.08, 4};
+    Param<Point>    margin {Point{.5,.5,.5}, Point{1.0,1.0,1.0}, Point{.5,.5,.5}};
+
+    auto params = prepareParamsSet(maxIter, maxCorrDist, fitnessEps, transEps, voxelSize, margin);
+    EstimationsResults results {{{}, tfInitial, static_cast<milliseconds>(0)}};
+
+    for (const auto& p : params)
+    {
+        auto start = high_resolution_clock::now();
+        auto tfFinal = merger.computeTransBetweenPointclouds(sourceCloud, targetCloud, p);
+        auto diff = high_resolution_clock::now() - start;
+        results.push_back({p, tfFinal, duration_cast<milliseconds>(diff)});
+
+        auto rpy = tfFinal.block<3,3>(0, 0).eulerAngles(0,1,2);
+        constexpr float maxAbsError = 0.08;
+
+        EXPECT_NEAR(x, tfFinal(0,3), maxAbsError);
+        EXPECT_NEAR(y, tfFinal(1,3), maxAbsError);
+        EXPECT_NEAR(z, tfFinal(2,3), maxAbsError);
+        EXPECT_NEAR(roll,  rpy(0), maxAbsError);
+        EXPECT_NEAR(pitch, rpy(1), maxAbsError);
+        EXPECT_NEAR(yaw,   rpy(2), maxAbsError);
+    }
+
+    preprocessTestResults(results);
+    printTestResults(results, "Cross pointcloud - test1");
 }

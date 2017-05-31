@@ -17,15 +17,15 @@ Eigen::Matrix4f createTransformationMatrix(
     Matrix4f transform = Matrix4f::Identity();
 
     Matrix3f m;
-    m = AngleAxisf(roll, Vector3f::UnitX())
+    m = AngleAxisf(roll,  Vector3f::UnitX())
       * AngleAxisf(pitch, Vector3f::UnitY())
-      * AngleAxisf(yaw, Vector3f::UnitZ());
+      * AngleAxisf(yaw,   Vector3f::UnitZ());
 
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 3; j++)
             transform(i,j) = m(i,j);
 
-    transform.col(3) = Vector4f{x, y, z, 1};
+    transform.col(3) = Vector4f(x, y, z, 1);
 
     return transform;
 }

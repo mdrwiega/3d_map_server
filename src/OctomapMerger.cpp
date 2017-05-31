@@ -78,9 +78,6 @@ Eigen::Matrix4f OctomapMerger::computeTransBetweenPointclouds(
     PointCloud::Ptr source(new PointCloud);
     PointCloud::Ptr target(new PointCloud);
 
-//    printPointcloudInfo(cloud1, "source");
-//    printPointcloudInfo(cloud2, "target");
-
     Point margin {1,1,1};
     extractIntersectingAndDownsamplePointClouds(
             cloud1, cloud2, params.voxelSize, params.intersecMargin, *source, *target);
