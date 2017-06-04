@@ -12,6 +12,5 @@
 #define LOG_INF() std::cout << std::endl
 #define LOG_DBG() std::cout << std::endl
 #define LOG_WRN() std::cout << std::endl
-#define LOG_ERR() std::cerr << std::endl
+#define LOG_ERR() std::cerr << std::endl <<  __func__ << ":"
 #define LOG_TEST() std::cout << std::endl
-

@@ -41,5 +41,5 @@ file(GLOB TESTS_SRC "*.cpp")
 
 add_executable(octomapToolsTests ${TESTS_SRC} ${TESTED_SRC})
 
-target_link_libraries(octomapToolsTests libgtest)
+target_link_libraries(octomapToolsTests libgtest mdUtils)
 add_test(NAME octomapToolsTests COMMAND octomapToolsTests)

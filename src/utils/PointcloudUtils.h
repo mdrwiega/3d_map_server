@@ -16,6 +16,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include "utils/Logger.hh"
 
@@ -27,18 +28,27 @@ using Point = pcl::PointXYZ;
 using PointCloud = pcl::PointCloud<Point>;
 using PointCloudPtr = PointCloud::Ptr;
 
+void downsamplePointCloud(const PointCloud::ConstPtr& cloudIn,
+                          PointCloud& cloudOut, double voxelSize)
+{
+  pcl::VoxelGrid<Point> grid;
+  grid.setLeafSize(voxelSize, voxelSize, voxelSize);
+  grid.setInputCloud(cloudIn);
+  grid.filter(cloudOut);
+}
+
 PointCloudPtr readPointCloudFromFile(const std::string fileName)
 {
-    PointCloudPtr cloud (new PointCloud);
+  PointCloudPtr cloud (new PointCloud);
 
-    if (pcl::io::loadPCDFile<Point> (fileName, *cloud) == -1)
-    {
-        LOG_ERR() << "\nCouldn't read file " << fileName;
-        return nullptr;
-    }
-    LOG_INF() << "Loaded " << cloud->width * cloud->height
-              << " data points from " << fileName << std::endl;
-    return cloud;
+  if (pcl::io::loadPCDFile<Point> (fileName, *cloud) == -1)
+  {
+    LOG_ERR() << "\nCouldn't read file " << fileName;
+    return nullptr;
+  }
+  LOG_INF() << "Loaded " << cloud->width * cloud->height
+      << " data points from " << fileName << std::endl;
+  return cloud;
 }
 
 /**
@@ -51,18 +61,18 @@ PointCloudPtr readPointCloudFromFile(const std::string fileName)
  * @param[out] out2 - output pointcloud which contains points smaller than plane
  */
 void splitPointcloud(const Eigen::Vector4f& plane,
-        const PointCloud& in, PointCloud& out1, PointCloud& out2)
+                     const PointCloud& in, PointCloud& out1, PointCloud& out2)
 {
-    out1.clear();
-    out2.clear();
+  out1.clear();
+  out2.clear();
 
-    for (const auto& p : in.points)
-    {
-        if ((plane[0] * p.x + plane[1] * p.y + plane[2] * p.z + plane[3]) > 0)
-            out1.push_back(p);
-        else
-            out2.push_back(p);
-    }
+  for (const auto& p : in.points)
+  {
+    if ((plane[0] * p.x + plane[1] * p.y + plane[2] * p.z + plane[3]) > 0)
+      out1.push_back(p);
+    else
+      out2.push_back(p);
+  }
 }
 
 /**
@@ -70,9 +80,9 @@ void splitPointcloud(const Eigen::Vector4f& plane,
  */
 bool pointsAreCollinear(const Eigen::Matrix3f& points)
 {
-    Eigen::Vector3f ab = points.row(1) - points.row(0);
-    Eigen::Vector3f ac = points.row(2) - points.row(0);
-    return ab.cross(ac) == Eigen::Vector3f{0,0,0};
+  Eigen::Vector3f ab = points.row(1) - points.row(0);
+  Eigen::Vector3f ac = points.row(2) - points.row(0);
+  return ab.cross(ac) == Eigen::Vector3f{0,0,0};
 }
 
 /**
@@ -82,39 +92,39 @@ bool pointsAreCollinear(const Eigen::Matrix3f& points)
  */
 Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
 {
-    if (pointsAreCollinear(A))
-    {
-        LOG_ERR() << "\nPoints are collinear. Please choose other points.\n";
-        throw std::runtime_error("Points are collinear");
-    }
+  if (pointsAreCollinear(A))
+  {
+    LOG_ERR() << "\nPoints are collinear. Please choose other points.\n";
+    throw std::runtime_error("Points are collinear");
+  }
 
-    Eigen::Vector3f x = A.colPivHouseholderQr().solve(Eigen::Vector3f{-1,-1,-1});
-    LOG_DBG() << "\nThe plane:\n"
-              << x[0] << " x + " << x[1] << " y + " << x[2] << " z + 1 = 0\n";
+  Eigen::Vector3f x = A.colPivHouseholderQr().solve(Eigen::Vector3f{-1,-1,-1});
+  LOG_DBG() << "\nThe plane:\n"
+            << x[0] << " x + " << x[1] << " y + " << x[2] << " z + 1 = 0\n";
 
-    return {x[0], x[1], x[2], 1};
+  return {x[0], x[1], x[2], 1};
 }
 
 void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
 {
-    Point min, max;
-    pcl::getMinMax3D(cloud, min, max);
+  Point min, max;
+  pcl::getMinMax3D(cloud, min, max);
 
-    LOG_INF() << "\nPointcloud: " << cloudName
-              << "\n---------------------------------------"
-              << "\nSize: " << cloud.width * cloud.height
-              << std::setprecision(3)
-              << "\nLimits x: (" << min.x << ", " << max.x << ")"
-              << "\nLimits y: (" << min.y << ", " << max.y << ")"
-              << "\nLimits z: (" << min.z << ", " << max.z << ")"
-              << "\n";
+  LOG_INF() << "\nPointcloud: " << cloudName
+      << "\n---------------------------------------"
+      << "\nSize: " << cloud.width * cloud.height
+      << std::setprecision(3)
+      << "\nLimits x: (" << min.x << ", " << max.x << ")"
+      << "\nLimits y: (" << min.y << ", " << max.y << ")"
+      << "\nLimits z: (" << min.z << ", " << max.z << ")"
+      << "\n";
 }
 
 void visualizePointCloud(const PointCloud::Ptr cloud)
 {
-    pcl::visualization::CloudViewer viewer ("Cloud Viewer");
-    viewer.showCloud (cloud);
-    while (!viewer.wasStopped ()) { }
+  pcl::visualization::CloudViewer viewer ("Cloud Viewer");
+  viewer.showCloud (cloud);
+  while (!viewer.wasStopped ()) { }
 }
 
 }

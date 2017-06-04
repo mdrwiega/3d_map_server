@@ -26,35 +26,35 @@ using namespace octomap_tools;
 
 void writeOcTreeAsPointCloudToFIle(OcTree& tree, const std::string fileName)
 {
-    auto cloud = convertOctreeToPointcloud(tree);
+  auto cloud = convertOctreeToPointcloud(tree);
 
-    // Fill in the cloud data
-    cloud.width    = cloud.size();
-    cloud.height   = 1;
-    cloud.is_dense = false;
+  // Fill in the cloud data
+  cloud.width    = cloud.size();
+  cloud.height   = 1;
+  cloud.is_dense = false;
 
-    pcl::io::savePCDFileASCII (fileName, cloud);
-    std::cerr << "Saved " << cloud.points.size () << " data points to " << fileName << std::endl;
+  pcl::io::savePCDFileASCII (fileName, cloud);
+  std::cerr << "Saved " << cloud.points.size () << " data points to " << fileName << std::endl;
 }
 
 void printHelp(const char* progName)
 {
-    std::cout << "Usage: " << progName << " <input_file.ot> <output_file.pcd>\n";
-    std::cout << "This program converts octree to pointcloud.\n";
-    exit(0);
+  std::cout << "Usage: " << progName << " <input_file.ot> <output_file.pcd>\n";
+  std::cout << "This program converts octree to pointcloud.\n";
+  exit(0);
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 3)
-        printHelp(argv[0]);
+  if (argc != 3)
+    printHelp(argv[0]);
 
-    const std::string inFilename = argv[1];
-    const std::string outFilename = argv[2];
+  const std::string inFilename = argv[1];
+  const std::string outFilename = argv[2];
 
-    std::unique_ptr<OcTree> tree = readOctreeFromFile(inFilename);
+  std::unique_ptr<OcTree> tree = readOctreeFromFile(inFilename);
 
-    writeOcTreeAsPointCloudToFIle(*tree, outFilename);
+  writeOcTreeAsPointCloudToFIle(*tree, outFilename);
 
-    return 0;
+  return 0;
 }

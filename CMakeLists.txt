@@ -13,10 +13,13 @@ set(TOOLS_DIR ${SRC_DIR}/tools)
 
 #set(Boost_USE_STATIC_LIBS        ON)
 
-find_package( octomap REQUIRED )
-find_package( PCL REQUIRED )
-find_package( Eigen3 REQUIRED )
+find_package(octomap 1.8.1 REQUIRED)
+find_package(PCL REQUIRED)
+find_package(Eigen3 REQUIRED)
 #find_package( Boost REQUIRED)
+
+# This library could be found on https://github.com/mdrwiega/md_utils
+find_library(mdUtils REQUIRED)
 
 add_subdirectory(table_printer)
 
@@ -35,29 +38,28 @@ link_libraries(${PCL_LIBRARIES})
 #link_libraries(${Boost_LIBRARIES})
 
 if (BUILD_BIN)
-#     add_executable(pointcloud2octree
-#         ${TOOLS_DIR}/pointcloud2octree.cpp
-#     )
-#     add_executable(pointcloud_splitter
-#         ${TOOLS_DIR}/pointcloud_splitter.cpp
-#     )
-#     add_executable(pointcloud_info
-#         ${TOOLS_DIR}/pointcloud_info.cpp
-#     )
-#     add_executable(octree2pointcloud
-#         ${TOOLS_DIR}/octree2pointcloud.cpp
-#         ${SRC_DIR}/utils/OctreeUtils.cpp
-#     )
-#     add_executable(octree_splitter
-#         ${TOOLS_DIR}/octree_splitter.cpp
-#         ${SRC_DIR}/utils/OctreeUtils.cpp
-#     )
+    add_executable(pointcloud2octree
+        ${TOOLS_DIR}/pointcloud2octree.cpp
+    )
+    add_executable(pointcloud_splitter
+        ${TOOLS_DIR}/pointcloud_splitter.cpp
+    )
+    add_executable(pointcloud_info
+        ${TOOLS_DIR}/pointcloud_info.cpp
+    )
+    add_executable(octree2pointcloud
+        ${TOOLS_DIR}/octree2pointcloud.cpp
+        ${SRC_DIR}/utils/OctreeUtils.cpp
+    )
+    add_executable(octree_splitter
+        ${TOOLS_DIR}/octree_splitter.cpp
+        ${SRC_DIR}/utils/OctreeUtils.cpp
+    )
     add_executable(find_octrees_tf
         ${TOOLS_DIR}/find_octrees_tf.cpp
         ${SRC_DIR}/OctomapMerger.cpp 
         ${SRC_DIR}/utils/OctreeUtils.cpp
     )
-
     add_executable(octomap_merge
         ${TOOLS_DIR}/octomap_merge.cpp
         ${SRC_DIR}/OctomapMerger.cpp
