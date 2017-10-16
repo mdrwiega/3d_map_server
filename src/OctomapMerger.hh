@@ -13,7 +13,6 @@
 #include <pcl/point_cloud.h>
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
-
 #include "utils/OctreeUtils.hh"
 
 namespace octomap_tools {
