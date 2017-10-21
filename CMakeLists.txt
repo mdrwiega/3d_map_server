@@ -21,11 +21,8 @@ find_package(Eigen3 REQUIRED)
 # This library could be found on https://github.com/mdrwiega/md_utils
 find_library(mdUtils REQUIRED)
 
-add_subdirectory(table_printer)
-
 include_directories(
     ${SRC_DIR}
-    ${SRC_DIR}/table_printer/src
     ${OCTOMAP_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS} 
     ${Eigen3_INCLUDE_DIRS}

@@ -8,7 +8,7 @@
 #include "OctomapMerger.hh"
 #include "utils/OctreeUtils.hh"
 #include "utils/Logger.hh"
-#include "../table_printer/src/TablePrinter.hh"
+#include "utils/table_printer.h"
 
 #include <algorithm>
 #include <iostream>
@@ -147,7 +147,7 @@ class OctomapMergerTest : public ::testing::Test
 
   void printTestResults(const EstimationsResults& results, std::string title)
   {
-    table_printer::TablePrinter tp(&std::cout);
+    md_utils::TablePrinter tp(&std::cout);
 
     const std::string columns[] = {
         "x", "y", "z", "roll", "pitch", "yaw", "time[ms]", "overallMSE",
@@ -157,11 +157,11 @@ class OctomapMergerTest : public ::testing::Test
     for (const auto& i : columns)
     {
       auto colWidth = std::max(static_cast<int>(i.size()+2), 9);
-      tp.AddColumn(i, colWidth);
+      tp.addColumn(i, colWidth);
     }
 
-    tp.PrintTitle("Test results: " + title);
-    tp.PrintHeader();
+    tp.printTitle("Test results: " + title);
+    tp.printHeader();
 
     for (auto res : results)
     {
@@ -176,7 +176,7 @@ class OctomapMergerTest : public ::testing::Test
                    << p.voxelSize << p.intersecMargin.x;
     }
 
-    tp.PrintFooter();
+    tp.printFooter();
   }
 
   OctomapMerger merger;

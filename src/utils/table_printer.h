@@ -8,10 +8,7 @@
 #include <cmath>
 #include <stdexcept>
 
-#include <boost/spirit/include/karma.hpp>
-namespace karma = boost::spirit::karma;
-
-namespace table_printer {
+namespace md_utils {
 class endl{};
 
 /** \class TablePrinter
@@ -20,12 +17,11 @@ class endl{};
 
   Usage:
     TablePrinter tp(&std::cout);
-    tp.AddColumn("Name", 20);
-    tp.AddColumn("Age", 3);
+    tp.AddColumn("Name", 22);
+    tp.AddColumn("Age", 4);
 
     tp.PrintHeader();
-    tp << "Dat Chu" << 25;
-    tp << "John Doe" << 26;
+    tp << "Michal" << 20;
     tp.PrintFooter();
 
  */
@@ -43,27 +39,25 @@ public:
     void setFlushLeft() { flushLeft_ = true; }
     void setFlushRight() { flushLeft_ = false; }
 
-    void AddColumn(const std::string & headerName, int columnWidth)
+    void addColumn(const std::string & headerName, int columnWidth)
     {
         if (columnWidth < 4)
             throw std::invalid_argument("Column size has to be >= 4");
 
         columnHeaders_.push_back(headerName);
         columnWidths_.push_back(columnWidth);
-        tableWidth_ += columnWidth + separator_.size(); // for the separator
+        tableWidth_ += columnWidth + separator_.size();
     }
 
-    void PrintHeader()
+    void printHeader()
     {
-        PrintHorizontalLine();
+        printHorizontalLine();
         *outStream_ << "|";
 
         for (size_t i = 0; i < getColumns(); ++i)
         {
-            if(flushLeft_)
-                *outStream_ << std::left;
-            else
-                *outStream_ << std::right;
+            if(flushLeft_) *outStream_ << std::left;
+            else           *outStream_ << std::right;
 
             *outStream_ << std::setw(columnWidths_.at(i))
                         << columnHeaders_.at(i).substr(0, columnWidths_.at(i));
@@ -73,24 +67,24 @@ public:
         }
 
         *outStream_ << "|\n";
-        PrintHorizontalLine();
+        printHorizontalLine();
     }
 
-    void PrintTitle(std::string title)
+    void printTitle(std::string title)
     {
-        PrintHorizontalLine();
+        printHorizontalLine();
         *outStream_ << "| " << title;
         for (size_t i = 0; i < (tableWidth_ - 2 - title.size()); ++i)
             *outStream_ << " ";
         *outStream_ << "|\n";
     }
 
-    void PrintFooter()
+    void printFooter()
     {
-        PrintHorizontalLine();
+        printHorizontalLine();
     }
 
-    TablePrinter& operator<<(endl input)
+    TablePrinter& operator <<(endl input)
     {
         while (col_ != 0)
             *this << "";
@@ -98,12 +92,12 @@ public:
     }
 
     template<typename T>
-    TablePrinter& operator<<(T input)
+    TablePrinter& operator <<(T input)
     {
         if (col_ == 0)
             *outStream_ << "|";
 
-        if(flushLeft_)
+        if (flushLeft_)
             *outStream_ << std::left;
         else
             *outStream_ << std::right;
@@ -111,7 +105,7 @@ public:
         *outStream_ << std::setw(columnWidths_.at(col_))
                     << std::setprecision(3) << input;
 
-        if (col_ == getColumns()-1)
+        if (col_ == (getColumns() - 1))
         {
             *outStream_ << "|\n";
             row_++;
@@ -127,38 +121,15 @@ public:
     }
 
 private:
-    void PrintHorizontalLine()
+    void printHorizontalLine()
     {
-        *outStream_ << "+"; // the left bar
-
+        *outStream_ << "+";
         for (size_t i=0; i < tableWidth_-1; ++i)
             *outStream_ << "-";
-
-        *outStream_ << "+"; // the right bar
-        *outStream_ << "\n";
+        *outStream_ << "+\n";
     }
 
-    template<typename T>
-    void OutputDecimalNumber(T input)
-    {
-        auto colWidth = columnWidths_.at(col_);
-        *outStream_ << karma::format(karma::maxwidth(colWidth)
-            [karma::right_align(colWidth)[karma::double_]], input);
-
-        if (col_ == getColumns()-1)
-        {
-            *outStream_ << "|\n";
-            row_++;
-            col_ = 0;
-        }
-        else
-        {
-            *outStream_ << separator_;
-            col_++;
-        }
-    }
-
-    std::ostream * outStream_;
+    std::ostream* outStream_;
     std::vector<std::string> columnHeaders_;
     std::vector<int> columnWidths_;
     std::string separator_;
