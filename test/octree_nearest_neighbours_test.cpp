@@ -3,7 +3,6 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "OctreeNearestNeighbours.h"
 #include "utils/OctreeUtils.hh"
 #include "utils/Logger.hh"
 
@@ -13,6 +12,7 @@
 #include <pcl/io/pcd_io.h>
 
 #include "md_utils/math/transformations.hh"
+#include "../src/octree_nearest_neighbours.h"
 
 using namespace octomap_tools;
 using namespace md_utils;

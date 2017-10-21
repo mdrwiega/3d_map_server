@@ -1,4 +1,4 @@
-#include "OctreeNearestNeighbours.h"
+#include "octree_nearest_neighbours.h"
 #include "utils/Logger.hh"
 
   //! Start-of-the-program initializer for the sequence map.
