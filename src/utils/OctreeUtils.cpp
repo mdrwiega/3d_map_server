@@ -104,7 +104,7 @@ PointCloud createUniformPointCloud(Point min, Point max, Point step)
 std::unique_ptr<OcTree> readOctreeFromFile(const std::string fileName)
     {
   LOG_INF() << "\nReading OcTree file: " << fileName
-      << "\n===========================\n";
+            << "\n===========================\n";
   std::ifstream file(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
 
   if (!file.is_open())
@@ -213,6 +213,75 @@ void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree)
       newNode->copyData(*node);
     }
   }
+}
+
+void printPointsAndDistances(std::string title, std::vector<Point>& points,
+                             std::vector<float>& distances)
+{
+  std::cout << title << ": Points and distances: \n";
+  for (int i = 0; i < points.size(); ++i)
+    std::cout << "(" << points[i].x << ", " << points[i].y << ", "
+              << points[i].z << ") = " << distances[i] << "\n";
+}
+
+int getKeyDepth(const OcTree& tree, const octomap::point3d& point,
+                const octomap::OcTreeKey& key)
+{
+  for (int depth = tree.getTreeDepth(); depth > 1; --depth)
+  {
+    if (tree.coordToKey(point, depth) == key)
+      return depth;
+  }
+  return -1;
+}
+
+bool contains(OcTree& tree, const Point& query, float sqRadius,
+              const octomap::OcTreeKey& o)
+{
+  auto p = tree.keyToCoord(o);
+  auto x = std::abs(query.x - p.x());
+  auto y = std::abs(query.y - p.y());
+  auto z = std::abs(query.z - p.z());
+  auto depth = getKeyDepth(tree, p, o);
+  auto half_size = tree.getNodeSize(depth) / 2;
+  x += half_size;
+  y += half_size;
+  z += half_size;
+
+  Point pp(x,y,z);
+  return squaredNorm(pp) < sqRadius;
+}
+
+// compute which child is closest to the query point
+int getClosestChild(const Point& q, const Point& p)
+{
+  return ((q.x - p.x) >= 0) |
+        (((q.y - p.y) >= 0) << 1) |
+        (((q.z - p.z) >= 0) << 2);
+}
+
+float squaredNorm(const Point& p)
+{
+  return p.x * p.x + p.y * p.y + p.z * p.z;
+}
+
+float squaredDistance(const Point& p, const Point& q)
+{
+  Point x(p.x - q.x, p.y - q.y, p.z - q.z);
+  return squaredNorm(x);
+}
+
+double getVoxelSquaredSideLen(const OcTree& tree, unsigned tree_depth_arg)
+{
+  // side length of the voxel cube increases exponentially with the octree depth
+  double side_len = tree.getResolution() * static_cast<double>(1 << (tree.getTreeDepth() - tree_depth_arg));
+  return side_len * side_len;
+}
+
+double getVoxelSquaredDiameter(const OcTree& tree, unsigned tree_depth_arg)
+{
+  // return the squared side length of the voxel cube as a function of the octree depth
+  return getVoxelSquaredSideLen(tree, tree_depth_arg) * 3;
 }
 
 }
