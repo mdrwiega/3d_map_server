@@ -20,19 +20,58 @@ using namespace octomap;
 
 TEST(OctreeNearestNeighboursTest, simple)
 {
-    constexpr float res = 0.1;
+  constexpr float res = 0.1;
 
-    OcTree tree1(res);
-    tree1.createRoot();
-    auto n = tree1.createNodeChild(tree1.getRoot(), 0);
-    n = tree1.createNodeChild(n, 0);
-    n = tree1.createNodeChild(n, 0);
+  OcTree tree(res);
+  tree.createRoot();
+  auto n1 = tree.createNodeChild(tree.getRoot(), 0);
+  auto n2 = tree.createNodeChild(n1, 0);
+  auto n3 = tree.createNodeChild(n2, 0);
+  auto n4 = tree.createNodeChild(n3, 0);
 
-    printOcTree(tree1, "tree");
+  auto b3 = tree.createNodeChild(n2, 1);
+  auto b4 = tree.createNodeChild(b3, 1);
+  printOcTree(tree, "tree");
 
-    Point p(-2500, -2500, -2500);
-//    NNParams params;
-//    FindClosest(tree1, *tree1.getRoot(), res, p, params);
+  double search_radius = 1000.0;
+  Point search_point(-3000, -3072, -3072);
+
+  // Brute force radius search
+  std::vector<Point> bruteforce_search_points;
+  for (auto leaf = tree.begin_leafs(); leaf != tree.end_leafs(); ++leaf)
+  {
+    point3d point = leaf.getCoordinate();
+    Point pp(point.x()-search_point.x, point.y()-search_point.y, point.z()-search_point.z);
+
+    auto pointDist = std::sqrt(squaredNorm(pp));
+    if (pointDist <= search_radius)
+      bruteforce_search_points.push_back(pp);
+  }
+
+  // Radius search
+  std::vector<int> radius_search_points;
+  std::vector<float> radius_search_dists;
+
+  radiusSearch(tree, search_point, search_radius, radius_search_points, radius_search_dists, 1000);
+  std::cout << " SearchRadius: " << search_radius << "\n";
+  std::cout << " SEARCH BRUTEFORCE: " << bruteforce_search_points.size() << "\n";
+  std::cout << " RADIUS SEARCH: " << radius_search_dists.size() << "\n";
+
+  ASSERT_EQ (bruteforce_search_points.size(), radius_search_points.size());
+
+  // heck if result from octree radius search can be also found in bruteforce search
+  //    std::vector<int>::const_iterator current = cloudNWRSearch.begin ();
+  //    while (current != radius_search_points.end ())
+  //    {
+  //      pointDist = sqrt (
+  //          (cloudIn.points[*current].x - searchPoint.x) * (cloudIn.points[*current].x - searchPoint.x)
+  //          + (cloudIn.points[*current].y - searchPoint.y) * (cloudIn.points[*current].y - searchPoint.y)
+  //          + (cloudIn.points[*current].z - searchPoint.z) * (cloudIn.points[*current].z - searchPoint.z));
+  //
+  //      ASSERT_TRUE (pointDist <= searchRadius);
+  //
+  //      ++current;
+  //    }
 }
 
 TEST(OctreeNearestNeighboursTest, Neighbours_Within_Radius_Search)
@@ -72,12 +111,12 @@ TEST(OctreeNearestNeighboursTest, Neighbours_Within_Radius_Search)
     tree.insertPointCloud(cloud, point3d{0,0,0}, 100, false, false);
 
     std::cout << "Tree size= " << tree.size() << "\n";
-//    OctreePointCloudSearch<PointXYZ> octree (0.001);
-//
-//    // build octree
-//    octree.setInputCloud (cloudIn);
-//    octree.addPointsFromInputCloud ();
-//
+    //    OctreePointCloudSearch<PointXYZ> octree (0.001);
+    //
+    //    // build octree
+    //    octree.setInputCloud (cloudIn);
+    //    octree.addPointsFromInputCloud ();
+    //
     double pointDist;
     double searchRadius = 5.0;
 
@@ -113,8 +152,8 @@ TEST(OctreeNearestNeighboursTest, Neighbours_Within_Radius_Search)
     {
       pointDist = sqrt (
           (cloudIn.points[*current].x - searchPoint.x) * (cloudIn.points[*current].x - searchPoint.x)
-              + (cloudIn.points[*current].y - searchPoint.y) * (cloudIn.points[*current].y - searchPoint.y)
-              + (cloudIn.points[*current].z - searchPoint.z) * (cloudIn.points[*current].z - searchPoint.z));
+          + (cloudIn.points[*current].y - searchPoint.y) * (cloudIn.points[*current].y - searchPoint.y)
+          + (cloudIn.points[*current].z - searchPoint.z) * (cloudIn.points[*current].z - searchPoint.z));
 
       ASSERT_TRUE (pointDist <= searchRadius);
 
