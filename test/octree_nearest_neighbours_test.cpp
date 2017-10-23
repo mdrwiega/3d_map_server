@@ -69,18 +69,6 @@ pcl::PointCloud<pcl::PointXYZ> GenerateRandomPointcloud(unsigned size)
   return cloud;
 }
 
-OcTree ConvertPointCloudToOctree(const PointCloud& cloud, double tree_resolution)
-{
-  OcTree tree(tree_resolution);
-
-  octomap::Pointcloud cloud_octo;
-  for (auto i : cloud)
-    cloud_octo.push_back(point3d{i.x, i.y, i.z});
-  tree.insertPointCloud(cloud_octo, point3d{0,0,0}, 100, false, false);
-
-  return tree;
-}
-
 bool checkIfResultsFromOneMethodContainsResultsFromSecond(
     const std::vector<Point>& vec1, const std::vector<Point> vec2)
 {
@@ -199,13 +187,13 @@ TEST(OctreeNearestNeighboursTest, NearestNeighbourSearch_SimpleTree_TwoBranches)
   double max_dist = 1000.0;
   Point search_point(-3000, -3070, -3070);
 
-  // Brute force radius search
+  // Brute force nearest search
   Point bruteforce_point;
   float bruteforce_dist;
   BruteForceNearestNeighbourSearch(
       tree, search_point, max_dist, bruteforce_point, bruteforce_dist);
 
-  // Brute force radius search
+  // Nearest neighbour search
   Point nearest_neighbour_point;
   float nearest_neighbour_dist;
   searchNearestNeighbour(

@@ -76,4 +76,7 @@ double getVoxelSquaredSideLen(const OcTree& tree,
 double getVoxelSquaredDiameter(const OcTree& tree,
                                unsigned tree_depth_arg);
 
+OcTree ConvertPointCloudToOctree(const PointCloud& cloud,
+                                 double tree_resolution);
+
 }

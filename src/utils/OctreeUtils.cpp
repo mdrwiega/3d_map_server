@@ -219,7 +219,7 @@ void printPointsAndDistances(std::string title, std::vector<Point>& points,
                              std::vector<float>& distances)
 {
   std::cout << title << ": Points and distances: \n";
-  for (int i = 0; i < points.size(); ++i)
+  for (unsigned i = 0; i < points.size(); ++i)
     std::cout << "(" << points[i].x << ", " << points[i].y << ", "
               << points[i].z << ") = " << distances[i] << "\n";
 }
@@ -282,6 +282,18 @@ double getVoxelSquaredDiameter(const OcTree& tree, unsigned tree_depth_arg)
 {
   // return the squared side length of the voxel cube as a function of the octree depth
   return getVoxelSquaredSideLen(tree, tree_depth_arg) * 3;
+}
+
+OcTree ConvertPointCloudToOctree(const PointCloud& cloud, double tree_resolution)
+{
+  OcTree tree(tree_resolution);
+  for (auto i : cloud)
+  {
+    auto point = octomap::point3d{i.x, i.y, i.z};
+    tree.setNodeValue(point, 1.0, true);
+  }
+
+  return tree;
 }
 
 }

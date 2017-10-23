@@ -80,9 +80,19 @@ void searchNearestNeighbour(const OcTree& tree, const Point& query,
   std::vector<float> dists;
   radiusSearch(tree, query, max_distance, points, dists);
 
-  auto i = std::min_element(dists.begin(),dists.end()) - dists.begin();
-  point = points[i];
-  distance = dists[i];
+  if (dists.size() > 0)
+  {
+    auto i = std::min_element(dists.begin(), dists.end()) - dists.begin();
+    point = points[i];
+    distance = dists[i];
+  }
+  else
+  {
+    point = query;
+    distance = 0;
+    std::cout << "NN Point not found for ("
+        << query.x << ", " << query.y << ", " << query.z << "\n";
+  }
 }
 
 }
