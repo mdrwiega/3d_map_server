@@ -93,84 +93,75 @@ float calculateNewNodeOccupancy(
       p, p0, p1, c000, c001, c010, c011, c100, c101, c110, c111);
 }
 
-void extractIntersectingOctrees(
-    const OcTree& tree1, const OcTree& tree2,
-    const Point& margin,
-    OcTree& out_tree1, OcTree& out_tree2)
+void getMinMaxOctree(const OcTree& tree, Point& min, Point& max)
 {
-  auto f_min = std::numeric_limits<float>::min();
-  auto f_max = std::numeric_limits<float>::max();
-  Point min_tree1{f_max, f_max, f_max};
-  Point max_tree1{f_min, f_min, f_min};
+  constexpr auto f_min = std::numeric_limits<float>::min();
+  constexpr auto f_max = std::numeric_limits<float>::max();
+  min = {f_max, f_max, f_max};
+  max = {f_min, f_min, f_min};
 
-  // Get min and max of tree1
-  for (auto i = tree1.begin_leafs(); i != tree1.end_leafs(); ++i)
+  // Get min and max of tree
+  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i)
   {
     auto p = i.getCoordinate();
-    if (p.x() < min_tree1.x) min_tree1.x = p.x();
-    if (p.y() < min_tree1.y) min_tree1.y = p.y();
-    if (p.z() < min_tree1.z) min_tree1.z = p.z();
-    if (p.x() > max_tree1.x) max_tree1.x = p.x();
-    if (p.y() > max_tree1.y) max_tree1.y = p.y();
-    if (p.z() > max_tree1.z) max_tree1.z = p.z();
+    if (p.x() < min.x) min.x = p.x();
+    if (p.y() < min.y) min.y = p.y();
+    if (p.z() < min.z) min.z = p.z();
+    if (p.x() > max.x) max.x = p.x();
+    if (p.y() > max.y) max.y = p.y();
+    if (p.z() > max.z) max.z = p.z();
   }
+}
 
-  auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax){
+void filterOutLeafsNotInRange(
+    const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out)
+{
+  auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax) {
     return (point.x < rMax.x && point.x > rMin.x) &&
         (point.y < rMax.y && point.y > rMin.y) &&
         (point.z < rMax.z && point.z > rMin.z);
   };
 
+  tree_out.clear();
+  tree_out.setResolution(tree_in.getResolution());
+  for (auto i = tree_in.begin_leafs(); i != tree_in.end_leafs(); ++i)
+  {
+    auto p = i.getCoordinate();
+    if (pointInRange(ToPcl(p), min, max))
+    {
+      auto key = i.getKey();
+      auto logodds = tree_in.search(key)->getLogOdds();
+      tree_out.setNodeValue(p, logodds, true);
+    }
+  }
+}
+
+void extractIntersectingOctrees(
+    const OcTree& tree1, const OcTree& tree2,
+    const Point& margin,
+    OcTree& out_tree1, OcTree& out_tree2)
+{
+  Point min_tree1, max_tree1;
+  getMinMaxOctree(tree1, min_tree1, max_tree1);
+
   auto addPoints = [](const Point& i, const Point& j){
-    return Point{i.x+j.x, i.y+j.y, i.z+j.z}; };
+    return Point{i.x + j.x, i.y + j.y, i.z + j.z}; };
   auto subPoints = [](const Point& i, const Point& j){
-    return Point{i.x-j.x, i.y-j.y, i.z-j.z}; };
+    return Point{i.x - j.x, i.y - j.y, i.z - j.z}; };
 
   // Filter out points from tree2 which are not in tree1 range (+ margin)
   min_tree1 = subPoints(min_tree1, margin);
   max_tree1 = addPoints(max_tree1, margin);
-  out_tree2.clear();
-  out_tree2.setResolution(tree2.getResolution());
-  for (auto i = tree2.begin_leafs(); i != tree2.end_leafs(); ++i)
-  {
-    auto p = i.getCoordinate();
-    if (pointInRange(ToPcl(p), min_tree1, max_tree1))
-    {
-      auto key = i.getKey();
-      auto logodds = tree2.search(key)->getLogOdds();
-      out_tree2.setNodeValue(p, logodds, true);
-    }
-  }
+  filterOutLeafsNotInRange(tree2, min_tree1, max_tree1, out_tree2);
 
   // Filtered tree 2 range
-  Point min_tree2{f_max, f_max, f_max};
-  Point max_tree2{f_min, f_min, f_min};
-  for (auto i = out_tree2.begin_leafs(); i != out_tree2.end_leafs(); ++i)
-  {
-    auto p = i.getCoordinate();
-    if (p.x() < min_tree2.x) min_tree2.x = p.x();
-    if (p.y() < min_tree2.y) min_tree2.y = p.y();
-    if (p.z() < min_tree2.z) min_tree2.z = p.z();
-    if (p.x() > max_tree2.x) max_tree2.x = p.x();
-    if (p.y() > max_tree2.y) max_tree2.y = p.y();
-    if (p.z() > max_tree2.z) max_tree2.z = p.z();
-  }
+  Point min_tree2, max_tree2;
+  getMinMaxOctree(out_tree2, min_tree2, max_tree2);
 
   // Filter out points from tree1 which are not in tree2 filtered range (+ margin)
   min_tree2 = subPoints(min_tree2, margin);
   max_tree2 = addPoints(max_tree2, margin);
-  out_tree1.clear();
-  out_tree1.setResolution(tree1.getResolution());
-  for (auto i = tree1.begin_leafs(); i != tree1.end_leafs(); ++i)
-  {
-    auto p = i.getCoordinate();
-    if (pointInRange(ToPcl(p), min_tree2, max_tree2))
-    {
-      auto key = i.getKey();
-      auto logodds = tree1.search(key)->getLogOdds();
-      out_tree1.setNodeValue(p, logodds, true);
-    }
-  }
+  filterOutLeafsNotInRange(tree1, min_tree2, max_tree2, out_tree1);
 }
 
 }

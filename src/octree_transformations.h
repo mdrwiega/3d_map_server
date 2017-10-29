@@ -12,12 +12,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl/registration/icp_nl.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/registration/transforms.h>
-
 #include "md_utils/math/cuboid.hh"
 #include "md_utils/math/trilinear_interpolation.hh"
 #include "md_utils/math/transformations.hh"
@@ -31,11 +25,15 @@ namespace octomap_tools {
 OcTreePtr transformOctree(const OcTree& tree,
                           const Eigen::Matrix4f& transformation);
 
-
 float calculateNewNodeOccupancy(const octomap::point3d& src_point,
                                 const octomap::point3d& src_approx_point,
                                 const OcTree& tree_in,
                                 const octomap::OcTreeNode* src_node);
+
+void getMinMaxOctree(const OcTree& tree, Point& min, Point& max);
+
+void filterOutLeafsNotInRange(
+    const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out);
 
 void extractIntersectingOctrees(
     const OcTree& tree1, const OcTree& tree2,
