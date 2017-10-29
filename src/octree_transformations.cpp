@@ -1,6 +1,7 @@
 #include "octree_transformations.h"
 
 #include "utils/Logger.hh"
+#include <limits>
 
 using namespace octomap;
 using namespace Eigen;
@@ -97,7 +98,79 @@ void extractIntersectingOctrees(
     const Point& margin,
     OcTree& out_tree1, OcTree& out_tree2)
 {
+  auto f_min = std::numeric_limits<float>::min();
+  auto f_max = std::numeric_limits<float>::max();
+  Point min_tree1{f_max, f_max, f_max};
+  Point max_tree1{f_min, f_min, f_min};
 
+  // Get min and max of tree1
+  for (auto i = tree1.begin_leafs(); i != tree1.end_leafs(); ++i)
+  {
+    auto p = i.getCoordinate();
+    if (p.x() < min_tree1.x) min_tree1.x = p.x();
+    if (p.y() < min_tree1.y) min_tree1.y = p.y();
+    if (p.z() < min_tree1.z) min_tree1.z = p.z();
+    if (p.x() > max_tree1.x) max_tree1.x = p.x();
+    if (p.y() > max_tree1.y) max_tree1.y = p.y();
+    if (p.z() > max_tree1.z) max_tree1.z = p.z();
+  }
+
+  auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax){
+    return (point.x < rMax.x && point.x > rMin.x) &&
+        (point.y < rMax.y && point.y > rMin.y) &&
+        (point.z < rMax.z && point.z > rMin.z);
+  };
+
+  auto addPoints = [](const Point& i, const Point& j){
+    return Point{i.x+j.x, i.y+j.y, i.z+j.z}; };
+  auto subPoints = [](const Point& i, const Point& j){
+    return Point{i.x-j.x, i.y-j.y, i.z-j.z}; };
+
+  // Filter out points from tree2 which are not in tree1 range (+ margin)
+  min_tree1 = subPoints(min_tree1, margin);
+  max_tree1 = addPoints(max_tree1, margin);
+  out_tree2.clear();
+  out_tree2.setResolution(tree2.getResolution());
+  for (auto i = tree2.begin_leafs(); i != tree2.end_leafs(); ++i)
+  {
+    auto p = i.getCoordinate();
+    if (pointInRange(ToPcl(p), min_tree1, max_tree1))
+    {
+      auto key = i.getKey();
+      auto logodds = tree2.search(key)->getLogOdds();
+      out_tree2.setNodeValue(p, logodds, true);
+    }
+  }
+
+  // Filtered tree 2 range
+  Point min_tree2{f_max, f_max, f_max};
+  Point max_tree2{f_min, f_min, f_min};
+  for (auto i = out_tree2.begin_leafs(); i != out_tree2.end_leafs(); ++i)
+  {
+    auto p = i.getCoordinate();
+    if (p.x() < min_tree2.x) min_tree2.x = p.x();
+    if (p.y() < min_tree2.y) min_tree2.y = p.y();
+    if (p.z() < min_tree2.z) min_tree2.z = p.z();
+    if (p.x() > max_tree2.x) max_tree2.x = p.x();
+    if (p.y() > max_tree2.y) max_tree2.y = p.y();
+    if (p.z() > max_tree2.z) max_tree2.z = p.z();
+  }
+
+  // Filter out points from tree1 which are not in tree2 filtered range (+ margin)
+  min_tree2 = subPoints(min_tree2, margin);
+  max_tree2 = addPoints(max_tree2, margin);
+  out_tree1.clear();
+  out_tree1.setResolution(tree1.getResolution());
+  for (auto i = tree1.begin_leafs(); i != tree1.end_leafs(); ++i)
+  {
+    auto p = i.getCoordinate();
+    if (pointInRange(ToPcl(p), min_tree2, max_tree2))
+    {
+      auto key = i.getKey();
+      auto logodds = tree1.search(key)->getLogOdds();
+      out_tree1.setNodeValue(p, logodds, true);
+    }
+  }
 }
 
 }
