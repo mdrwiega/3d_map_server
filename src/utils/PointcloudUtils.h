@@ -78,7 +78,7 @@ void splitPointcloud(const Eigen::Vector4f& plane,
 /**
  * Checks if 3D points in matrix (each point in row) are collinear
  */
-bool pointsAreCollinear(const Eigen::Matrix3f& points)
+inline bool pointsAreCollinear(const Eigen::Matrix3f& points)
 {
   Eigen::Vector3f ab = points.row(1) - points.row(0);
   Eigen::Vector3f ac = points.row(2) - points.row(0);

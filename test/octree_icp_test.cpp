@@ -22,7 +22,7 @@ using namespace octomap;
 
 constexpr double kPi  = 3.14159265358979323846;
 
-#define SHOW_IMAGES 1
+#define SHOW_IMAGES 0
 
 Matrix3Xf generateEllipsePoints(Vector2f s, float a, float b,
                                 float rot_angle, unsigned points_num)

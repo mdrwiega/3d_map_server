@@ -2,7 +2,6 @@
 
 #include <exception>
 #include <limits>
-#include "kdtree/kdtree.h"
 #include "octree_nearest_neighbours.h"
 
 using namespace Eigen;
@@ -71,66 +70,6 @@ inline float squaredDistance(const Eigen::Vector3f& a,
   return (a - b).squaredNorm();
 }
 
-void nearestNeighboursKdTree(const Eigen::Matrix3Xf& dst_points,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours)
-{
-  struct kdtree *ptree = kd_create(3);
-
-  for (unsigned i = 0; i < dst_points.cols(); i++ )
-  {
-    Vector3f v = dst_points.col(i);
-    kd_insertf((struct kdtree*) ptree, (float*)&v, 0);
-  }
-
-  for (unsigned i = 0; i < src_points.cols(); i++)
-  {
-    Vector3f v = src_points.col(i);
-    struct kdres* results = kd_nearestf((struct kdtree *)ptree, (float*)&v);
-    kd_res_end(results);
-    Vector3f nn;
-    kd_res_itemf(results, (float*)&nn);
-    kd_res_free(results);
-    nearest_neighbours.col(i) = nn;
-  }
-  kd_free(ptree);
-}
-
-Point ToPcl(const Eigen::Vector3f& v)
-{
-  return Point(v(0), v(1), v(2));
-}
-
-Point ToPcl(const octomap::point3d& p)
-{
-  return Point(p.x(), p.y(), p.z());
-}
-
-Vector3f ToEigen(const Point& p)
-{
-  return { p.x, p.y, p.z };
-}
-
-void nearestNeighboursOcTree(const Eigen::Matrix3Xf& dst_points,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours)
-{
-  constexpr double kMaxDist = 200.0;
-  PointCloud cloud;
-  for (auto i = 0; i < dst_points.cols(); ++i)
-    cloud.push_back(ToPcl(dst_points.col(i)));
-  OcTree tree = ConvertPointCloudToOctree(cloud, 0.5);
-
-  for (unsigned i = 0; i < src_points.cols(); i++)
-  {
-    Point point_q = ToPcl(src_points.col(i));
-    float dist;
-    Point nn;
-    searchNearestNeighbour(tree, point_q, kMaxDist, nn, dist);
-    nearest_neighbours.col(i) = ToEigen(nn);
-  }
-}
-
 float icp(const Matrix3Xf& new_points, const Matrix3Xf& dst_points,
           Matrix3f& R, Vector3f& T,
           unsigned max_iter, float tolerance,
@@ -167,22 +106,6 @@ float icp(const Matrix3Xf& new_points, const Matrix3Xf& dst_points,
   leastSquaresBestFitTransform(new_points, src_points, R, T);
 
   return sqrt(err);
-}
-
-void nearestNeighboursOnOcTree(const OcTree& tree_dst,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours)
-{
-  constexpr double kMaxDist = 200.0;
-
-  for (unsigned i = 0; i < src_points.cols(); i++)
-  {
-    Point point_q = ToPcl(src_points.col(i));
-    float dist;
-    Point nn;
-    searchNearestNeighbour(tree_dst, point_q, kMaxDist, nn, dist);
-    nearest_neighbours.col(i) = ToEigen(nn);
-  }
 }
 
 Matrix3Xf treeLeafsToPoints(const OcTree& tree)

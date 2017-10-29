@@ -1,4 +1,7 @@
+#pragma once
+
 #include "utils/OctreeUtils.hh"
+#include "octree_nearest_neighbours.h"
 
 #include <Eigen/Dense>
 
@@ -7,17 +10,6 @@ namespace octomap_tools {
 using NearestNeighboursFcn = std::function<void(
     const Eigen::Matrix3Xf&, Eigen::Matrix3Xf&, Eigen::Matrix3Xf&)>;
 
-void nearestNeighboursKdTree(const Eigen::Matrix3Xf& dst_points,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours);
-
-void nearestNeighboursOcTree(const Eigen::Matrix3Xf& dst_points,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours);
-
-void nearestNeighboursOnOcTree(const OcTree& tree_dst,
-                             Eigen::Matrix3Xf& src_points,
-                             Eigen::Matrix3Xf& nearest_neighbours);
 /**
  * @brief Calculates transformation with ICP method between two input point sets
  *

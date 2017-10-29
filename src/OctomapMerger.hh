@@ -43,14 +43,6 @@ class OctomapMerger
       const EstimationParams& params);
 
   OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2);
-
-  OcTreePtr transformOctree(const OcTree& tree,
-                            const Eigen::Matrix4f& transformation);
-
-  float calculateNewNodeOccupancy(const octomap::point3d& src_point,
-                                  const octomap::point3d& src_approx_point,
-                                  const OcTree& tree_in,
-                                  const octomap::OcTreeNode* src_node);
 };
 
 }

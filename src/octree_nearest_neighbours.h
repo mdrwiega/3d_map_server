@@ -1,9 +1,11 @@
+#pragma once
+
 #include "utils/OctreeUtils.hh"
 
 namespace octomap_tools {
 
-  constexpr unsigned tree_max_value = 32768;
-  constexpr unsigned tree_depth_max = 16;
+  static constexpr unsigned tree_max_value = 32768;
+  static constexpr unsigned tree_depth_max = 16;
 
 void getNeighborsWithinRadius(const OcTree& tree,
                               const Point& point,
@@ -25,4 +27,17 @@ void searchNearestNeighbour(const OcTree& tree,
                             double max_distance,
                             Point& point,
                             float& distance);
+
+void nearestNeighboursKdTree(const Eigen::Matrix3Xf& dst_points,
+                             Eigen::Matrix3Xf& src_points,
+                             Eigen::Matrix3Xf& nearest_neighbours);
+
+void nearestNeighboursOcTree(const Eigen::Matrix3Xf& dst_points,
+                             Eigen::Matrix3Xf& src_points,
+                             Eigen::Matrix3Xf& nearest_neighbours);
+
+void nearestNeighboursOnOcTree(const OcTree& tree_dst,
+                             Eigen::Matrix3Xf& src_points,
+                             Eigen::Matrix3Xf& nearest_neighbours);
+
 }
