@@ -6,8 +6,6 @@
  *****************************************************************************/
 #pragma once
 
-#include "OctomapMerger.hh"
-
 #include <iomanip>
 #include <stdexcept>
 #include <algorithm>
@@ -18,6 +16,8 @@
 
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
+
+#include "octomap_merger.h"
 #include "utils/OctreeUtils.hh"
 
 namespace octomap_tools {

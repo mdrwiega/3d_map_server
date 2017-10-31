@@ -22,8 +22,8 @@
 
 #include <Eigen/Dense>
 
+#include "../octomap_merger.h"
 #include "utils/OctreeUtils.hh"
-#include "OctomapMerger.hh"
 
 using namespace octomap_tools;
 using namespace Eigen;

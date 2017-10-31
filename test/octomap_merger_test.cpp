@@ -5,7 +5,6 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "OctomapMerger.hh"
 #include "utils/OctreeUtils.hh"
 #include "utils/Logger.hh"
 #include "utils/table_printer.h"
@@ -20,6 +19,8 @@
 
 #include <pcl/registration/transforms.h>
 #include "md_utils/math/transformations.hh"
+
+#include "octomap_merger.h"
 #include "octree_transformations.h"
 
 using namespace octomap_tools;

@@ -5,8 +5,6 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "OctomapMerger.hh"
-
 #include <iomanip>
 #include <stdexcept>
 #include <algorithm>
@@ -19,6 +17,8 @@
 #include "md_utils/math/cuboid.hh"
 #include "md_utils/math/trilinear_interpolation.hh"
 #include "md_utils/math/transformations.hh"
+
+#include "octomap_merger.h"
 #include "octree_transformations.h"
 
 using namespace octomap;

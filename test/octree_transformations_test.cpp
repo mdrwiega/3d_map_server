@@ -122,7 +122,6 @@ TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartExist)
   }
 }
 
-
 TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartNotExist)
 {
   // Cloud with ranges from -10 to 10

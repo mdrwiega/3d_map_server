@@ -33,7 +33,7 @@ include_directories(
 enable_testing()
 
 set(TESTED_SRC
-    ${SRC_DIR}/OctomapMerger.cpp    
+    ${SRC_DIR}/octomap_merger.cpp    
     ${SRC_DIR}/utils/OctreeUtils.cpp
     ${SRC_DIR}/octree_nearest_neighbours.cpp
     ${SRC_DIR}/octree_transformations.cpp
