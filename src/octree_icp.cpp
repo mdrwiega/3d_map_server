@@ -157,4 +157,30 @@ float icp(const OcTree& src_tree, const OcTree& dst_tree,
   return sqrt(err);
 }
 
+Eigen::Matrix4f computeTransBetweenPointclouds(
+    const PointCloud& cloud1, const PointCloud& cloud2,
+    const EstimationParams& params)
+{
+  PointCloud::Ptr source(new PointCloud);
+  PointCloud::Ptr target(new PointCloud);
+
+  extractIntersectingAndDownsamplePointClouds(
+      cloud1, cloud2, params.voxelSize, params.intersecMargin, *source, *target);
+
+  pcl::IterativeClosestPoint <Point, Point> icp;
+  icp.setMaxCorrespondenceDistance(params.maxCorrespondenceDist);
+  icp.setMaximumIterations(params.maxIter);
+  icp.setTransformationEpsilon(params.transfEps);
+  icp.setEuclideanFitnessEpsilon (params.fitnessEps);
+
+  PointCloud::Ptr icpResult;
+
+  icp.setInputSource(source);
+  icp.setInputTarget(target);
+  icpResult = source;
+  icp.align(*icpResult);
+
+  return icp.getFinalTransformation();
+}
+
 }

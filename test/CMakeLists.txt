@@ -37,6 +37,7 @@ set(TESTED_SRC
     ${SRC_DIR}/utils/OctreeUtils.cpp
     ${SRC_DIR}/octree_nearest_neighbours.cpp
     ${SRC_DIR}/octree_transformations.cpp
+    ${SRC_DIR}/pointcloud_transformations.cpp
     ${SRC_DIR}/octree_icp.cpp
     ${SRC_DIR}/kdtree/kdtree.c
 )

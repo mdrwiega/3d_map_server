@@ -9,13 +9,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include <pcl/registration/icp_nl.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/registration/transforms.h>
-
-#include "utils/PointcloudUtils.h"
-#include "md_utils/math/cuboid.hh"
-#include "md_utils/math/trilinear_interpolation.hh"
 #include "md_utils/math/transformations.hh"
 
 #include "octomap_merger.h"
@@ -26,61 +19,6 @@ using namespace Eigen;
 using namespace md_utils;
 
 namespace octomap_tools {
-
-void OctomapMerger::extractIntersectingAndDownsamplePointClouds(
-    const PointCloud& cloud1, const PointCloud& cloud2,
-    float voxelSize, const Point& margin,
-    PointCloud& cloud1reduced, PointCloud& cloud2reduced)
-{
-  PointCloud::Ptr cloud1filtered(new PointCloud);
-  PointCloud::Ptr cloud2filtered(new PointCloud);
-
-  Point minCloud1, maxCloud1;
-  pcl::getMinMax3D(cloud1, minCloud1, maxCloud1);
-  filterOutPointsNotInRange(cloud2, minCloud1, maxCloud1, *cloud2filtered);
-
-  Point minCloud2filtered, maxCloud2filtered;
-  pcl::getMinMax3D(*cloud2filtered, minCloud2filtered, maxCloud2filtered);
-
-  auto addPoints = [](const Point& i, const Point& j){
-    return Point{i.x+j.x, i.y+j.y, i.z+j.z}; };
-  auto subPoints = [](const Point& i, const Point& j){
-    return Point{i.x-j.x, i.y-j.y, i.z-j.z}; };
-
-  minCloud2filtered = subPoints(minCloud2filtered, margin);
-  maxCloud2filtered = addPoints(maxCloud2filtered, margin);
-
-  filterOutPointsNotInRange(cloud1, minCloud2filtered, maxCloud2filtered, *cloud1filtered);
-
-  downsamplePointCloud(cloud1filtered, cloud1reduced, voxelSize);
-  downsamplePointCloud(cloud2filtered, cloud2reduced, voxelSize);
-}
-
-Eigen::Matrix4f OctomapMerger::computeTransBetweenPointclouds(
-    const PointCloud& cloud1, const PointCloud& cloud2,
-    const EstimationParams& params)
-{
-  PointCloud::Ptr source(new PointCloud);
-  PointCloud::Ptr target(new PointCloud);
-
-  extractIntersectingAndDownsamplePointClouds(
-      cloud1, cloud2, params.voxelSize, params.intersecMargin, *source, *target);
-
-  pcl::IterativeClosestPoint <Point, Point> icp;
-  icp.setMaxCorrespondenceDistance(params.maxCorrespondenceDist);
-  icp.setMaximumIterations(params.maxIter);
-  icp.setTransformationEpsilon(params.transfEps);
-  icp.setEuclideanFitnessEpsilon (params.fitnessEps);
-
-  PointCloud::Ptr icpResult;
-
-  icp.setInputSource(source);
-  icp.setInputTarget(target);
-  icpResult = source;
-  icp.align(*icpResult);
-
-  return icp.getFinalTransformation();
-}
 
 OcTreePtr OctomapMerger::sumOctrees(OcTree& tree1, OcTree& tree2)
 {

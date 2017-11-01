@@ -28,7 +28,7 @@ using Point = pcl::PointXYZ;
 using PointCloud = pcl::PointCloud<Point>;
 using PointCloudPtr = PointCloud::Ptr;
 
-void downsamplePointCloud(const PointCloud::ConstPtr& cloudIn,
+inline void downsamplePointCloud(const PointCloud::ConstPtr& cloudIn,
                           PointCloud& cloudOut, double voxelSize)
 {
   pcl::VoxelGrid<Point> grid;
@@ -37,7 +37,7 @@ void downsamplePointCloud(const PointCloud::ConstPtr& cloudIn,
   grid.filter(cloudOut);
 }
 
-PointCloudPtr readPointCloudFromFile(const std::string fileName)
+inline PointCloudPtr readPointCloudFromFile(const std::string fileName)
 {
   PointCloudPtr cloud (new PointCloud);
 
@@ -60,7 +60,7 @@ PointCloudPtr readPointCloudFromFile(const std::string fileName)
  * @param[out] out1 - output pointcloud which contains points bigger than plane
  * @param[out] out2 - output pointcloud which contains points smaller than plane
  */
-void splitPointcloud(const Eigen::Vector4f& plane,
+inline void splitPointcloud(const Eigen::Vector4f& plane,
                      const PointCloud& in, PointCloud& out1, PointCloud& out2)
 {
   out1.clear();
@@ -90,7 +90,7 @@ inline bool pointsAreCollinear(const Eigen::Matrix3f& points)
  *
  * @param[in] A - matrix with points coordinates in rows
  */
-Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
+inline Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
 {
   if (pointsAreCollinear(A))
   {
@@ -105,7 +105,7 @@ Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
   return {x[0], x[1], x[2], 1};
 }
 
-void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
+inline void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
 {
   Point min, max;
   pcl::getMinMax3D(cloud, min, max);
@@ -120,7 +120,7 @@ void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
       << "\n";
 }
 
-void visualizePointCloud(const PointCloud::Ptr cloud)
+inline void visualizePointCloud(const PointCloud::Ptr cloud)
 {
   pcl::visualization::CloudViewer viewer ("Cloud Viewer");
   viewer.showCloud (cloud);

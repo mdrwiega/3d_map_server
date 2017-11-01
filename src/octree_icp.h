@@ -2,6 +2,7 @@
 
 #include "utils/OctreeUtils.hh"
 #include "octree_nearest_neighbours.h"
+#include "pointcloud_transformations.h"
 
 #include <Eigen/Dense>
 
@@ -31,5 +32,19 @@ float icp(const Eigen::Matrix3Xf& new_points,
 float icp(const OcTree& src_tree, const OcTree& dst_points,
           Eigen::Matrix3f& R, Eigen::Vector3f& T,
           unsigned max_iter, float tolerance);
+
+struct EstimationParams
+{
+  unsigned maxIter;               // Max number of iterations (ICP)
+  float    maxCorrespondenceDist; // Max correspondence distance (ICP)
+  float    fitnessEps;            // Euclidean fitness epsilon (ICP)
+  float    transfEps;             // Transformation epsilon (ICP)
+  float    voxelSize;             // Size of voxel after downsampling
+  Point    intersecMargin;        // Margin in intersecting region extraction
+};
+
+Eigen::Matrix4f computeTransBetweenPointclouds(
+    const PointCloud& cloud1, const PointCloud& cloud2,
+    const EstimationParams& params);
 }
 

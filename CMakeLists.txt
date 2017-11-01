@@ -63,7 +63,8 @@ if (BUILD_BIN)
         ${TOOLS_DIR}/octomap_merge.cpp
         ${SRC_DIR}/OctomapMerger.cpp
         ${SRC_DIR}/utils/OctreeUtils.cpp
-        ${SRC_DIR}/utils/octree_transformations.cpp
+        ${SRC_DIR}/octree_transformations.cpp
+        ${SRC_DIR}/pointcloud_transformations.cpp
     )
 endif()
 
