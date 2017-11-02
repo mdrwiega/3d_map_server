@@ -23,16 +23,12 @@
 #include "octomap_merger.h"
 #include "octree_transformations.h"
 #include "octree_icp.h"
+#include "test_utils.h"
 
 using namespace octomap_tools;
 using namespace std::chrono;
 using namespace octomap;
 using namespace md_utils;
-
-#define EXPECT_POINT3D_EQ(n1, n2) \
-    EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
-    EXPECT_NEAR(n1.y(), n2.y(), 1e-5); \
-    EXPECT_NEAR(n1.z(), n2.z(), 1e-5);
 
 class OctomapMergerTest : public ::testing::Test
 {
@@ -40,22 +36,7 @@ class OctomapMergerTest : public ::testing::Test
   OctomapMergerTest() = default;
   ~OctomapMergerTest() = default;
 
-  PointCloud createCrossShapePointCloud(float length, float width, float height, float res,
-                                        float offsetX = 0, float offsetY = 0, float offsetZ = 0)
-  {
-    auto cloud1 = createUniformPointCloud(
-        Point{-length + offsetX, -width + offsetY, -height + offsetZ},
-        Point{length + offsetX, width + offsetY, height + offsetZ},
-        Point{res, res, res});
 
-    auto cloud2 = createUniformPointCloud(
-        Point{-width + offsetX, -length + offsetY, -height + offsetZ},
-        Point{width + offsetX, length + offsetY, height + offsetZ},
-        Point{res, res, res});
-
-    return cloud1 + cloud2;
-
-  }
 
   using EstimationsConfs = std::list<EstimationParams>;
 

@@ -127,4 +127,22 @@ inline void visualizePointCloud(const PointCloud::Ptr cloud)
   while (!viewer.wasStopped ()) { }
 }
 
+inline PointCloud createCrossShapePointCloud(
+    float length, float width, float height, float res,
+    float offsetX = 0, float offsetY = 0, float offsetZ = 0)
+{
+  auto cloud1 = createUniformPointCloud(
+      Point{-length + offsetX, -width + offsetY, -height + offsetZ},
+      Point{length + offsetX, width + offsetY, height + offsetZ},
+      Point{res, res, res});
+
+  auto cloud2 = createUniformPointCloud(
+      Point{-width + offsetX, -length + offsetY, -height + offsetZ},
+      Point{width + offsetX, length + offsetY, height + offsetZ},
+      Point{res, res, res});
+
+  return cloud1 + cloud2;
+
+}
+
 }

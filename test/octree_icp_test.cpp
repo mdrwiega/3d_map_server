@@ -4,51 +4,19 @@
  *****************************************************************************/
 
 #include "utils/OctreeUtils.hh"
-#include "utils/Logger.hh"
 
 #include <gtest/gtest.h>
 #include <cmath>
-#include <algorithm>
-
-#include "md_utils/math/transformations.hh"
-#include "octree_icp.h"
 
 #include <opencv2/opencv.hpp>
+#include "octree_icp.h"
+#include "test_utils.h"
 
 using namespace Eigen;
 using namespace octomap_tools;
-using namespace md_utils;
 using namespace octomap;
 
-constexpr double kPi  = 3.14159265358979323846;
-
 #define SHOW_IMAGES 0
-
-Matrix3Xf generateEllipsePoints(Vector2f s, float a, float b,
-                                float rot_angle, unsigned points_num)
-{
-  float d = 0;
-  Matrix3Xf points(3, points_num);
-
-  for (unsigned i = 0; i < points_num; ++i)
-  {
-    Vector2f p = { a * cos(d), b * sin(d) };
-    p = Rotation2Df(rot_angle) * p + s;
-    points.col(i) = Vector3f(p(0,0), p(1,0), 0);
-    d += 2 * kPi / points_num;
-  }
-  return points;
-}
-
-void drawPoints(IplImage* image, const Matrix3Xf& points,
-                CvScalar color = CV_RGB(255,255,255), int thickness = 1)
-{
-  for (unsigned i = 0; i < points.cols(); ++i)
-  {
-    auto point_cv = cvPoint((int)points(0,i), (int)points(1,i));
-    cvDrawCircle(image, point_cv, thickness, color, 1);
-  }
-}
 
 TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
 {
