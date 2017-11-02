@@ -42,7 +42,10 @@ set(TESTED_SRC
     ${SRC_DIR}/kdtree/kdtree.c
 )
 
-file(GLOB TESTS_SRC "*.cpp")
+file(GLOB TESTS_SRC
+	"main.cpp"
+	"integration_test.cpp"
+)
 
 add_executable(octomapToolsTests ${TESTS_SRC} ${TESTED_SRC})
 

@@ -17,7 +17,6 @@
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
 
-#include "octomap_merger.h"
 #include "utils/OctreeUtils.hh"
 
 namespace octomap_tools {

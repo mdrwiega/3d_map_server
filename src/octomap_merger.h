@@ -15,11 +15,6 @@
 
 namespace octomap_tools {
 
-class OctomapMerger
-{
- public:
-
-  OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2);
-};
+OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2);
 
 }

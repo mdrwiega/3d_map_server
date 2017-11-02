@@ -161,8 +161,6 @@ class OctomapMergerTest : public ::testing::Test
 
     tp.printFooter();
   }
-
-  OctomapMerger merger;
 };
 
 TEST_F(OctomapMergerTest, GetTransformationBetweenPointclouds_TheSameClouds_OnlyTransformed)
@@ -273,7 +271,7 @@ TEST_F(OctomapMergerTest, mergeOcTrees_NodesInTheSameDepth)
   n = tree2.createNodeChild(n, 0);
   n->setLogOdds(logodds(0.6));
 
-  auto treeOut = merger.sumOctrees(tree1, tree2);
+  auto treeOut = sumOctrees(tree1, tree2);
 
   printOcTree(tree1, "Tree1");
   printOcTree(tree2, "Tree2");
@@ -299,7 +297,7 @@ TEST_F(OctomapMergerTest, mergeOcTrees_NodeInTheTree2IsDeeper)
   n = tree2.createNodeChild(n, 0);
   n->setLogOdds(logodds(0.6));
 
-  auto treeOut = merger.sumOctrees(tree1, tree2);
+  auto treeOut = sumOctrees(tree1, tree2);
 
   printOcTree(tree1, "Tree1");
   printOcTree(tree2, "Tree2");
@@ -328,7 +326,7 @@ TEST_F(OctomapMergerTest, mergeOcTrees_NodeInTheTree1IsDeeper)
   printOcTree(tree1, "Tree1");
   printOcTree(tree2, "Tree2");
 
-  auto treeOut = merger.sumOctrees(tree1, tree2);
+  auto treeOut = sumOctrees(tree1, tree2);
 
   printOcTree(*treeOut, "Out tree");
 

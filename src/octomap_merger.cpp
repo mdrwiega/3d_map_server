@@ -20,7 +20,7 @@ using namespace md_utils;
 
 namespace octomap_tools {
 
-OcTreePtr OctomapMerger::sumOctrees(OcTree& tree1, OcTree& tree2)
+OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2)
 {
   OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
 

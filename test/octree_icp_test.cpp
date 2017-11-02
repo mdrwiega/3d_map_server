@@ -6,9 +6,6 @@
 #include "utils/OctreeUtils.hh"
 
 #include <gtest/gtest.h>
-#include <cmath>
-
-#include <opencv2/opencv.hpp>
 #include "octree_icp.h"
 #include "test_utils.h"
 
@@ -56,18 +53,6 @@ TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
 
   cvReleaseImage(&image);
   EXPECT_LE(error, 65.0);
-}
-
-OcTree PointsToOctree(const Matrix3Xf& points, double tree_resolution)
-{
-  OcTree tree(tree_resolution);
-  for (auto i = 0; i < points.cols(); ++i)
-  {
-    auto point = octomap::point3d{points(0,i), points(1,i), points(2,i)};
-    tree.setNodeValue(point, 1.0, true);
-  }
-
-  return tree;
 }
 
 TEST(OctreeIcpTest, IcpWithOcTreeNearestNeighbours)
