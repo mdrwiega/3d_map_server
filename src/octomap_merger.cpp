@@ -9,18 +9,15 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "md_utils/math/transformations.hh"
-
 #include "octomap_merger.h"
 #include "octree_transformations.h"
 
 using namespace octomap;
 using namespace Eigen;
-using namespace md_utils;
 
 namespace octomap_tools {
 
-OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2)
+OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2)
 {
   OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
 

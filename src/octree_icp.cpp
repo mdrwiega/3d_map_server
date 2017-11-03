@@ -3,6 +3,7 @@
 #include <exception>
 #include <limits>
 #include "octree_nearest_neighbours.h"
+#include "utils/types_conversions.h"
 
 using namespace Eigen;
 
@@ -108,25 +109,13 @@ float icp(const Matrix3Xf& new_points, const Matrix3Xf& dst_points,
   return sqrt(err);
 }
 
-Matrix3Xf treeLeafsToPoints(const OcTree& tree)
-{
-  Matrix3Xf points(3, tree.getNumLeafNodes());
-  unsigned i = 0;
-  for (auto it = tree.begin_leafs(); it != tree.end_leafs(); ++it)
-  {
-    auto p = it.getCoordinate();
-    points.col(i++) = Vector3f(p.x(), p.y(), p.z());
-  }
-  return points;
-}
-
 float icp(const OcTree& src_tree, const OcTree& dst_tree,
           Matrix3f& R, Vector3f& T,
           unsigned max_iter, float tolerance)
 {
   float err = 0;
   float prev_err = std::numeric_limits<float>::max();
-  auto src_points = treeLeafsToPoints(src_tree);
+  auto src_points = OctreeToPoints(src_tree);
 
   for (unsigned k = 0; k < max_iter; ++k)
   {
@@ -151,7 +140,7 @@ float icp(const OcTree& src_tree, const OcTree& dst_tree,
     prev_err = err;
   }
   // Final transformation
-  auto new_points = treeLeafsToPoints(src_tree);
+  auto new_points = OctreeToPoints(src_tree);
   leastSquaresBestFitTransform(new_points, src_points, R, T);
 
   return sqrt(err);

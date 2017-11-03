@@ -33,8 +33,9 @@ include_directories(
 enable_testing()
 
 set(TESTED_SRC
-    ${SRC_DIR}/octomap_merger.cpp    
-    ${SRC_DIR}/utils/OctreeUtils.cpp
+    ${SRC_DIR}/octomap_merger.cpp
+    ${SRC_DIR}/octomap_integrator.cpp
+    ${SRC_DIR}/utils/octree_utils.cpp
     ${SRC_DIR}/octree_nearest_neighbours.cpp
     ${SRC_DIR}/octree_transformations.cpp
     ${SRC_DIR}/pointcloud_transformations.cpp
@@ -44,7 +45,8 @@ set(TESTED_SRC
 
 file(GLOB TESTS_SRC
 	"main.cpp"
-	"integration_test.cpp"
+	"*.cpp"
+#	"octomap_integrator_test.cpp"
 )
 
 add_executable(octomapToolsTests ${TESTS_SRC} ${TESTED_SRC})

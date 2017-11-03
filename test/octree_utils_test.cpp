@@ -3,17 +3,18 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-#include "utils/Logger.hh"
+#include "utils/octree_utils.h"
 
 #include <gtest/gtest.h>
 #include <cmath>
 
-#include "md_utils/math/transformations.hh"
+#include "md_utils/math/transformations.h"
+
+#include "utils/logger.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
-using namespace md_utils;
+using namespace md;
 
 #define EXPECT_MATRIX_EQ(m1, m2)           \
     for (int i = 0; i < m1.rows(); ++i)    \

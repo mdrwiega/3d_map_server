@@ -3,17 +3,17 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-
 #include <gtest/gtest.h>
 
 #include <pcl/registration/transforms.h>
 #include "md_utils/math/transformations.hh"
 #include "octree_transformations.h"
+#include "utils/octree_utils.h"
+#include "utils/types_conversions.h"
 
 using namespace octomap_tools;
 using namespace octomap;
-using namespace md_utils;
+using namespace md;
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
     EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
@@ -92,8 +92,8 @@ TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartExist)
   auto cloud2 = createUniformPointCloud(
       Point{0,0,0}, Point{20,20,20}, Point{1,1,1});
 
-  auto tree1 = ConvertPointCloudToOctree(cloud1, 0.5);
-  auto tree2 = ConvertPointCloudToOctree(cloud2, 0.5);
+  auto tree1 = PointCloudToOctree(cloud1, 0.5);
+  auto tree2 = PointCloudToOctree(cloud2, 0.5);
   OcTree filtered_tree1(1), filtered_tree2(1);
   Point margin {1,1,1};
   extractIntersectingOctrees(tree1, tree2, margin, filtered_tree1, filtered_tree2);
@@ -132,8 +132,8 @@ TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartNotExist)
   auto cloud2 = createUniformPointCloud(
       Point{20,20,20}, Point{30,30,30}, Point{1,1,1});
 
-  auto tree1 = ConvertPointCloudToOctree(cloud1, 0.5);
-  auto tree2 = ConvertPointCloudToOctree(cloud2, 0.5);
+  auto tree1 = PointCloudToOctree(cloud1, 0.5);
+  auto tree2 = PointCloudToOctree(cloud2, 0.5);
   OcTree filtered_tree1(1), filtered_tree2(1);
   Point margin {1,1,1};
   extractIntersectingOctrees(tree1, tree2, margin, filtered_tree1, filtered_tree2);

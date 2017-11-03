@@ -8,7 +8,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace md_utils {
+namespace md {
 class endl{};
 
 /** \class TablePrinter

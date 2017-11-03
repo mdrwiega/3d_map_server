@@ -5,8 +5,8 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "OctreeUtils.hh"
-#include "utils/Logger.hh"
+#include "logger.h"
+#include "octree_utils.h"
 
 namespace octomap_tools {
 
@@ -38,52 +38,6 @@ void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
   tree->prune();
 
   writeOcTreeToFile(*tree, fileName);
-}
-
-PointCloud convertOctreeToPointcloud(OcTree& tree)
-{
-  auto maxDepth = tree.getTreeDepth();
-  LOG_INF() << "tree depth is " << maxDepth << std::endl;
-
-  // Expansion of occupied nodes
-  std::vector<octomap::OcTreeNode*> collapsedOccNodes;
-  do {
-    collapsedOccNodes.clear();
-    for (auto it = tree.begin(); it != tree.end(); ++it)
-    {
-      if(tree.isNodeOccupied(*it) && it.getDepth() < maxDepth)
-      {
-        collapsedOccNodes.push_back(&(*it));
-      }
-    }
-    for (auto it = collapsedOccNodes.begin(); it != collapsedOccNodes.end(); ++it)
-    {
-      tree.expandNode(*it);
-    }
-    LOG_INF() << "expanded " << collapsedOccNodes.size() << " nodes" << std::endl;
-  } while(collapsedOccNodes.size() > 0);
-
-  PointCloud cloud;
-  for (auto it = tree.begin(); it != tree.end(); ++it)
-  {
-    if(tree.isNodeOccupied(*it))
-    {
-      auto p = it.getCoordinate();
-      cloud.push_back({p.x(), p.y(), p.z()});
-    }
-  }
-  return cloud;
-}
-
-void tree2PointCloud(const OcTree *tree,
-                     pcl::PointCloud<pcl::PointXYZ>& pclCloud)
-{
-  // Traverse all leafs in the tree
-  for (auto it = tree->begin_leafs(); it != tree->end_leafs(); ++it)
-  {
-    if (tree->isNodeOccupied(*it))
-      pclCloud.push_back(pcl::PointXYZ(it.getX(), it.getY(), it.getZ()));
-  }
 }
 
 PointCloud createUniformPointCloud(Point min, Point max, Point step)
@@ -282,18 +236,6 @@ double getVoxelSquaredDiameter(const OcTree& tree, unsigned tree_depth_arg)
 {
   // return the squared side length of the voxel cube as a function of the octree depth
   return getVoxelSquaredSideLen(tree, tree_depth_arg) * 3;
-}
-
-OcTree ConvertPointCloudToOctree(const PointCloud& cloud, double tree_resolution)
-{
-  OcTree tree(tree_resolution);
-  for (auto i : cloud)
-  {
-    auto point = octomap::point3d{i.x, i.y, i.z};
-    tree.setNodeValue(point, 1.0, true);
-  }
-
-  return tree;
 }
 
 }

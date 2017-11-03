@@ -3,10 +3,10 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-
 #include <gtest/gtest.h>
 #include "octree_icp.h"
+
+#include "utils/octree_utils.h"
 #include "test_utils.h"
 
 using namespace Eigen;
@@ -21,12 +21,12 @@ TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
   int num_points = 200;
 
   // Create destination ellipse - model
-  auto dst_points = generateEllipsePoints(
+  auto dst_points = getEllipsePoints(
       Vector2f(250, 200), 100, 200, kPi / 3, num_points);
   drawPoints(image, dst_points, CV_RGB(255, 0, 0), 2);
 
   // Create source ellipse
-  auto src_points = generateEllipsePoints(
+  auto src_points = getEllipsePoints(
       Vector2f(180, 300), 110, 190, kPi / 10, num_points / 4);
   drawPoints(image, src_points, CV_RGB(0, 0, 255), 2);
 
@@ -50,7 +50,6 @@ TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
     cv::waitKey();
   #endif
 
-  cvReleaseImage(&image);
   EXPECT_LE(error, 65.0);
 }
 
@@ -60,12 +59,12 @@ TEST(OctreeIcpTest, IcpWithOcTreeNearestNeighbours)
   int num_points = 200;
 
   // Create destination ellipse - model
-  auto dst_points = generateEllipsePoints(
+  auto dst_points = getEllipsePoints(
       Vector2f(250, 200), 100, 200, kPi / 3, num_points);
   drawPoints(image, dst_points, CV_RGB(255, 0, 0), 2);
 
   // Create source ellipse
-  auto src_points = generateEllipsePoints(
+  auto src_points = getEllipsePoints(
       Vector2f(180, 300), 110, 190, kPi / 10, num_points / 4);
   drawPoints(image, src_points, CV_RGB(0, 0, 255), 2);
 

@@ -11,10 +11,11 @@
 
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
-#include "utils/OctreeUtils.hh"
+
+#include "utils/octree_utils.h"
 
 namespace octomap_tools {
 
-OcTreePtr sumOctrees(OcTree& tree1, OcTree& tree2);
+OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2);
 
 }

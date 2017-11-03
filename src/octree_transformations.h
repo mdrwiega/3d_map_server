@@ -10,14 +10,14 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "md_utils/math/cuboid.hh"
-#include "md_utils/math/trilinear_interpolation.hh"
-#include "md_utils/math/transformations.hh"
+#include "md_utils/math/cuboid.h"
+#include "md_utils/math/trilinear_interpolation.h"
+#include "md_utils/math/transformations.h"
 
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
 
-#include "utils/OctreeUtils.hh"
+#include "utils/octree_utils.h"
 
 namespace octomap_tools {
 

@@ -23,8 +23,8 @@
 #include <Eigen/Dense>
 
 #include "../octomap_merger.h"
-#include "utils/OctreeUtils.hh"
-#include "utils/Logger.hh"
+#include "../utils/logger.h"
+#include "../utils/octree_utils.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -59,8 +59,8 @@ int main(int argc, char** argv)
   PointCloud::Ptr cloud1(new PointCloud);
   PointCloud::Ptr cloud2(new PointCloud);
 
-  tree2PointCloud(tree1.get(), *cloud1);
-  tree2PointCloud(tree2.get(), *cloud2);
+  OctreeToPointCloud(tree1.get(), *cloud1);
+  OctreeToPointCloud(tree2.get(), *cloud2);
 
   OctomapMerger merger;
   auto tfFinal = merger.computeTransBetweenPointclouds(

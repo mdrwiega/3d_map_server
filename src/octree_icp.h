@@ -1,10 +1,10 @@
 #pragma once
 
-#include "utils/OctreeUtils.hh"
 #include "octree_nearest_neighbours.h"
 #include "pointcloud_transformations.h"
 
 #include <Eigen/Dense>
+#include "utils/octree_utils.h"
 
 namespace octomap_tools {
 

@@ -32,12 +32,7 @@ void writeOcTreeToFile(const OcTree& tree, const std::string& fileName);
 void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
                                    const std::string& fileName);
 
-PointCloud convertOctreeToPointcloud(OcTree& tree);
-
 PointCloud createUniformPointCloud(Point min, Point max, Point step);
-
-void tree2PointCloud(const OcTree *tree,
-                     pcl::PointCloud<pcl::PointXYZ>& pclCloud);
 
 std::unique_ptr<OcTree> readOctreeFromFile(const std::string fileName);
 
@@ -75,23 +70,5 @@ double getVoxelSquaredSideLen(const OcTree& tree,
 
 double getVoxelSquaredDiameter(const OcTree& tree,
                                unsigned tree_depth_arg);
-
-OcTree ConvertPointCloudToOctree(const PointCloud& cloud,
-                                 double tree_resolution);
-
-inline Point ToPcl(const Eigen::Vector3f& v)
-{
-  return Point(v(0), v(1), v(2));
-}
-
-inline Point ToPcl(const octomap::point3d& p)
-{
-  return Point(p.x(), p.y(), p.z());
-}
-
-inline Eigen::Vector3f ToEigen(const Point& p)
-{
-  return { p.x, p.y, p.z };
-}
 
 }

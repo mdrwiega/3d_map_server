@@ -23,7 +23,7 @@
 #include <Eigen/Dense>
 
 #include "../octomap_merger.h"
-#include "utils/OctreeUtils.hh"
+#include "../utils/octree_utils.h"
 
 using namespace octomap_tools;
 using namespace Eigen;

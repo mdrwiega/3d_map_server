@@ -3,20 +3,21 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-#include "utils/Logger.hh"
-
 #include <gtest/gtest.h>
 #include <cmath>
 #include <algorithm>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 
-#include "md_utils/math/transformations.hh"
+#include "md_utils/math/transformations.h"
 #include "octree_nearest_neighbours.h"
 
+#include "utils/logger.h"
+#include "utils/octree_utils.h"
+#include "utils/types_conversions.h"
+
 using namespace octomap_tools;
-using namespace md_utils;
+using namespace md;
 using namespace octomap;
 
 void BruteForceRadiusSearch(const OcTree& tree,
@@ -137,7 +138,7 @@ TEST(OctreeNearestNeighboursTest, NeighboursWithinRadiusSearch)
   {
     // Generate random pointcloud and convert it to octree
     PointCloud cloud = GenerateRandomPointcloud(points_size);
-    OcTree tree = ConvertPointCloudToOctree(cloud, 0.1);
+    OcTree tree = PointCloudToOctree(cloud, 0.1);
 
     double search_radius = 5.0;
 
@@ -215,7 +216,7 @@ TEST(OctreeNearestNeighboursTest, NearestNeighbourSearch_Multi_Test)
   {
     // Generate random pointcloud and convert it to octree
     PointCloud cloud = GenerateRandomPointcloud(points_size);
-    OcTree tree = ConvertPointCloudToOctree(cloud, 0.1);
+    OcTree tree = PointCloudToOctree(cloud, 0.1);
 
     // Random search point
     Point search_point(static_cast<float>(5.0 * std::rand() / (float)RAND_MAX),

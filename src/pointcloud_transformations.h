@@ -15,8 +15,8 @@
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
 
-#include "utils/OctreeUtils.hh"
-#include "utils/PointcloudUtils.h"
+#include "utils/octree_utils.h"
+#include "utils/pointcloud_utils.h"
 
 namespace octomap_tools {
 

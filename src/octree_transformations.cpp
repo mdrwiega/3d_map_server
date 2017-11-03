@@ -1,11 +1,13 @@
 #include "octree_transformations.h"
 
-#include "utils/Logger.hh"
 #include <limits>
+
+#include "utils/logger.h"
+#include "utils/types_conversions.h"
 
 using namespace octomap;
 using namespace Eigen;
-using namespace md_utils;
+using namespace md;
 
 namespace octomap_tools {
 
@@ -18,7 +20,7 @@ OcTreePtr transformOctree(const OcTree& tree_in,
   double x_min, x_max, y_min, y_max, z_min, z_max;
   tree_in.getMetricMin(x_min, y_min, z_min);
   tree_in.getMetricMax(x_max, y_max, z_max);
-  md_utils::Cuboid box(x_min, x_max, y_min, y_max, z_min, z_max);
+  md::Cuboid box(x_min, x_max, y_min, y_max, z_min, z_max);
   box.transform(transformation);
 
   Vector3f p_min, p_max;

@@ -5,11 +5,10 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-
 #include <gtest/gtest.h>
 
 #include "pointcloud_transformations.h"
+#include "../src/utils/octree_utils.h"
 
 using namespace octomap_tools;
 using namespace octomap;

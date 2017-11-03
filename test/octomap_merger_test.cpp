@@ -5,8 +5,6 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/OctreeUtils.hh"
-#include "utils/Logger.hh"
 #include "utils/table_printer.h"
 
 #include <algorithm>
@@ -21,6 +19,9 @@
 #include "md_utils/math/transformations.hh"
 
 #include "octomap_merger.h"
+
+#include "utils/octree_utils.h"
+#include "utils/logger.h"
 #include "octree_transformations.h"
 #include "octree_icp.h"
 #include "test_utils.h"
@@ -28,7 +29,7 @@
 using namespace octomap_tools;
 using namespace std::chrono;
 using namespace octomap;
-using namespace md_utils;
+using namespace md;
 
 class OctomapMergerTest : public ::testing::Test
 {
@@ -130,7 +131,7 @@ class OctomapMergerTest : public ::testing::Test
 
   void printTestResults(const EstimationsResults& results, std::string title)
   {
-    md_utils::TablePrinter tp(&std::cout);
+    md::TablePrinter tp(&std::cout);
 
     const std::string columns[] = {
         "x", "y", "z", "roll", "pitch", "yaw", "time[ms]", "overallMSE",

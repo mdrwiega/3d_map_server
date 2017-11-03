@@ -18,8 +18,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
-#include "utils/OctreeUtils.hh"
-#include "utils/PointcloudUtils.h"
+#include "../utils/octree_utils.h"
+#include "../utils/pointcloud_utils.h"
 
 using namespace octomap;
 using namespace octomap_tools;

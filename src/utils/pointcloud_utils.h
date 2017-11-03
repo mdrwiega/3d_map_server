@@ -18,9 +18,9 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/voxel_grid.h>
 
-#include "utils/Logger.hh"
-
 #include <Eigen/Dense>
+
+#include "logger.h"
 
 namespace octomap_tools {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/OctreeUtils.hh"
+#include "utils/octree_utils.h"
 
 namespace octomap_tools {
 

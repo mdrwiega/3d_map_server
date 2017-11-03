@@ -1,6 +1,8 @@
 #include "octree_nearest_neighbours.h"
-#include "utils/Logger.hh"
+
 #include "kdtree/kdtree.h"
+#include "utils/logger.h"
+#include "utils/types_conversions.h"
 
 using namespace octomap;
 using namespace Eigen;
@@ -130,7 +132,7 @@ void nearestNeighboursOcTree(const Eigen::Matrix3Xf& dst_points,
   PointCloud cloud;
   for (auto i = 0; i < dst_points.cols(); ++i)
     cloud.push_back(ToPcl(dst_points.col(i)));
-  OcTree tree = ConvertPointCloudToOctree(cloud, 0.5);
+  OcTree tree = PointCloudToOctree(cloud, 0.5);
 
   for (unsigned i = 0; i < src_points.cols(); i++)
   {
