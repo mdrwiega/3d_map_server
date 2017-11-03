@@ -16,6 +16,7 @@ set(TOOLS_DIR ${SRC_DIR}/tools)
 find_package(octomap 1.8.1 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED )
 #find_package( Boost REQUIRED)
 
 # The library can be found on https://github.com/mdrwiega/md_utils
@@ -32,9 +33,8 @@ include_directories(
 link_libraries(${OCTOMAP_LIBRARIES})
 link_libraries(${Eigen3_LIBRARIES})
 link_libraries(${PCL_LIBRARIES})
-#link_libraries(${Boost_LIBRARIES})
-find_package(OpenCV REQUIRED )
 link_libraries(${OpenCV_LIBS})
+#link_libraries(${Boost_LIBRARIES})
 
 if (BUILD_BIN)
     add_executable(pointcloud2octree

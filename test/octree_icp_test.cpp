@@ -17,8 +17,7 @@ using namespace octomap;
 
 TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
 {
-  auto image = cvCreateImage(cvSize(500, 500), 8, 3);
-  cvZero(image);
+  auto image = cv::Mat(500, 500, CV_8UC3);
   int num_points = 200;
 
   // Create destination ellipse - model
@@ -47,8 +46,8 @@ TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
   drawPoints(image, src_points, CV_RGB(255, 0, 255), 5);
 
   #if SHOW_IMAGES == 1
-    cvShowImage("image",image);
-    cvWaitKey();
+    cv::imshow("image", image);
+    cv::waitKey();
   #endif
 
   cvReleaseImage(&image);
@@ -57,8 +56,7 @@ TEST(OctreeIcpTest, ellipsesVisualization_IcpWithOcTreeNearestNeighbours)
 
 TEST(OctreeIcpTest, IcpWithOcTreeNearestNeighbours)
 {
-  auto image = cvCreateImage(cvSize(500, 500), 8, 3);
-  cvZero(image);
+  auto image = cv::Mat(500, 500, CV_8UC3);
   int num_points = 200;
 
   // Create destination ellipse - model
@@ -88,10 +86,8 @@ TEST(OctreeIcpTest, IcpWithOcTreeNearestNeighbours)
   drawPoints(image, src_points, CV_RGB(255, 0, 255), 5);
 
   #if SHOW_IMAGES == 1
-    cvShowImage("image",image);
-    cvWaitKey();
+    cv::imshow("image", image);
+    cv::waitKey();
   #endif
-
-  cvReleaseImage(&image);
   EXPECT_LE(error, 65.0);
 }

@@ -3,7 +3,8 @@
 #include <cmath>
 
 #include <Eigen/Dense>
-#include <opencv2/opencv.hpp>
+#include <opencv/highgui.h>
+#include <opencv/cv.hpp>
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
     EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
@@ -36,13 +37,13 @@ inline Eigen::Matrix3Xf generateEllipsePoints(
   return points;
 }
 
-inline void drawPoints(IplImage* image, const Eigen::Matrix3Xf& points,
+inline void drawPoints(cv::Mat& image, const Eigen::Matrix3Xf& points,
                 CvScalar color = CV_RGB(255,255,255), int thickness = 1)
 {
   for (unsigned i = 0; i < points.cols(); ++i)
   {
-    auto point_cv = cvPoint((int)points(0,i), (int)points(1,i));
-    cvDrawCircle(image, point_cv, thickness, color, 1);
+    auto point_cv = cv::Point((int)points(0,i), (int)points(1,i));
+    cv::circle(image, point_cv, thickness, color, 1);
   }
 }
 
@@ -96,5 +97,10 @@ inline Eigen::Matrix4f transformationMat(const Eigen::Matrix3f& R, const Eigen::
   transform.block<3,1>(0,3) = T;
   transform(3,3) = 1;
   return transform;
+}
+
+inline cv::Point ToCv(const Eigen::Vector3f& p)
+{
+  return cv::Point(p(0), p(1));
 }
 
