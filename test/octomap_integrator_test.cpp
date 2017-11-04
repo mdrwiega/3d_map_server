@@ -4,6 +4,9 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
 #include "test_utils.h"
 #include "octomap_integrator.h"
 #include "md_utils/math/transformations.h"
@@ -14,6 +17,41 @@ using namespace octomap_tools;
 using namespace octomap;
 
 #define SHOW_IMAGES 0
+#define RUN_OCTOVIS 1
+
+const std::string ds_path = "datasets";
+const std::string tmp_path ="test/tmp";
+
+TEST(IntegrateOctomaps, MapsIntegrationDemo)
+{
+//  auto tree = readOctreeFromFile(inFilename);
+
+
+  // Parameters
+//  pcl::PointXYZ margin = {100, 100, 1};
+//  OctreeIntegrationConf conf { 500, 100, 0.1, margin };
+//
+//
+//  OcTree src_tree = PointsToOctree(points1, 1);
+//  OcTree dst_tree = PointsToOctree(points2, 1);
+//  Matrix4f T_init = Matrix4f::Identity();
+//  Matrix4f T_fin;
+//  float error = 0;
+//
+//  auto merged_tree = integrateOctomaps(
+//      src_tree, dst_tree, conf, T_init, T_fin, error);
+//
+//  auto merged_points = OctreeToPoints(*merged_tree);
+//
+//  std::cout << "Error = " << error << "\n"
+//            << "Esimated rotation: "
+//            << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+//            << "\nEsimated translation: "
+//            << T_fin.block<3,1>(0,3).transpose() << "\n";
+//
+//  EXPECT_LE(error, 150.0);
+//  std::system("pwd >test.txt");
+}
 
 TEST(IntegrateOctomaps, OctomapsIntegrationDemo_2D_EllipsesVis)
 {
