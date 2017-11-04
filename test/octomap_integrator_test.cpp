@@ -19,13 +19,11 @@ using namespace octomap;
 #define SHOW_IMAGES 0
 #define RUN_OCTOVIS 1
 
-const std::string ds_path = "datasets";
-const std::string tmp_path ="test/tmp";
+const std::string ds_path = "datasets/";
+const std::string tmp_path = "build/tmp/";
 
 TEST(IntegrateOctomaps, MapsIntegrationDemo)
 {
-//  auto tree = readOctreeFromFile(inFilename);
-
 
   // Parameters
 //  pcl::PointXYZ margin = {100, 100, 1};

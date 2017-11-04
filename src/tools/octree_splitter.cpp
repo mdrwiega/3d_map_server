@@ -22,8 +22,9 @@
 
 #include <Eigen/Dense>
 
-#include "../utils/octree_utils.h"
-#include "../utils/pointcloud_utils.h"
+#include "utils/octree_utils.h"
+#include "utils/pointcloud_utils.h"
+#include "md_utils/math/geometry.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -58,7 +59,7 @@ int main(int argc, char** argv)
           std::strtof(argv[j+2], nullptr)};
   }
 
-  const auto plane = calculatePlaneFromThreePoints(A);
+  const auto plane = md::planeFromThreePoints(A);
   auto tree = readOctreeFromFile(inFilename);
 
   auto cloud = convertOctreeToPointcloud(*tree);

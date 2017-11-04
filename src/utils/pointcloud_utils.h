@@ -75,36 +75,6 @@ inline void splitPointcloud(const Eigen::Vector4f& plane,
   }
 }
 
-/**
- * Checks if 3D points in matrix (each point in row) are collinear
- */
-inline bool pointsAreCollinear(const Eigen::Matrix3f& points)
-{
-  Eigen::Vector3f ab = points.row(1) - points.row(0);
-  Eigen::Vector3f ac = points.row(2) - points.row(0);
-  return ab.cross(ac) == Eigen::Vector3f{0,0,0};
-}
-
-/**
- * Calculates plane from three points
- *
- * @param[in] A - matrix with points coordinates in rows
- */
-inline Eigen::Vector4f calculatePlaneFromThreePoints(const Eigen::Matrix3f& A)
-{
-  if (pointsAreCollinear(A))
-  {
-    LOG_ERR() << "\nPoints are collinear. Please choose other points.\n";
-    throw std::runtime_error("Points are collinear");
-  }
-
-  Eigen::Vector3f x = A.colPivHouseholderQr().solve(Eigen::Vector3f{-1,-1,-1});
-  LOG_DBG() << "\nThe plane:\n"
-            << x[0] << " x + " << x[1] << " y + " << x[2] << " z + 1 = 0\n";
-
-  return {x[0], x[1], x[2], 1};
-}
-
 inline void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
 {
   Point min, max;
