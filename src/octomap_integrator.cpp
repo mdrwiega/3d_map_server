@@ -4,6 +4,7 @@
 #include "octree_transformations.h"
 #include "octree_icp.h"
 #include "md_utils/math/transformations.h"
+#include "utils/types_conversions.h"
 
 namespace octomap_tools {
 
@@ -30,8 +31,7 @@ OcTreePtr integrateOctomaps(const OcTree& tree1, const OcTree& tree2,
   LOG_DBG() << "ICP has been finished\n";
 
   T_fin = md::transformationMat(R_est, T_est);
-  auto trans = md::transformationMat(R_est, T_est);
-  auto trans_src_tree = transformOctree(tree1, trans);
+  auto trans_src_tree = transformOctree(tree1, T_fin);
   LOG_DBG() << "Octree has been transformed\n";
 
   auto merged_tree = sumOctrees(*trans_src_tree, tree2);
@@ -45,8 +45,27 @@ OcTreePtr integrateOctomapsPcl(
     const Eigen::Matrix4f& T_init, Eigen::Matrix4f& T_fin,
     float& error)
 {
+  PointCloud cloud_src;
+  OctreeToPointCloud(&tree1, cloud_src);
+  PointCloud cloud_dst;
+  OctreeToPointCloud(&tree2, cloud_dst);
 
+  EstimationParams params;
+  params.maxIter = conf.max_iter;
+  params.maxCorrespondenceDist = conf.max_nn_dist;
+  params.fitnessEps = conf.fitness_eps;
+  params.transfEps = 0.01;
+  params.voxelSize = 0.1;
+  params.intersecMargin = conf.intersec_margin;
 
+  T_fin = computeTransBetweenPointclouds(cloud_src, cloud_dst, params);
+
+  auto trans_src_tree = transformOctree(tree1, T_fin);
+  LOG_DBG() << "Octree has been transformed\n";
+
+  auto merged_tree = sumOctrees(*trans_src_tree, tree2);
+  LOG_DBG() << "Octrees have been merged\n";
+  return merged_tree;
 }
 
 }

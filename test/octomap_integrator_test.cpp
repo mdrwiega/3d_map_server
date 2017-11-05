@@ -66,7 +66,7 @@ TEST(IntegrateOctomaps, MapsIntegrationDemo)
   float error = 0;
 
   std::cout << "Start integration of octomaps\n";
-  auto merged_tree = integrateOctomaps(
+  auto merged_tree = integrateOctomapsPcl(
       tree1, tree2, conf, T_init, T_fin, error);
 
   printOcTreeInfo(*merged_tree, "merged tree");
