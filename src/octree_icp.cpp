@@ -4,6 +4,7 @@
 #include <limits>
 #include "octree_nearest_neighbours.h"
 #include "utils/types_conversions.h"
+#include <md_utils/math/transformations.h>
 
 using namespace Eigen;
 
@@ -146,30 +147,13 @@ float icp(const OcTree& src_tree, const OcTree& dst_tree,
   return sqrt(err);
 }
 
-Eigen::Matrix4f computeTransBetweenPointclouds(
-    const PointCloud& cloud1, const PointCloud& cloud2,
-    const EstimationParams& params)
+Eigen::Matrix4f icp(const OcTree& src_tree, const OcTree& dst_points,
+                    unsigned max_iter, float tolerance)
 {
-  PointCloud::Ptr source(new PointCloud);
-  PointCloud::Ptr target(new PointCloud);
-
-  extractIntersectingAndDownsamplePointClouds(
-      cloud1, cloud2, params.voxelSize, params.intersecMargin, *source, *target);
-
-  pcl::IterativeClosestPoint <Point, Point> icp;
-  icp.setMaxCorrespondenceDistance(params.maxCorrespondenceDist);
-  icp.setMaximumIterations(params.maxIter);
-  icp.setTransformationEpsilon(params.transfEps);
-  icp.setEuclideanFitnessEpsilon (params.fitnessEps);
-
-  PointCloud::Ptr icpResult;
-
-  icp.setInputSource(source);
-  icp.setInputTarget(target);
-  icpResult = source;
-  icp.align(*icpResult);
-
-  return icp.getFinalTransformation();
+  Eigen::Matrix3f R;
+  Eigen::Vector3f T;
+  icp(src_tree, dst_points, R, T, max_iter, tolerance);
+  return md::transformationMat(R, T);
 }
 
 }

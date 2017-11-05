@@ -115,6 +115,14 @@ void getMinMaxOctree(const OcTree& tree, Point& min, Point& max)
   }
 }
 
+void getMinMaxOctree(const OcTree& tree, Eigen::Vector3f& min, Eigen::Vector3f& max)
+{
+  Point pmin, pmax;
+  getMinMaxOctree(tree, pmin, pmax);
+  min = ToEigen(pmin);
+  max = ToEigen(pmax);
+}
+
 void filterOutLeafsNotInRange(
     const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out)
 {

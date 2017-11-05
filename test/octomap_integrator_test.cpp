@@ -17,9 +17,10 @@
 using namespace Eigen;
 using namespace octomap_tools;
 using namespace octomap;
+using namespace md;
 
 #define SHOW_IMAGES 0
-#define RUN_OCTOVIS 1
+#define RUN_OCTOVIS 0
 
 const std::string ds_path = "datasets/";
 const std::string tmp_path = "build/tmp/";
@@ -36,37 +37,37 @@ TEST(IntegrateOctomaps, MapsIntegrationDemo)
 
   auto orig_tree = readOctreeFromFile(map_path);
   printOcTreeInfo(*orig_tree, "original_tree");
-  Point o_min, o_max;
+  Vector3f o_min, o_max;
   getMinMaxOctree(*orig_tree, o_min, o_max);
 
-  Vector3f tree_min = {o_min.x + 25, o_min.y + 8, o_min.z + 0.5};
-  Vector3f tree_max = {o_max.x - 5,  o_max.y - 4, o_max.z - 2.2};
+  Vector3f tree_min = o_min + Vector3f{25, 8, 0.5};
+  Vector3f tree_max = o_max - Vector3f{5, 4, 2.2};
   auto tree = cutOctree(*orig_tree, tree_min, tree_max);
 
   Vector3f center = (tree_max + tree_min) / 2;
   Vector3f tree1_min = tree_min;
-  Vector3f tree1_max = {center(0) + 0.1, tree_max(1), tree_max(2)};
-  Vector3f tree2_min = {center(0) - 0.1, tree_min(1), tree_min(2)};
+  Vector3f tree1_max = {center(0) + 0.5f, tree_max(1), tree_max(2)};
+  Vector3f tree2_min = {center(0) - 0.5f, tree_min(1), tree_min(2)};
   Vector3f tree2_max = tree_max;
 
   OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
   OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
-  auto transf = md::createTransformationMatrix(0.0, 0, 0, 0, 0, ToRadians(0));
+  auto transf = md::createTransformationMatrix(0.1, 0, 0, 0, 0, ToRadians(0));
   OcTree tree2 = *(transformOctree(tree2_i, transf));
 
   printOcTreeInfo(tree, "tree");
   printOcTreeInfo(tree1, "tree1");
   printOcTreeInfo(tree2, "tree2");
 
-  pcl::PointXYZ margin = {0.2, 0.2, 0.05};
-  OctreeIntegrationConf conf {100, 20, 0.01, margin };
+  pcl::PointXYZ margin = {0.4, 0.4, 0.05};
+  OctreeIntegrationConf conf {1000, 0.5, 0.01, margin };
 
   Matrix4f T_init = Matrix4f::Identity();
   Matrix4f T_fin;
   float error = 0;
 
   std::cout << "Start integration of octomaps\n";
-  auto merged_tree = integrateOctomapsPcl(
+  auto merged_tree = integrateOctomaps(
       tree1, tree2, conf, T_init, T_fin, error);
 
   printOcTreeInfo(*merged_tree, "merged tree");

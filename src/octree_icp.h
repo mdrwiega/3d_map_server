@@ -33,18 +33,8 @@ float icp(const OcTree& src_tree, const OcTree& dst_points,
           Eigen::Matrix3f& R, Eigen::Vector3f& T,
           unsigned max_iter, float tolerance);
 
-struct EstimationParams
-{
-  unsigned maxIter;               // Max number of iterations (ICP)
-  float    maxCorrespondenceDist; // Max correspondence distance (ICP)
-  float    fitnessEps;            // Euclidean fitness epsilon (ICP)
-  float    transfEps;             // Transformation epsilon (ICP)
-  float    voxelSize;             // Size of voxel after downsampling
-  Point    intersecMargin;        // Margin in intersecting region extraction
-};
+Eigen::Matrix4f icp(const OcTree& src_tree, const OcTree& dst_points,
+                    unsigned max_iter, float tolerance);
 
-Eigen::Matrix4f computeTransBetweenPointclouds(
-    const PointCloud& cloud1, const PointCloud& cloud2,
-    const EstimationParams& params);
 }
 

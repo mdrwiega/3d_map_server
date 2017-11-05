@@ -59,8 +59,8 @@ int main(int argc, char** argv)
   PointCloud::Ptr cloud1(new PointCloud);
   PointCloud::Ptr cloud2(new PointCloud);
 
-  OctreeToPointCloud(tree1.get(), *cloud1);
-  OctreeToPointCloud(tree2.get(), *cloud2);
+  *cloud1 = octreeToPointCloud(*tree1);
+  *cloud2 = octreeToPointCloud(*tree2);
 
   OctomapMerger merger;
   auto tfFinal = merger.computeTransBetweenPointclouds(

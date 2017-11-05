@@ -85,14 +85,16 @@ inline octomap::OcTree PointCloudToOctree(
   return tree;
 }
 
-inline void OctreeToPointCloud(const octomap::OcTree *tree,
-                     pcl::PointCloud<pcl::PointXYZ>& cloud)
+inline pcl::PointCloud<pcl::PointXYZ> octreeToPointCloud(
+    const octomap::OcTree& tree)
 {
-  for (auto i = tree->begin_leafs(); i != tree->end_leafs(); ++i)
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i)
   {
-    if (tree->isNodeOccupied(*i))
+    if (tree.isNodeOccupied(*i))
       cloud.push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
   }
+  return cloud;
 }
 
 inline PointCloud convertOctreeToPointcloud(octomap::OcTree& tree)

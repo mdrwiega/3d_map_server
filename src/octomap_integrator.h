@@ -23,6 +23,8 @@ struct OctreeIntegrationConf
   float    max_nn_dist;       // Max correspondence distance (NN)
   float    fitness_eps;       // Euclidean fitness epsilon (ICP)
   Point    intersec_margin;   // Margin in intersecting region extraction (m)
+  float    transf_eps;             // Transformation epsilon (ICP)
+  float    voxel_size;             // Size of voxel after downsampling
 };
 
 /**
@@ -36,9 +38,18 @@ OcTreePtr integrateOctomaps(
     const Eigen::Matrix4f& T_init, Eigen::Matrix4f& T_fin,
     float& error);
 
+Eigen::Matrix4f estimateTransBetweenOctomaps(
+    const OcTree& tree1, const OcTree& tree2,
+    const OctreeIntegrationConf& conf);
+
 OcTreePtr integrateOctomapsPcl(
     const OcTree& tree1, const OcTree& tree2,
     const OctreeIntegrationConf& conf,
     const Eigen::Matrix4f& T_init, Eigen::Matrix4f& T_fin,
     float& error);
+
+Eigen::Matrix4f estimateTransBetweenPointclouds(
+    const PointCloud& cloud1, const PointCloud& cloud2,
+    const OctreeIntegrationConf& params);
+
 }

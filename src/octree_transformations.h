@@ -29,6 +29,8 @@ float calculateNewNodeOccupancy(const octomap::point3d& src_point,
                                 const OcTree& tree_in,
                                 const octomap::OcTreeNode* src_node);
 
+void getMinMaxOctree(const OcTree& tree, Eigen::Vector3f& min, Eigen::Vector3f& max);
+
 void getMinMaxOctree(const OcTree& tree, Point& min, Point& max);
 
 [[deprecated]]
