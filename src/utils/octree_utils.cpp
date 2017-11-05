@@ -118,8 +118,7 @@ int getLeafDepth(const OcTree& tree, const OcTreeNode& node)
   return -1;
 }
 
-
-void printOcTree(const OcTree& tree, std::string name)
+void printOcTreeInfo(const OcTree& tree, std::string name)
 {
   double xMin, xMax, yMin, yMax, zMin, zMax;
 
@@ -130,6 +129,13 @@ void printOcTree(const OcTree& tree, std::string name)
   LOG_INF() << "Size:" << tree.size() << "  Resolution: " << tree.getResolution();
   LOG_INF() << "MinMax x(" << xMin << ", " << xMax << ")  y(" << yMin << ", " << yMax
       << ")  z(" << zMin << ", " << zMax << ")";
+  LOG_INF();
+}
+
+
+void printOcTree(const OcTree& tree, std::string name)
+{
+  printOcTreeInfo(tree, name);
   LOG_INF() << "Leafs:";
   for (auto it = tree.begin_leafs(); it != tree.end_leafs(); ++it)
   {

@@ -94,8 +94,8 @@ void searchNearestNeighbour(const OcTree& tree, const Point& query,
   {
     point = query;
     distance = 0;
-    std::cout << "NN Point not found for ("
-        << query.x << ", " << query.y << ", " << query.z << "\n";
+//    std::cout << "NN Point not found for ("
+//        << query.x << ", " << query.y << ", " << query.z << "\n";
   }
 }
 

@@ -138,6 +138,15 @@ void filterOutLeafsNotInRange(
   }
 }
 
+OcTree cutOctree(const OcTree& tree_in,
+                 const Eigen::Vector3f& min,
+                 const Eigen::Vector3f& max)
+{
+  OcTree tree_out(tree_in.getResolution());
+  filterOutLeafsNotInRange(tree_in, ToPcl(min), ToPcl(max), tree_out);
+  return tree_out;
+}
+
 void extractIntersectingOctrees(
     const OcTree& tree1, const OcTree& tree2,
     const Point& margin,

@@ -7,10 +7,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+
 #include "test_utils.h"
 #include "octomap_integrator.h"
 #include "md_utils/math/transformations.h"
 #include "utils/octree_utils.h"
+#include "octree_transformations.h"
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -24,31 +26,77 @@ const std::string tmp_path = "build/tmp/";
 
 TEST(IntegrateOctomaps, MapsIntegrationDemo)
 {
+  std::string map_name = "fr_079";
+  std::string map_path = tmp_path + map_name + ".ot";
 
-  // Parameters
-//  pcl::PointXYZ margin = {100, 100, 1};
-//  OctreeIntegrationConf conf { 500, 100, 0.1, margin };
-//
-//
-//  OcTree src_tree = PointsToOctree(points1, 1);
-//  OcTree dst_tree = PointsToOctree(points2, 1);
-//  Matrix4f T_init = Matrix4f::Identity();
-//  Matrix4f T_fin;
-//  float error = 0;
-//
-//  auto merged_tree = integrateOctomaps(
-//      src_tree, dst_tree, conf, T_init, T_fin, error);
-//
-//  auto merged_points = OctreeToPoints(*merged_tree);
-//
-//  std::cout << "Error = " << error << "\n"
-//            << "Esimated rotation: "
-//            << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
-//            << "\nEsimated translation: "
-//            << T_fin.block<3,1>(0,3).transpose() << "\n";
-//
-//  EXPECT_LE(error, 150.0);
-//  std::system("pwd >test.txt");
+  std::system(("rm -rf " + tmp_path).c_str());
+  std::system(("mkdir -p " + tmp_path).c_str());
+  std::system(("gzip -cd " + ds_path + map_name + ".ot.gz > " \
+      + map_path).c_str());
+
+  auto orig_tree = readOctreeFromFile(map_path);
+  printOcTreeInfo(*orig_tree, "original_tree");
+  Point o_min, o_max;
+  getMinMaxOctree(*orig_tree, o_min, o_max);
+
+  Vector3f tree_min = {o_min.x + 25, o_min.y + 8, o_min.z + 0.5};
+  Vector3f tree_max = {o_max.x - 5,  o_max.y - 4, o_max.z - 2.2};
+  auto tree = cutOctree(*orig_tree, tree_min, tree_max);
+
+  Vector3f center = (tree_max + tree_min) / 2;
+  Vector3f tree1_min = tree_min;
+  Vector3f tree1_max = {center(0) + 0.1, tree_max(1), tree_max(2)};
+  Vector3f tree2_min = {center(0) - 0.1, tree_min(1), tree_min(2)};
+  Vector3f tree2_max = tree_max;
+
+  OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
+  OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
+  auto transf = md::createTransformationMatrix(0.0, 0, 0, 0, 0, ToRadians(0));
+  OcTree tree2 = *(transformOctree(tree2_i, transf));
+
+  printOcTreeInfo(tree, "tree");
+  printOcTreeInfo(tree1, "tree1");
+  printOcTreeInfo(tree2, "tree2");
+
+  pcl::PointXYZ margin = {0.2, 0.2, 0.05};
+  OctreeIntegrationConf conf {100, 20, 0.01, margin };
+
+  Matrix4f T_init = Matrix4f::Identity();
+  Matrix4f T_fin;
+  float error = 0;
+
+  std::cout << "Start integration of octomaps\n";
+  auto merged_tree = integrateOctomaps(
+      tree1, tree2, conf, T_init, T_fin, error);
+
+  printOcTreeInfo(*merged_tree, "merged tree");
+
+  std::cout << "Error = " << error << "\n"
+      << "Esimated rotation: "
+      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nEsimated translation: "
+      << T_fin.block<3,1>(0,3).transpose() << "\n";
+
+#if RUN_OCTOVIS == 1
+  std::string tree_f_path = tmp_path + map_name + "_filtered.ot";
+  writeOcTreeToFile(tree, tree_f_path);
+  std::system(("octovis " + tree_f_path + "&").c_str());
+
+  std::string tree1_path = tmp_path + map_name + "_p1.ot";
+  writeOcTreeToFile(tree1, tree1_path);
+  std::system(("octovis " + tree1_path + "&").c_str());
+
+  std::string tree2_path = tmp_path + map_name + "_p2.ot";
+  writeOcTreeToFile(tree2, tree2_path);
+  std::system(("octovis " + tree2_path + "&").c_str());
+
+  std::string merged_path = tmp_path + map_name + "_m.ot";
+  writeOcTreeToFile(*merged_tree, merged_path);
+  std::system(("octovis " + merged_path + "&").c_str());
+
+  getchar();
+  std::system("killall octovis");
+#endif
 }
 
 TEST(IntegrateOctomaps, OctomapsIntegrationDemo_2D_EllipsesVis)
@@ -102,10 +150,10 @@ TEST(IntegrateOctomaps, OctomapsIntegrationDemo_2D_EllipsesVis)
   auto merged_points = OctreeToPoints(*merged_tree);
 
   std::cout << "Error = " << error << "\n"
-            << "Esimated rotation: "
-            << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
-            << "\nEsimated translation: "
-            << T_fin.block<3,1>(0,3).transpose() << "\n";
+      << "Esimated rotation: "
+      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nEsimated translation: "
+      << T_fin.block<3,1>(0,3).transpose() << "\n";
 
 #if SHOW_IMAGES == 1
   auto img2 = cv::Mat(img_size, img_size, CV_8UC3);

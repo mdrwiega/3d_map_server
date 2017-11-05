@@ -41,6 +41,8 @@ int getNodeDepth(const OcTree& tree, const octomap::point3d& point,
 
 int getLeafDepth(const OcTree& tree, const OcTreeNode& node);
 
+void printOcTreeInfo(const OcTree& tree, std::string name);
+
 void printOcTree(const OcTree& tree, std::string name);
 
 void filterOutPointsNotInRange(const PointCloud& cloudIn,

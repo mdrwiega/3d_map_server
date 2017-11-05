@@ -31,8 +31,13 @@ float calculateNewNodeOccupancy(const octomap::point3d& src_point,
 
 void getMinMaxOctree(const OcTree& tree, Point& min, Point& max);
 
+[[deprecated]]
 void filterOutLeafsNotInRange(
     const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out);
+
+OcTree cutOctree(const OcTree& tree_in,
+                 const Eigen::Vector3f& min,
+                 const Eigen::Vector3f& max);
 
 void extractIntersectingOctrees(
     const OcTree& tree1, const OcTree& tree2,
