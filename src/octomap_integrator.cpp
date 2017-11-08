@@ -15,7 +15,10 @@ OcTreePtr integrateOctomaps(const OcTree& tree1, const OcTree& tree2,
                             float& error)
 {
   T_fin = estimateTransBetweenOctomaps(tree1, tree2, conf);
-  LOG_DBG() << "ICP has been finished\n";
+  LOG_DBG() << "ICP has been finished\nEstimated rotation: "
+      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nEstimated translation: "
+      << T_fin.block<3,1>(0,3).transpose() << "\n";
 
   auto trans_src_tree = transformOctree(tree1, T_fin);
   LOG_DBG() << "Octree has been transformed\n";
@@ -49,7 +52,10 @@ OcTreePtr integrateOctomapsPcl(
   PointCloud cloud_dst = octreeToPointCloud(tree2);
 
   T_fin = estimateTransBetweenPointclouds(cloud_src, cloud_dst, conf);
-  LOG_DBG() << "ICP has been finished\n";
+  LOG_DBG() << "ICP has been finished\nEstimated rotation: "
+      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nEstimated translation: "
+      << T_fin.block<3,1>(0,3).transpose() << "\n";
 
   auto trans_src_tree = transformOctree(tree1, T_fin);
   LOG_DBG() << "Octree has been transformed\n";

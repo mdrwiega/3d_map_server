@@ -22,20 +22,26 @@ using namespace md;
 #define SHOW_IMAGES 0
 #define RUN_OCTOVIS 0
 
-const std::string ds_path = "datasets/";
-const std::string tmp_path = "build/tmp/";
+static const std::string ds_path = "datasets/";
+static const std::string tmp_path = "build/tmp/";
 
-TEST(IntegrateOctomaps, MapsIntegrationDemo)
+std::unique_ptr<OcTree> unpackAndGetOctomap(
+    const std::string& map_name, const std::string ext = "ot")
 {
-  std::string map_name = "fr_079";
-  std::string map_path = tmp_path + map_name + ".ot";
+  const std::string map_path = tmp_path + map_name + "." + ext;
 
   std::system(("rm -rf " + tmp_path).c_str());
   std::system(("mkdir -p " + tmp_path).c_str());
-  std::system(("gzip -cd " + ds_path + map_name + ".ot.gz > " \
-      + map_path).c_str());
+  std::system(("gzip -cd " + ds_path + map_name +
+      "." + ext + ".gz > " + map_path).c_str());
 
-  auto orig_tree = readOctreeFromFile(map_path);
+  return readOctreeFromFile(map_path);
+}
+
+
+TEST(IntegrateOctomaps, MapsIntegrationDemo)
+{
+  auto orig_tree = unpackAndGetOctomap("fr_079");
   printOcTreeInfo(*orig_tree, "original_tree");
   Vector3f o_min, o_max;
   getMinMaxOctree(*orig_tree, o_min, o_max);
@@ -52,7 +58,7 @@ TEST(IntegrateOctomaps, MapsIntegrationDemo)
 
   OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
   OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
-  auto transf = md::createTransformationMatrix(0.1, 0, 0, 0, 0, ToRadians(0));
+  auto transf = md::createTransformationMatrix(0.1, 0.2, 0, 0, 0, ToRadians(0));
   OcTree tree2 = *(transformOctree(tree2_i, transf));
 
   printOcTreeInfo(tree, "tree");
@@ -60,24 +66,17 @@ TEST(IntegrateOctomaps, MapsIntegrationDemo)
   printOcTreeInfo(tree2, "tree2");
 
   pcl::PointXYZ margin = {0.4, 0.4, 0.05};
-  OctreeIntegrationConf conf {1000, 0.5, 0.01, margin };
+  OctreeIntegrationConf conf {1000, 2.0, 0.1, margin, 0.01, 0.05 };
 
   Matrix4f T_init = Matrix4f::Identity();
   Matrix4f T_fin;
   float error = 0;
 
   std::cout << "Start integration of octomaps\n";
-  auto merged_tree = integrateOctomaps(
+  auto merged_tree = integrateOctomapsPcl(
       tree1, tree2, conf, T_init, T_fin, error);
 
   printOcTreeInfo(*merged_tree, "merged tree");
-
-  std::cout << "Error = " << error << "\n"
-      << "Esimated rotation: "
-      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
-      << "\nEsimated translation: "
-      << T_fin.block<3,1>(0,3).transpose() << "\n";
-
 #if RUN_OCTOVIS == 1
   std::string tree_f_path = tmp_path + map_name + "_filtered.ot";
   writeOcTreeToFile(tree, tree_f_path);
