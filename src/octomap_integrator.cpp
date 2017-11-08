@@ -41,7 +41,6 @@ Eigen::Matrix4f estimateTransBetweenOctomaps(
   return icp(src_tree_f, dst_tree_f, conf.max_iter, conf.fitness_eps);
 }
 
-
 OcTreePtr integrateOctomapsPcl(
     const OcTree& tree1, const OcTree& tree2,
     const OctreeIntegrationConf& conf,
@@ -63,6 +62,15 @@ OcTreePtr integrateOctomapsPcl(
   auto merged_tree = sumOctrees(*trans_src_tree, tree2);
   LOG_DBG() << "Octrees have been merged\n";
   return merged_tree;
+}
+
+Eigen::Matrix4f estimateTransBetweenOctomapsPcl(
+    const OcTree& tree1, const OcTree& tree2,
+    const OctreeIntegrationConf& conf)
+{
+  auto cloud1 = octreeToPointCloud(tree1);
+  auto cloud2 = octreeToPointCloud(tree2);
+  return estimateTransBetweenPointclouds(cloud1, cloud2, conf);
 }
 
 Eigen::Matrix4f estimateTransBetweenPointclouds(
