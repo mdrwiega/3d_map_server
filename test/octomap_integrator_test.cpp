@@ -11,7 +11,6 @@
 #include "test_utils.h"
 #include "octomap_integrator.h"
 #include "md_utils/math/transformations.h"
-#include "utils/octree_utils.h"
 #include "octree_transformations.h"
 
 using namespace Eigen;
@@ -21,23 +20,6 @@ using namespace md;
 
 #define SHOW_IMAGES 0
 #define RUN_OCTOVIS 0
-
-static const std::string ds_path = "datasets/";
-static const std::string tmp_path = "build/tmp/";
-
-std::unique_ptr<OcTree> unpackAndGetOctomap(
-    const std::string& map_name, const std::string ext = "ot")
-{
-  const std::string map_path = tmp_path + map_name + "." + ext;
-
-  std::system(("rm -rf " + tmp_path).c_str());
-  std::system(("mkdir -p " + tmp_path).c_str());
-  std::system(("gzip -cd " + ds_path + map_name +
-      "." + ext + ".gz > " + map_path).c_str());
-
-  return readOctreeFromFile(map_path);
-}
-
 
 TEST(IntegrateOctomaps, MapsIntegrationDemo)
 {

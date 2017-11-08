@@ -33,7 +33,7 @@ using namespace md;
 const std::string ds_path = "datasets/";
 const std::string tmp_path = "build/tmp/";
 
-class OctomapIntegratorTest : public ::testing::Test
+class OctomapIntegratorPerfTest : public ::testing::Test
 {
  public:
   using EstimationsConfs = std::list<OctreeIntegrationConf>;
@@ -148,7 +148,7 @@ class OctomapIntegratorTest : public ::testing::Test
 };
 
 
-TEST_F(OctomapIntegratorTest, GetTransformationBetweenPointclouds_TheSameClouds_OnlyTransformed)
+TEST_F(OctomapIntegratorPerfTest, GetTransformationBetweenPointclouds_TheSameClouds_OnlyTransformed)
 {
   auto sourceCloud = createCrossShapePointCloud(0.6, 0.2, 0.1, 0.02);
 
@@ -192,7 +192,7 @@ TEST_F(OctomapIntegratorTest, GetTransformationBetweenPointclouds_TheSameClouds_
   printTestResults(results, "Cross pointcloud - test1");
 }
 
-TEST_F(OctomapIntegratorTest, GetTransformationBetweenPointclouds_CloudsDiffers)
+TEST_F(OctomapIntegratorPerfTest, GetTransformationBetweenPointclouds_CloudsDiffers)
 {
   auto sourceCloud = createCrossShapePointCloud(0.6, 0.2, 0.1, 0.02);
 
@@ -238,3 +238,52 @@ TEST_F(OctomapIntegratorTest, GetTransformationBetweenPointclouds_CloudsDiffers)
   printTestResults(results, "Different pointcloud - test2");
 }
 
+TEST_F(OctomapIntegratorPerfTest, OctomapSplitedIntoTwo_EstimationTests)
+{
+  auto orig_tree = unpackAndGetOctomap("fr_079");
+  Vector3f o_min, o_max;
+  getMinMaxOctree(*orig_tree, o_min, o_max);
+
+  Vector3f tree_min = o_min + Vector3f{25, 8, 0.5};
+  Vector3f tree_max = o_max - Vector3f{5, 4, 2.2};
+  auto tree = cutOctree(*orig_tree, tree_min, tree_max);
+
+  Vector3f center = (tree_max + tree_min) / 2;
+  Vector3f tree1_min = tree_min;
+  Vector3f tree1_max = {center(0) + 1.0f, tree_max(1), tree_max(2)};
+  Vector3f tree2_min = {center(0) - 1.0f, tree_min(1), tree_min(2)};
+  Vector3f tree2_max = tree_max;
+
+  OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
+  OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
+  auto transf = md::createTransformationMatrix(0.1, 0.1, 0, 0, 0, ToRadians(0));
+  OcTree tree2 = *(transformOctree(tree2_i, transf));
+
+  printOcTreeInfo(tree, "tree");
+  printOcTreeInfo(tree1, "tree1");
+  printOcTreeInfo(tree2, "tree2");
+
+  // Parameters ranges (min, max, multiplicator)
+  Param<unsigned> maxIter     {1000, 2000, 2};
+  Param<float>    maxCorrDist {0.1, 1.4, 2};
+  Param<float>    fitnessEps  {1e-5, 1e-3, 10};
+  Param<float>    transEps    {1e-12, 1e-9, 1e3};
+  Param<float>    voxelSize   {0.05, 0.4, 2};
+  Param<Point>    margin {Point{.5,.5,.5}, Point{1.5,1.5,1.5}, Point{.5,.5,.5}};
+
+  auto params = prepareParamsSet(maxIter, maxCorrDist, fitnessEps, transEps, voxelSize, margin);
+  EstimationsResults results {{{}, Matrix4f::Identity(), static_cast<milliseconds>(0)}};
+
+  for (const auto& conf : params)
+  {
+    auto start = high_resolution_clock::now();
+
+    Matrix4f T_fin = estimateTransBetweenOctomapsPcl(tree1, tree2, conf);
+
+    auto diff = duration_cast<milliseconds>(high_resolution_clock::now() - start);
+    results.push_back({conf, T_fin, diff});
+  }
+
+  preprocessTestResults(results);
+  printTestResults(results, "Octomap transformation estimate - fr_079");
+}

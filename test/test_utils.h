@@ -6,6 +6,7 @@
 #include <opencv/highgui.h>
 #include <opencv/cv.hpp>
 #include "utils/types_conversions.h"
+#include "utils/octree_utils.h"
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
     EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
@@ -13,6 +14,22 @@
     EXPECT_NEAR(n1.z(), n2.z(), 1e-5);
 
 namespace octomap_tools {
+
+static const std::string ds_path = "datasets/";
+static const std::string tmp_path = "build/tmp/";
+
+inline std::unique_ptr<OcTree> unpackAndGetOctomap(
+    const std::string& map_name, const std::string ext = "ot")
+{
+  const std::string map_path = tmp_path + map_name + "." + ext;
+
+  std::system(("rm -rf " + tmp_path).c_str());
+  std::system(("mkdir -p " + tmp_path).c_str());
+  std::system(("gzip -cd " + ds_path + map_name +
+      "." + ext + ".gz > " + map_path).c_str());
+
+  return readOctreeFromFile(map_path);
+}
 
 inline Eigen::Matrix3Xf getEllipsePoints(
     Eigen::Vector2f s, float a, float b,
