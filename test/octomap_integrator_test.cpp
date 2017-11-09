@@ -7,11 +7,17 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #include "test_utils.h"
 #include "octomap_integrator.h"
 #include "md_utils/math/transformations.h"
 #include "octree_transformations.h"
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/common/common_headers.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/io/pcd_io.h>
+
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -20,6 +26,80 @@ using namespace md;
 
 #define SHOW_IMAGES 0
 #define RUN_OCTOVIS 0
+
+TEST(IntegrateOctomaps, MapsIntegration_EstimationOnly_Demo_PclVis)
+{
+  auto orig_tree = unpackAndGetOctomap("fr_079");
+  printOcTreeInfo(*orig_tree, "original_tree");
+  Vector3f o_min, o_max;
+  getMinMaxOctree(*orig_tree, o_min, o_max);
+
+  Vector3f tree_min = o_min + Vector3f{25, 8, 0.5};
+  Vector3f tree_max = o_max - Vector3f{5, 4, 2.2};
+  auto tree = cutOctree(*orig_tree, tree_min, tree_max);
+
+  Vector3f center = (tree_max + tree_min) / 2;
+  Vector3f tree1_min = tree_min;
+  Vector3f tree1_max = {center(0) + 1.0f, tree_max(1), tree_max(2)};
+  Vector3f tree2_min = {center(0) - 1.0f, tree_min(1), tree_min(2)};
+  Vector3f tree2_max = tree_max;
+
+  OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
+  OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
+  printOcTreeInfo(tree2_i, "tree2i");
+  auto transf = md::createTransformationMatrix(0.1, 0.3, 0, 0, 0, ToRadians(0));
+  OcTree tree2 = *(transformOctree(tree2_i, transf));
+
+  printOcTreeInfo(tree, "tree");
+  printOcTreeInfo(tree1, "tree1");
+  printOcTreeInfo(tree2, "tree2");
+
+  pcl::PointXYZ margin = {0.4, 0.4, 0.05};
+  OctreeIntegrationConf conf {1000, 2.0, 0.1, margin, 0.01, 0.05 };
+  auto T_fin = estimateTransBetweenOctomapsPcl(tree1, tree2, conf);
+  std::cout << "\nTransform: \n" << T_fin << "\n";
+
+  std::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  viewer->addCoordinateSystem (1.0);
+  viewer->initCameraParameters ();
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cld1 (new pcl::PointCloud<pcl::PointXYZ>);
+  *cld1 = octreeToPointCloud(tree1);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(cld1, 0, 0, 255);
+  viewer->addPointCloud<pcl::PointXYZ> (cld1, single_color, "sample cloud");
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cld2 (new pcl::PointCloud<pcl::PointXYZ>);
+  *cld2 = octreeToPointCloud(tree2);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color2(cld2, 255, 0, 255);
+  viewer->addPointCloud<pcl::PointXYZ> (cld2, single_color2, "sample cloud1");
+
+  viewer->addCube(o_min(0), o_max(0), o_min(1), o_max(1), o_min(2), o_max(2), 1, 0, 0, "tree_original");
+  viewer->addCube(tree_min(0), tree_max(0), tree_min(1), tree_max(1), tree_min(2), tree_max(2), 0, 1, 0, "tree");
+  Vector3f pmin1, pmax1;
+  Vector3f pmin2, pmax2;
+  getMinMaxOctree(tree1, pmin1, pmax1);
+  viewer->addCube(pmin1(0), pmax1(0), pmin1(1), pmax1(1), pmin1(2), pmax1(2), 0, 0, 1, "tree1");
+  getMinMaxOctree(tree2, pmin2, pmax2);
+  viewer->addCube(pmin2(0), pmax2(0), pmin2(1), pmax2(1), pmin2(2), pmax2(2), 1, 0, 1, "tree2");
+
+  if (pmin1(0) > pmin2(0)) { pmin(0) = pmin1(0) + margin.x; }
+  else { pmin(0) = pmin2(0) + margin.x; }
+
+
+  pcl::ModelCoefficients coeffs;
+  coeffs.values.push_back (0.0);
+  coeffs.values.push_back (0.0);
+  coeffs.values.push_back (1.0);
+  coeffs.values.push_back (0.0);
+  viewer->addPlane (coeffs, "plane");
+
+  while (!viewer->wasStopped())
+  {
+    viewer->spinOnce(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+}
 
 TEST(IntegrateOctomaps, MapsIntegrationDemo)
 {
