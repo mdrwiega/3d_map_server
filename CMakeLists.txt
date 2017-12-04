@@ -6,14 +6,14 @@ option(BUILD_TESTS "Build and run unit tests. " ON)
 option(BUILD_BIN "Build binaries of tools." OFF)
 
 #set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS} -Wno-deprecated")
 
 set(SRC_DIR "src")
 set(TOOLS_DIR ${SRC_DIR}/tools)
 
 #set(Boost_USE_STATIC_LIBS        ON)
 
-find_package(octomap 1.8.0 REQUIRED)
+find_package(octomap 1.8.1 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED )

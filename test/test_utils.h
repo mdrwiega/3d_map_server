@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <unistd.h>
 
 #include <Eigen/Dense>
 #include <opencv/highgui.h>
@@ -15,18 +16,29 @@
 
 namespace octomap_tools {
 
-static const std::string ds_path = "datasets/";
-static const std::string tmp_path = "build/tmp/";
+static const std::string ds_path = "../datasets/";
+static const std::string tmp_path = "tmp/";
+
+inline bool isFileExist(const std::string& file_name)
+{
+    std::ifstream infile(file_name.c_str());
+    return infile.good();
+}
 
 inline std::unique_ptr<OcTree> unpackAndGetOctomap(
     const std::string& map_name, const std::string ext = "ot")
 {
   const std::string map_path = tmp_path + map_name + "." + ext;
 
-  std::system(("rm -rf " + tmp_path).c_str());
-  std::system(("mkdir -p " + tmp_path).c_str());
-  std::system(("gzip -cd " + ds_path + map_name +
-      "." + ext + ".gz > " + map_path).c_str());
+  if (!isFileExist(map_path))
+  {
+    std::system(("rm -rf " + tmp_path).c_str());
+    std::system(("mkdir -p " + tmp_path).c_str());
+    std::string map_packed_path = ds_path + map_name + "." + ext + ".gz";
+    std::system(("gzip -cd " + map_packed_path + " > " + map_path).c_str());
+    std::cout << "Unpacked file: " << map_packed_path
+              << " to " << map_path << std::endl;
+  }
 
   return readOctreeFromFile(map_path);
 }

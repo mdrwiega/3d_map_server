@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 
 #include <pcl/registration/transforms.h>
-#include "md_utils/math/transformations.hh"
+#include "md_utils/math/transformations.h"
 #include "octree_transformations.h"
 #include "utils/octree_utils.h"
 #include "utils/types_conversions.h"

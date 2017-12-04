@@ -12,6 +12,15 @@ Clone and install md\_utils.
 
 `cmake .. && make && sudo make install`
 
+Clone and install md\_octomap (modified octomap lib)
+
+`git clone git@gitlab.com:mdrwiega/md_octomap.git`
+
+`mkdir md_octomap/build && cd md_octomap/build`
+
+`cmake .. && make && sudo make install`
+
+
 Clone octomap_tools repository.
 
 `git clone https://gitlab.com/mdrwiega/octomap_tools.git`
@@ -22,8 +31,17 @@ Make build directory.
   
 Generate project and compile it.
 
-`cmake -DBUILD_TESTS=ON .. && make -j 8`
-  
+`cmake -j8 --build build`
+
+### Run UT
+
+	cd build
+
+	test/octomapToolsTests
+
+	test/octomapToolsTests --gtest_filter=IntegrateOctomaps.EstimationOnly_Demo_PclVis
+
+
 ### Installation
 
 `sudo make install`

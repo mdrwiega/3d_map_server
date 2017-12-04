@@ -1,10 +1,15 @@
 #include "octomap_integrator.h"
 
+#include <thread>
+
 #include "octomap_merger.h"
 #include "octree_transformations.h"
 #include "octree_icp.h"
 #include "md_utils/math/transformations.h"
 #include "utils/types_conversions.h"
+#include <pcl/visualization/pcl_visualizer.h>
+
+#define SHOW_PCL 1
 
 namespace octomap_tools {
 
@@ -83,18 +88,51 @@ Eigen::Matrix4f estimateTransBetweenPointclouds(
   extractIntersectingAndDownsamplePointClouds(
       cloud1, cloud2, params.voxel_size, params.intersec_margin, *source, *target);
 
+#if SHOW_PCL == 1
+  pcl::visualization::PCLVisualizer viewer ("3D Viewer");
+  viewer.setBackgroundColor (0, 0, 0);
+  viewer.addCoordinateSystem (1.0);
+  viewer.initCameraParameters();
+  viewer.setCameraPosition(0.0, 0.0, 25.0, 0.0, 0.0, 0.0);
+
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color(source, 0, 0, 255);
+  viewer.addPointCloud<pcl::PointXYZ> (source, single_color, "source");
+
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color2(target, 255, 0, 255);
+  viewer.addPointCloud<pcl::PointXYZ> (target, single_color2, "target");
+
+  Point min1, max1, min2, max2;
+  pcl::getMinMax3D(*source, min1, max1);
+  pcl::getMinMax3D(*target, min2, max2);
+
+  viewer.addCube(min1.x, max1.x, min1.y, max1.y, min1.z, max1.z, 0, 0, 1, "source");
+  viewer.addCube(min2.x, max2.x, min2.y, max2.y, min2.z, max2.z, 1, 0, 1, "target");
+#endif
+
   pcl::IterativeClosestPoint <Point, Point> icp;
   icp.setMaxCorrespondenceDistance(params.max_nn_dist);
   icp.setMaximumIterations(params.max_iter);
   icp.setTransformationEpsilon(params.transf_eps);
   icp.setEuclideanFitnessEpsilon (params.fitness_eps);
 
-  PointCloud::Ptr icpResult;
-
   icp.setInputSource(source);
   icp.setInputTarget(target);
-  icpResult = source;
-  icp.align(*icpResult);
+  icp.align(*source);
+  std::cout << "\nICP has converged, score is " << icp.getFitnessScore () << std::endl;
+  std::cout << "ICP transformation " << " : cloud_icp -> cloud_in" << std::endl;
+
+#if SHOW_PCL == 1
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> single_color3(source, 0, 255, 0);
+  viewer.addPointCloud<pcl::PointXYZ> (source, single_color3, "src");
+  pcl::getMinMax3D(*source, min1, max1);
+  viewer.addCube(min1.x, max1.x, min1.y, max1.y, min1.z, max1.z, 0, 1, 0, "source2");
+
+  while (!viewer.wasStopped())
+  {
+    viewer.spinOnce(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+#endif
 
   return icp.getFinalTransformation();
 }
