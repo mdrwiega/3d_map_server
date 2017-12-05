@@ -9,7 +9,7 @@
 #include "utils/types_conversions.h"
 #include <pcl/visualization/pcl_visualizer.h>
 
-#define SHOW_PCL 1
+#define SHOW_PCL 0
 
 namespace octomap_tools {
 
