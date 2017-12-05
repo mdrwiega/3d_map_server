@@ -41,6 +41,7 @@ Generate project and compile it.
 
 	test/octomapToolsTests --gtest_filter=IntegrateOctomaps.EstimationOnly_Demo_PclVis
 
+	test/octomapToolsTests --gtest_filter=OctreeTransformationsTest.transformOcTreeFromDataset*
 
 ### Installation
 

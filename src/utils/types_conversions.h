@@ -43,6 +43,12 @@ inline float ToRadians(float deg)
   return deg * kPi / 180.0;
 }
 
+inline float ToRad(float deg)
+{
+  return ToRadians(deg);
+}
+
+
 inline cv::Point ToCv(const Eigen::Vector3f& p)
 {
   return cv::Point(p(0), p(1));

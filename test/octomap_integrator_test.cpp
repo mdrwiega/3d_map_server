@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 #include "test_utils.h"
 #include "octomap_integrator.h"
@@ -17,7 +18,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
-
+#include <pcl/common/transforms.h>
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -27,6 +28,103 @@ using namespace md;
 #define SHOW_IMAGES 0
 #define SHOW_PCL 1
 #define RUN_OCTOVIS 0
+
+TEST(IntegrateOctomaps, EstimationOnlyWithPcl_Demo_PclVis)
+{
+  auto orig_tree = unpackAndGetOctomap("fr_079");
+  printOcTreeInfo(*orig_tree, "original_tree");
+
+  Vector3f tree_min = Vector3f{-6, -5, 0.1};
+  Vector3f tree_max = Vector3f{6, 5, 0.6};
+  auto tree = cutOctree(*orig_tree, tree_min, tree_max);
+
+  Vector3f center = (tree_max + tree_min) / 2;
+  Vector3f tree1_max = {center(0) + 1.5f, tree_max(1), tree_max(2)};
+  Vector3f tree2_min = {center(0) - 1.5f, tree_min(1), tree_min(2)};
+
+  OcTree tree1 = cutOctree(tree, tree_min, tree1_max);
+  OcTree tree2_i = cutOctree(tree, tree2_min, tree_max);
+  printOcTreeInfo(tree2_i, "tree2i");
+  auto T = md::createTransformationMatrix(0.3, 0.15, 0, 0, 0, ToRadians(0));
+
+  OcTree tree2 = *(transformOctree(tree2_i, T));
+  auto cloud1 = octreeToPointCloud(tree1);
+  auto cloud2i = octreeToPointCloud(tree2_i);
+  PointCloud cloud2;
+  pcl::transformPointCloud(cloud2i, cloud2, T);
+
+  pcl::PointXYZ margin = {1.0, 1.0, 1.0};
+  OctreeIntegrationConf conf {100, 0.5, 0.05, margin, 0.001, 0.04 };
+  auto start = std::chrono::high_resolution_clock::now();
+  Eigen::Matrix4f T_fin = estimateTransBetweenPointclouds(cloud1, cloud2, conf);
+  auto diff = std::chrono::high_resolution_clock::now() - start;
+
+  printOcTreeInfo(tree, "tree");
+  printOcTreeInfo(tree1, "tree1");
+  printOcTreeInfo(tree2, "tree2");
+
+  std::cout << "\nApplied transformation: \n"
+      << "Rotation: "
+      << T.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nTranslation: "
+      << T.block<3,1>(0,3).transpose() << "\n";
+
+  std::cout << "\nEstimated transformation: \n"
+      << "Rotation: "
+      << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nTranslation: "
+      << T_fin.block<3,1>(0,3).transpose() << "\n";
+
+  std::cout << "\nError: " << (T.inverse() * T_fin).norm() - 2;
+  auto time = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(diff).count());
+  std::cout << "\nTime: " << time << " ms \n";
+
+#if SHOW_PCL == 1
+  pcl::visualization::PCLVisualizer viewer ("3D Viewer");
+  viewer.setBackgroundColor(0, 0, 0);
+  viewer.addCoordinateSystem(1.0);
+  viewer.initCameraParameters();
+  viewer.setCameraPosition(0.0, 0.0, 25.0, 0.0, 0.0, 0.0);
+
+  // Visualize first octree as a point cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cld1 (new pcl::PointCloud<pcl::PointXYZ>);
+  *cld1 = octreeToPointCloud(tree1);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color1(cld1, 0, 0, 255);
+  viewer.addPointCloud<pcl::PointXYZ> (cld1, color1, "tree1");
+  Vector3f pmin1, pmax1;
+  getMinMaxOctree(tree1, pmin1, pmax1);
+  viewer.addCube(pmin1(0), pmax1(0), pmin1(1), pmax1(1), pmin1(2), pmax1(2), 0, 0, 1, "tree1_borders");
+
+  // Visualize second octree as a point cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cld2 (new pcl::PointCloud<pcl::PointXYZ>);
+  *cld2 = octreeToPointCloud(tree2);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color2(cld2, 255, 0, 255);
+  viewer.addPointCloud<pcl::PointXYZ> (cld2, color2, "tree2");
+  Vector3f pmin2, pmax2;
+  getMinMaxOctree(tree2, pmin2, pmax2);
+  viewer.addCube(pmin2(0), pmax2(0), pmin2(1), pmax2(1), pmin2(2), pmax2(2), 1, 0, 1, "tree2_borders");
+
+  // Transform second tree with estimated transformation and visualize it
+  auto transf_tree = transformOctree(tree1, T_fin);
+  printOcTreeInfo(*transf_tree, "trans_tree");
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cld3 (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::transformPointCloud(cloud1, *cld3, T_fin);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color3(cld2, 0, 255, 0);
+  viewer.addPointCloud<pcl::PointXYZ> (cld3, color3, "tree_transformed");
+  Vector3f pmin3, pmax3;
+  getMinMaxOctree(*transf_tree, pmin3, pmax3);
+  viewer.addCube(pmin3(0), pmax3(0), pmin3(1), pmax3(1), pmin3(2), pmax3(2), 0, 1, 0, "tree3_borders");
+
+  viewer.addCube(tree_min(0), tree_max(0),
+                 tree_min(1), tree_max(1), tree_min(2), tree_max(2), 1, 1, 0, "tree_borders");
+
+  while (!viewer.wasStopped())
+  {
+    viewer.spinOnce(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+#endif
+}
 
 TEST(IntegrateOctomaps, EstimationOnly_Demo_PclVis)
 {
@@ -48,25 +146,32 @@ TEST(IntegrateOctomaps, EstimationOnly_Demo_PclVis)
   OcTree tree1 = cutOctree(tree, tree1_min, tree1_max);
   OcTree tree2_i = cutOctree(tree, tree2_min, tree2_max);
   printOcTreeInfo(tree2_i, "tree2i");
-  auto transf = md::createTransformationMatrix(0.1, 0.2, 0, 0, 0, ToRadians(2));
+  auto transf = md::createTransformationMatrix(0.0, 0.2, 0, 0, 0, ToRadians(0));
   OcTree tree2 = *(transformOctree(tree2_i, transf));
+
+  pcl::PointXYZ margin = {1.0, 1.0, 1.0};
+  OctreeIntegrationConf conf {100, 0.3, 0.05, margin, 0.001, 0.04 };
+  auto T_fin = estimateTransBetweenOctomapsPcl(tree1, tree2, conf);
 
   printOcTreeInfo(tree, "tree");
   printOcTreeInfo(tree1, "tree1");
   printOcTreeInfo(tree2, "tree2");
 
-  pcl::PointXYZ margin = {1.0, 1.0, 1.0};
-  OctreeIntegrationConf conf {100, 0.6, 0.05, margin, 0.001, 0.04 };
-  auto T_fin = estimateTransBetweenOctomapsPcl(tree1, tree2, conf);
-  std::cout << "\nTransform: \n"
-      << "Esimated rotation: "
+  std::cout << "\nApplied transformation: \n"
+      << "Rotation: "
+      << transf.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nTranslation: "
+      << transf.block<3,1>(0,3).transpose() << "\n";
+
+  std::cout << "\nEstimated transformation: \n"
+      << "Rotation: "
       << T_fin.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
-      << "\nEsimated translation: "
+      << "\nTranslation: "
       << T_fin.block<3,1>(0,3).transpose() << "\n";
 
 #if SHOW_PCL == 1
   pcl::visualization::PCLVisualizer viewer ("3D Viewer");
-  viewer.setBackgroundColor (255, 255, 255);
+  viewer.setBackgroundColor (0, 0, 0);
   viewer.addCoordinateSystem (1.0);
   viewer.initCameraParameters();
   viewer.setCameraPosition(0.0, 0.0, 25.0, 0.0, 0.0, 0.0);
@@ -92,6 +197,7 @@ TEST(IntegrateOctomaps, EstimationOnly_Demo_PclVis)
 
   // Transform second tree with estimated transformation and visualize it
   auto transf_tree = transformOctree(tree1, T_fin);
+  printOcTreeInfo(*transf_tree, "trans_tree");
   pcl::PointCloud<pcl::PointXYZ>::Ptr cld3 (new pcl::PointCloud<pcl::PointXYZ>);
   *cld3 = octreeToPointCloud(*transf_tree);
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color3(cld2, 0, 255, 0);

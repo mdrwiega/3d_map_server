@@ -8,6 +8,8 @@
 #include "logger.h"
 #include "octree_utils.h"
 
+#include <iomanip>
+
 namespace octomap_tools {
 
 void writeOcTreeToFile(const OcTree& tree, const std::string& fileName)
@@ -127,9 +129,8 @@ void printOcTreeInfo(const OcTree& tree, std::string name)
 
   LOG_INF() << "OcTree: " << name;
   LOG_INF() << "Size:" << tree.size() << "  Resolution: " << tree.getResolution();
-  LOG_INF() << "MinMax x(" << xMin << ", " << xMax << ")  y(" << yMin << ", " << yMax
-      << ")  z(" << zMin << ", " << zMax << ")";
-  LOG_INF();
+  LOG_INF() << "MinMax x(" << xMin << ", " << xMax
+            << ")  y(" << yMin << ", " << yMax << ")  z(" << zMin << ", " << zMax << ")\n";
 }
 
 
