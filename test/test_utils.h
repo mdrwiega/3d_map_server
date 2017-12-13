@@ -2,12 +2,14 @@
 
 #include <cmath>
 #include <unistd.h>
+#include <chrono>
 
 #include <Eigen/Dense>
 #include <opencv/highgui.h>
 #include <opencv/cv.hpp>
 #include "utils/types_conversions.h"
 #include "utils/octree_utils.h"
+#include <md_utils/math/transformations.h>
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
     EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
@@ -40,7 +42,28 @@ inline std::unique_ptr<OcTree> unpackAndGetOctomap(
               << " to " << map_path << std::endl;
   }
 
-  return readOctreeFromFile(map_path);
+  auto tree = readOctreeFromFile(map_path);
+  printOcTreeInfo(*tree, "Loaded tree");
+  return tree;
+}
+
+inline float ToMilliseconds(std::chrono::duration<double> time)
+{
+  return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+}
+
+inline void printTransformation(const Eigen::Matrix4f& t,
+                                const std::string& title = "")
+{
+  std::cout << "\n" << title
+      << "\nR: " << t.block<3,3>(0,0).eulerAngles(0, 1, 2).transpose()
+      << "\nT: " << t.block<3,1>(0,3).transpose() << "\n";
+}
+
+inline float transoformationsError(
+    const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2)
+{
+  return (t1.inverse() * t2 - Eigen::Matrix4f::Identity()).norm();
 }
 
 inline Eigen::Matrix3Xf getEllipsePoints(

@@ -20,6 +20,7 @@
 
 #include "../utils/octree_utils.h"
 #include "../utils/pointcloud_utils.h"
+#include <utils/types_conversions.h>
 
 using namespace octomap;
 using namespace octomap_tools;

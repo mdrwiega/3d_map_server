@@ -25,6 +25,7 @@
 #include "utils/octree_utils.h"
 #include "utils/pointcloud_utils.h"
 #include "md_utils/math/geometry.h"
+#include <utils/types_conversions.h>
 
 using namespace octomap_tools;
 using namespace Eigen;

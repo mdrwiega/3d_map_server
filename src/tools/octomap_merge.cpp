@@ -66,8 +66,7 @@ int main(int argc, char** argv)
 
   auto transform = createTransformationMatrix(x,y,z,roll, pitch, yaw);
 
-  OctomapMerger merger;
-  auto treeOut = merger.mergeOcTrees(*tree1, *tree2, transform);
+  auto treeOut = mergeOcTrees(*tree1, *tree2, transform);
 
   if (saveToFile)
     writeOcTreeToFile(*treeOut, outFilename);

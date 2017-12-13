@@ -17,6 +17,7 @@
 #include <pcl/common/common.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/voxel_grid.h>
+#include "octree_utils.h"
 
 #include <Eigen/Dense>
 
@@ -49,6 +50,17 @@ inline PointCloudPtr readPointCloudFromFile(const std::string fileName)
   LOG_INF() << "Loaded " << cloud->width * cloud->height
       << " data points from " << fileName << std::endl;
   return cloud;
+}
+
+inline void savePointCloudToFile(const std::string fileName, const PointCloud& cloudIn)
+{
+  if (pcl::io::savePCDFile<Point> (fileName, cloudIn) == -1)
+  {
+    LOG_ERR() << "\nCouldn't save to file " << fileName;
+    return;
+  }
+  LOG_INF() << "Loaded " << cloudIn.width * cloudIn.height
+      << " data points from " << fileName << std::endl;
 }
 
 /**

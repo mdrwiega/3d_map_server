@@ -23,6 +23,7 @@
 #include <Eigen/Dense>
 
 #include "../utils/pointcloud_utils.h"
+#include "md_utils/math/geometry.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
           std::strtof(argv[j+2], nullptr)};
   }
 
-  const auto plane = calculatePlaneFromThreePoints(A);
+  const auto plane = md::planeFromThreePoints(A);
   const auto cloud = readPointCloudFromFile(inFilename);
 
   printPointcloudInfo(*cloud, inFilename);

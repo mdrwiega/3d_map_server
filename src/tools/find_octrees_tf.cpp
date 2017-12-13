@@ -22,9 +22,11 @@
 
 #include <Eigen/Dense>
 
-#include "../octomap_merger.h"
+
 #include "../utils/logger.h"
-#include "../utils/octree_utils.h"
+#include <octomap_integrator.h>
+#include <utils/octree_utils.h>
+#include <utils/types_conversions.h>
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -62,9 +64,9 @@ int main(int argc, char** argv)
   *cloud1 = octreeToPointCloud(*tree1);
   *cloud2 = octreeToPointCloud(*tree2);
 
-  OctomapMerger merger;
-  auto tfFinal = merger.computeTransBetweenPointclouds(
-      *cloud1, *cloud2, voxelSize, maxIterations, maxCorrespDist, fitnessEps);
+  pcl::PointXYZ margin = {1.0, 1.0, 1.0};
+  OctreeIntegrationConf conf {maxIterations, maxCorrespDist, fitnessEps, margin, 0.001, voxelSize };
+  auto tfFinal = estimateTransBetweenPointclouds(*cloud1, *cloud2, conf);
 
   auto vec = tfFinal.col(3).transpose();
   Eigen::Matrix3f rot = tfFinal.block(0, 0, 3, 3);
