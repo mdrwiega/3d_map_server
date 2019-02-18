@@ -4,12 +4,14 @@ project(octomap_tools)
 # Turn on tests with: cmake -Doption=ON
 option(BUILD_TESTS "Build and run unit tests. " ON)
 option(BUILD_BIN "Build binaries of tools." OFF)
+option(BUILD_DEMOS "Build demos." OFF)
 
 #set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS} -Wno-deprecated")
 
 set(SRC_DIR "src")
 set(TOOLS_DIR ${SRC_DIR}/tools)
+set(DEMOS_DIR ${SRC_DIR}/demos)
 
 #set(Boost_USE_STATIC_LIBS        ON)
 
@@ -82,6 +84,12 @@ if (BUILD_BIN)
 #	set_target_properties(find_octrees_tf PROPERTIES LINKER_LANGUAGE CXX)
 #	set_target_properties(octomap_merge PROPERTIES LINKER_LANGUAGE CXX)
 
+endif()
+
+if (BUILD_DEMOS) 
+    add_executable(correspondence_grouping
+        ${DEMOS_DIR}/correspondence_grouping.cpp
+    )
 endif()
 
 if (BUILD_TESTS)

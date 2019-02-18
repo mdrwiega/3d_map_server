@@ -44,7 +44,8 @@ set(TESTED_SRC
 
 file(GLOB TESTS_SRC
 	"main.cpp"
-	"*.cpp"
+#	"*.cpp"
+   "correspondence_grouping_test.cpp"
 #	"octomap_integrator_test.cpp"
 )
 
