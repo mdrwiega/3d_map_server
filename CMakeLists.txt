@@ -4,7 +4,7 @@ project(octomap_tools)
 # Turn on tests with: cmake -Doption=ON
 option(BUILD_TESTS "Build and run unit tests. " ON)
 option(BUILD_BIN "Build binaries of tools." OFF)
-option(BUILD_DEMOS "Build demos." OFF)
+option(BUILD_DEMOS "Build demos." ON)
 
 #set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS} -Wno-deprecated")
