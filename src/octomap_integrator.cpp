@@ -9,9 +9,292 @@
 #include "utils/types_conversions.h"
 #include <pcl/visualization/pcl_visualizer.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/correspondence.h>
+
+#include <pcl/features/board.h>
+#include <pcl/recognition/cg/hough_3d.h>
+//#include <pcl/filters/uniform_sampling.h>
+
+#include <pcl/recognition/cg/geometric_consistency.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/kdtree/impl/kdtree_flann.hpp>
+#include <pcl/common/transforms.h>
+#include <pcl/console/parse.h>
+#include <pcl/filters/voxel_grid.h>
+
+
+typedef pcl::Normal NormalType;
+typedef pcl::ReferenceFrame RFType;
+typedef pcl::SHOT352 DescriptorType;
+
 #define SHOW_PCL 0
 
 namespace octomap_tools {
+
+std::vector<Eigen::Vector2f> generateSpiralCoordinatesSequence(int size_x, int size_y) {
+  std::vector<Eigen::Vector2f> seq;
+  int m = size_x;
+  int n = size_y;
+  int i, k = 0, l = 0;
+
+  /*  k - starting row index
+      m - ending row index
+      l - starting column index
+      n - ending column index
+      i - iterator
+  */
+
+  while (k < m && l < n) {
+      /* Print the first row from the remaining rows */
+      for (i = l; i < n; ++i) {
+        seq.push_back(Eigen::Vector2f(k, i));
+      }
+      k++;
+
+      /* Print the last column from the remaining columns */
+      for (i = k; i < m; ++i) {
+          seq.push_back(Eigen::Vector2f(i, n-1));
+      }
+      n--;
+
+      /* Print the last row from the remaining rows */
+      if ( k < m) {
+          for (i = n-1; i >= l; --i) {
+            seq.push_back(Eigen::Vector2f(m-1, i));
+          }
+          m--;
+      }
+
+      /* Print the first column from the remaining columns */
+      if (l < n) {
+          for (i = m-1; i >= k; --i) {
+            seq.push_back(Eigen::Vector2f(i, l));
+          }
+          l++;
+      }
+  }
+  return seq;
+}
+
+std::vector<Rectangle> generateBlocksInSpiralOrder(Eigen::Vector2f& min, Eigen::Vector2f& max, Eigen::Vector2f& step_xy)
+{
+  std::vector<Rectangle> cells;
+  int size_x = ceil((max(0) - min(0)) / step_xy(0)) ;
+  int size_y = ceil((max(1) - min(1)) / step_xy(1)) ;
+  std::vector<Eigen::Vector2f> seq = generateSpiralCoordinatesSequence(size_x, size_y);
+
+  for (auto& i : seq) {
+    Rectangle rect;
+    rect.min(0) = min(0) + i(0) * step_xy(0);
+    rect.min(1) = min(1) + i(1) * step_xy(1);
+    rect.max(0) = min(0) + (i(0) + 1) * step_xy(0);
+    rect.max(1) = min(1) + (i(1) + 1) * step_xy(1);
+
+    if (rect.max(0) > max(0)) rect.max(0) = max(0);
+    if (rect.max(1) > max(1)) rect.max(1) = max(1);
+
+    cells.push_back(rect);
+  }
+
+  return cells;
+}
+
+void HoughClustering(
+    const CorrespondenceGroupingConfig& config,
+    const pcl::CorrespondencesPtr& model_scene_corrs,
+    FeatureCloudPtr& model,
+    FeatureCloudPtr& scene,
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+    std::vector<pcl::Correspondences>& clustered_corrs) {
+  //  Compute (Keypoints) Reference Frames only for Hough
+  pcl::PointCloud<RFType>::Ptr model_rf(new pcl::PointCloud<RFType>());
+  pcl::PointCloud<RFType>::Ptr scene_rf(new pcl::PointCloud<RFType>());
+  pcl::BOARDLocalReferenceFrameEstimation<Point, NormalType, RFType> rf_est;
+  rf_est.setFindHoles(true);
+  rf_est.setRadiusSearch(config.rf_rad_);
+  rf_est.setInputCloud(model->getKeypoints());
+  rf_est.setInputNormals(model->getSurfaceNormals());
+  rf_est.setSearchSurface(model->getPointCloud());
+  rf_est.compute(*model_rf);
+  rf_est.setInputCloud(scene->getKeypoints());
+  rf_est.setInputNormals(scene->getSurfaceNormals());
+  rf_est.setSearchSurface(scene->getPointCloud());
+  rf_est.compute(*scene_rf);
+  //  Clustering
+  pcl::Hough3DGrouping<Point, Point, RFType, RFType> clusterer;
+  clusterer.setHoughBinSize(config.cg_size_);
+  clusterer.setHoughThreshold(config.cg_thresh_);
+  clusterer.setUseInterpolation(true);
+  clusterer.setUseDistanceWeight(false);
+  clusterer.setInputCloud(model->getKeypoints());
+  clusterer.setInputRf(model_rf);
+  clusterer.setSceneCloud(scene->getKeypoints());
+  clusterer.setSceneRf(scene_rf);
+  clusterer.setModelSceneCorrespondences(model_scene_corrs);
+  //clusterer.cluster (clustered_corrs);
+  clusterer.recognize(rototranslations, clustered_corrs);
+}
+
+void GeometryConsistencyGrouping(
+    const CorrespondenceGroupingConfig& config,
+    const pcl::CorrespondencesPtr& model_scene_corrs,
+    FeatureCloudPtr& model,
+    FeatureCloudPtr& scene,
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+    std::vector<pcl::Correspondences>& clustered_corrs) {
+  pcl::GeometricConsistencyGrouping<Point, Point> gc_clusterer;
+  gc_clusterer.setGCSize(config.cg_size_);
+  gc_clusterer.setGCThreshold(config.cg_thresh_);
+  gc_clusterer.setInputCloud(model->getKeypoints());
+  gc_clusterer.setSceneCloud(scene->getKeypoints());
+  gc_clusterer.setModelSceneCorrespondences(model_scene_corrs);
+  //gc_clusterer.cluster (clustered_corrs);
+  gc_clusterer.recognize(rototranslations, clustered_corrs);
+}
+
+void FindCorrespondencesWithKdTree(const pcl::CorrespondencesPtr& model_scene_corrs,
+                         FeatureCloudPtr& model, FeatureCloudPtr& scene) {
+  pcl::KdTreeFLANN<DescriptorType> match_search;
+  match_search.setInputCloud(model->getDescriptors());
+  //  For each scene keypoint descriptor, find nearest neighbor into the model keypoints descriptor cloud and add it to the correspondences vector.
+  for (size_t i = 0; i < scene->getDescriptors()->size(); ++i) {
+    auto& scene_descriptor = scene->getDescriptors()->at(i);
+    std::vector<int> neigh_indices(1);
+    std::vector<float> neigh_sqr_dists(1);
+    if (!std::isfinite(scene_descriptor.descriptor[0])) {
+      //skipping NaNs
+      continue;
+    }
+    int found_neighs = match_search.nearestKSearch(scene_descriptor, 1,
+                                                   neigh_indices,
+                                                   neigh_sqr_dists);
+    if (found_neighs == 1 && neigh_sqr_dists[0] < 0.25f)  //  add match only if the squared descriptor distance is less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
+        {
+      pcl::Correspondence corr(neigh_indices[0], static_cast<int>(i),
+                               neigh_sqr_dists[0]);
+      model_scene_corrs->push_back(corr);
+    }
+  }
+}
+
+void calc(FeatureCloudPtr& scene, FeatureCloudPtr& model,
+          const CorrespondenceGroupingConfig& config, CGResultsSet& results) {
+
+  pcl::CorrespondencesPtr model_scene_corrs (new pcl::Correspondences());
+  FindCorrespondencesWithKdTree(model_scene_corrs, model, scene);
+
+  std::cout << "Correspondences found: " << model_scene_corrs->size () << std::endl;
+  if (model_scene_corrs->size() < config.correspondences_thresh_) {
+    std::cout << "Correspondences below threshold. Exit." << std::endl;
+    return;
+  }
+  //  Actual Clustering
+  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transformations;
+  std::vector<pcl::Correspondences> clustered_corrs;
+
+  if (config.use_hough_) {
+    HoughClustering(config, model_scene_corrs, model, scene, transformations, clustered_corrs);
+  } else {
+    GeometryConsistencyGrouping(config, model_scene_corrs, model, scene,
+                                transformations, clustered_corrs);
+  }
+
+  std::cout << "Model instances found: " << transformations.size () << std::endl;
+  if (transformations.size() == 0) {
+    std::cout << "No model instances. Exit" << std::endl;
+    return;
+  }
+
+  Point pmin, pmax;
+  pcl::getMinMax3D(*model->getPointCloud(), pmin, pmax);
+  // Copy results to data structure
+  for (size_t i = 0; i < transformations.size (); ++i) {
+    CGResultEntry result;
+    result.model_max = pmax;
+    result.model_min = pmin;
+    result.transformation = transformations[i];
+    result.correspondences = clustered_corrs[i].size();
+    results.AppendResultEntry(result);
+  }
+
+  visualize(config, transformations, clustered_corrs, scene, model);
+}
+
+void visualize(
+    const CorrespondenceGroupingConfig& config,
+    const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
+    const std::vector<pcl::Correspondences>& clustered_corrs,
+    FeatureCloudPtr& scene, FeatureCloudPtr& model) {
+
+  if (config.show_visualization_) {
+    pcl::visualization::PCLVisualizer viewer("Correspondence Grouping");
+    viewer.addPointCloud(scene->getPointCloud(), "scene_cloud");
+    PointCloud::Ptr off_scene_model(new PointCloud());
+    PointCloud::Ptr off_scene_model_keypoints(
+        new PointCloud());
+    if (config.show_correspondences_ || config.show_keypoints_) {
+      //  We are translating the model so that it doesn't end in the middle of the scene representation
+      pcl::transformPointCloud(*model->getPointCloud(), *off_scene_model,
+                               Eigen::Vector3f(-1, 0, 0),
+                               Eigen::Quaternionf(1, 0, 0, 0));
+      pcl::transformPointCloud(*model->getKeypoints(),
+                               *off_scene_model_keypoints,
+                               Eigen::Vector3f(-1, 0, 0),
+                               Eigen::Quaternionf(1, 0, 0, 0));
+      pcl::visualization::PointCloudColorHandlerCustom<Point> off_scene_model_color_handler(
+          off_scene_model, 255, 255, 128);
+      viewer.addPointCloud(off_scene_model, off_scene_model_color_handler,
+                           "off_scene_model");
+    }
+    if (config.show_keypoints_) {
+      pcl::visualization::PointCloudColorHandlerCustom<Point> scene_keypoints_color_handler(
+          scene->getKeypoints(), 0, 0, 255);
+      viewer.addPointCloud(scene->getKeypoints(), scene_keypoints_color_handler,
+                           "scene_keypoints");
+      viewer.setPointCloudRenderingProperties(
+          pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "scene_keypoints");
+      pcl::visualization::PointCloudColorHandlerCustom<Point> off_scene_model_keypoints_color_handler(
+          off_scene_model_keypoints, 0, 0, 255);
+      viewer.addPointCloud(off_scene_model_keypoints,
+                           off_scene_model_keypoints_color_handler,
+                           "off_scene_model_keypoints");
+      viewer.setPointCloudRenderingProperties(
+          pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5,
+          "off_scene_model_keypoints");
+    }
+    for (size_t i = 0; i < rototranslations.size(); ++i) {
+      PointCloud::Ptr rotated_model(new PointCloud());
+      pcl::transformPointCloud(*model->getPointCloud(), *rotated_model,
+                               rototranslations[i]);
+      std::stringstream ss_cloud;
+      ss_cloud << "instance" << i;
+      pcl::visualization::PointCloudColorHandlerCustom<Point> rotated_model_color_handler(
+          rotated_model, 255, 0, 0);
+      viewer.addPointCloud(rotated_model, rotated_model_color_handler,
+                           ss_cloud.str());
+      if (config.show_correspondences_) {
+        for (size_t j = 0; j < clustered_corrs[i].size(); ++j) {
+          std::stringstream ss_line;
+          ss_line << "correspondence_line" << i << "_" << j;
+          Point& model_point = off_scene_model_keypoints->at(
+              clustered_corrs[i][j].index_query);
+          Point& scene_point = scene->getKeypoints()->at(
+              clustered_corrs[i][j].index_match);
+          //  We are drawing a line for each pair of clustered correspondences found between the model and the scene
+          viewer.addLine<Point, Point>(model_point, scene_point, 0, 255, 0,
+                                       ss_line.str());
+        }
+      }
+    }
+    while (!viewer.wasStopped()) {
+      viewer.spinOnce();
+    }
+  }
+}
+
 
 OcTreePtr integrateOctomaps(const OcTree& tree1, const OcTree& tree2,
                             const OctreeIntegrationConf& conf,

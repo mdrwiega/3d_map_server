@@ -52,15 +52,15 @@ inline PointCloudPtr readPointCloudFromFile(const std::string fileName)
   return cloud;
 }
 
-inline void savePointCloudToFile(const std::string fileName, const PointCloud& cloudIn)
+inline void savePointCloudToFile(const std::string fileName, const PointCloud& cloudIn, bool binary)
 {
-  if (pcl::io::savePCDFile<Point> (fileName, cloudIn) == -1)
+  if (pcl::io::savePCDFile<Point> (fileName, cloudIn, binary) == -1)
   {
     LOG_ERR() << "\nCouldn't save to file " << fileName;
     return;
   }
-  LOG_INF() << "Loaded " << cloudIn.width * cloudIn.height
-      << " data points from " << fileName << std::endl;
+  LOG_INF() << "Saved " << cloudIn.width * cloudIn.height
+      << " data points to " << fileName << std::endl;
 }
 
 /**

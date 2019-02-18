@@ -257,6 +257,8 @@ main (int argc, char *argv[])
   descr_est.setSearchSurface (scene);
   descr_est.compute (*scene_descriptors);
 
+  std::cout << "Descriptors calculated: " << std::endl;
+
   //
   //  Find Model-Scene Correspondences with KdTree
   //
