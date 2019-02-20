@@ -39,10 +39,12 @@ public:
     void setFlushLeft() { flushLeft_ = true; }
     void setFlushRight() { flushLeft_ = false; }
 
-    void addColumn(const std::string & headerName, int columnWidth)
+    void addColumn(const std::string & headerName, int columnWidth = 0)
     {
-        if (columnWidth < 4)
-            throw std::invalid_argument("Column size has to be >= 4");
+        if (columnWidth < headerName.size())
+        {
+          columnWidth = headerName.size();
+        }
 
         columnHeaders_.push_back(headerName);
         columnWidths_.push_back(columnWidth);

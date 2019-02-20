@@ -10,11 +10,11 @@
 #include <algorithm>
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
-#include <pcl/point_types.h>
 
 #include "utils/octree_utils.h"
 #include <utils/pointcloud_utils.h>
 #include <pcl/kdtree/kdtree_flann.h>
+<<<<<<< HEAD
 #include <pcl/keypoints/uniform_sampling.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/shot_omp.h>
@@ -62,13 +62,31 @@ class CGResultsSet {
     };
     std::sort(results_.begin(), results_.end(), comparator);
   }
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ed4b629... Next part of refactoring
   Eigen::Matrix4f GetBestTransformation() {
+    SortResults();
     if (!results_.empty())
       return results_.back().transformation;
     else
       return Eigen::Matrix4f{};
   }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bd57a90... Next part of refactoring about feature detection method
+=======
+>>>>>>> ed4b629... Next part of refactoring
+=======
+  void PrintBestTransformation() {
+    auto T = GetBestTransformation();
+    PrintTransformationMatrix(T);
+  }
+
+>>>>>>> 97f1049... Tests update. Working state
   void PrintResults() {
     SortResults();
     std::cout << "Results set size: " << results_.size() << std::endl;
@@ -78,19 +96,22 @@ class CGResultsSet {
       std::cout << "Model MAX: (" << result.model_max.x << ", " << result.model_max.y << ", " << result.model_max.z << ")" << std::endl;
       std::cout << "Correspondences: " << result.correspondences;
 
-      Eigen::Matrix3f rotation = result.transformation.block<3,3>(0, 0);
-      Eigen::Vector3f translation = result.transformation.block<3,1>(0, 3);
-
-      printf ("\n");
-      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (0,0), rotation (0,1), rotation (0,2));
-      printf ("        R = | %6.3f %6.3f %6.3f | \n", rotation (1,0), rotation (1,1), rotation (1,2));
-      printf ("            | %6.3f %6.3f %6.3f | \n", rotation (2,0), rotation (2,1), rotation (2,2));
-      printf ("\n");
-      printf ("        t = < %0.3f, %0.3f, %0.3f >\n", translation (0), translation (1), translation (2));
-      printf ("\n");
+      PrintTransformationMatrix(result.transformation);
     }
   }
  private:
+  void PrintTransformationMatrix(Eigen::Matrix4f& Mat) {
+    Eigen::Matrix3f rotation = Mat.block<3,3>(0, 0);
+    Eigen::Vector3f translation = Mat.block<3,1>(0, 3);
+
+    printf ("\n");
+    printf ("            | %6.3f %6.3f %6.3f | \n", rotation (0,0), rotation (0,1), rotation (0,2));
+    printf ("        R = | %6.3f %6.3f %6.3f | \n", rotation (1,0), rotation (1,1), rotation (1,2));
+    printf ("            | %6.3f %6.3f %6.3f | \n", rotation (2,0), rotation (2,1), rotation (2,2));
+    printf ("\n");
+    printf ("        t = < %0.3f, %0.3f, %0.3f >\n", translation (0), translation (1), translation (2));
+    printf ("\n");
+  }
   std::vector<CGResultEntry> results_;
 };
 
@@ -198,16 +219,31 @@ class FeatureCloud {
 
 using FeatureCloudPtr = std::shared_ptr<FeatureCloud>;
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 std::vector<Rectangle> generateBlocksInSpiralOrder(Eigen::Vector2f& min, Eigen::Vector2f& max, Eigen::Vector2f& step_xy);
 
 void calc(FeatureCloudPtr& scene, FeatureCloudPtr& model,
           const CorrespondenceGroupingConfig& config, CGResultsSet& results);
 
+=======
+=======
+std::vector<Rectangle> generateBlocksInSpiralOrder(Eigen::Vector2f& min, Eigen::Vector2f& max, Eigen::Vector2f& step_xy);
+
+>>>>>>> ed4b629... Next part of refactoring
+void calc(FeatureCloudPtr& scene, FeatureCloudPtr& model,
+          const CorrespondenceGroupingConfig& config, CGResultsSet& results);
+
+>>>>>>> bd57a90... Next part of refactoring about feature detection method
 void visualize(
     const CorrespondenceGroupingConfig& config,
     const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> >& rototranslations,
     const std::vector<pcl::Correspondences>& clustered_corrs,
     FeatureCloudPtr& scene, FeatureCloudPtr& model);
+=======
+
+namespace octomap_tools {
+>>>>>>> 5841953... Refactoring
 
 struct OctreeIntegrationConf
 {

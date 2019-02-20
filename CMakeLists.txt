@@ -3,7 +3,7 @@ project(octomap_tools)
 
 # Turn on tests with: cmake -Doption=ON
 option(BUILD_TESTS "Build and run unit tests. " ON)
-option(BUILD_BIN "Build binaries of tools." OFF)
+option(BUILD_BIN "Build binaries of tools." ON)
 option(BUILD_DEMOS "Build demos." ON)
 
 #set(CMAKE_BUILD_TYPE Release)

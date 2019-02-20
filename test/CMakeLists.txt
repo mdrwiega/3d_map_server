@@ -42,12 +42,14 @@ set(TESTED_SRC
     ${SRC_DIR}/pointcloud_transformations.cpp
     ${SRC_DIR}/octree_icp.cpp
     ${SRC_DIR}/kdtree/kdtree.c
+    ${SRC_DIR}/features_matching.cpp    
+    ${SRC_DIR}/features_matching_visualizer.cpp
 )
 
 file(GLOB TESTS_SRC
 	"main.cpp"
 #	"*.cpp"
-   "correspondence_grouping_test.cpp"
+   "features_matching_test.cpp"
 #	"octomap_integrator_test.cpp"
 )
 

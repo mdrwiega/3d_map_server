@@ -11,7 +11,6 @@
 #include <chrono>
 
 #include "test_utils.h"
-#include "octomap_integrator.h"
 #include "md_utils/math/transformations.h"
 #include "octree_transformations.h"
 #include <pcl/visualization/pcl_visualizer.h>
@@ -23,6 +22,7 @@
 
 #include <pcl/filters/crop_box.h>
 
+#include "features_matching.h"
 
 
 using namespace Eigen;
@@ -37,9 +37,95 @@ using namespace std::chrono;
 #define SAVE_CLOUDS_TO_FILES 0
 #define LOAD_CLOUDS_FROM_FILES 0
 
+std::string getCurrentDataAndTime() {
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
 
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+  return oss.str();
+}
 
-TEST(IntegrateOctomaps, GenerateSpiralTraverse)
+TEST(FeaturesMatching, SingleBlockMatching)
+{
+  PointCloudPtr orig_cloud (new PointCloud);
+  PointCloudPtr cropped_cloud (new PointCloud);
+  PointCloudPtr cloud_l (new PointCloud);
+  PointCloudPtr cloud_r (new PointCloud);
+
+  // PREPARE SCENE AND MODEL
+  auto orig_tree = unpackAndGetOctomap("fr_079");
+  *orig_cloud = octreeToPointCloud(*orig_tree);
+  printPointcloudInfo(*orig_cloud, "orig_cloud");
+
+  pcl::PointXYZ minPt, maxPt;
+  pcl::getMinMax3D (*orig_cloud, minPt, maxPt);
+
+  auto cloud_min = Vector4f(-10, -10, -0.5, 1.0);
+  auto cloud_max = Vector4f(7, 7, 2.0, 1.0);
+  pcl::CropBox<Point> boxFilter;
+  boxFilter.setMin(cloud_min);
+  boxFilter.setMax(cloud_max);
+  boxFilter.setInputCloud(orig_cloud);
+  boxFilter.filter(*cropped_cloud);
+  printPointcloudInfo(*cropped_cloud, "cropped_cloud");
+
+  float x_common = 5;
+  Vector4f center = (cloud_max + cloud_min) / 2;
+  Vector4f cloud_l_max = {center(0) + x_common / 2, cloud_max(1), cloud_max(2), 1};
+  Vector4f cloud_r_min = {center(0) - x_common / 2, cloud_min(1), cloud_min(2), 1};
+
+  auto T = md::createTransformationMatrix(8.5, 1.5, 0.1, ToRadians(3), ToRadians(2), ToRadians(25));
+
+  boxFilter.setMin(cloud_min);
+  boxFilter.setMax(cloud_l_max);
+  boxFilter.setInputCloud(cropped_cloud);
+  boxFilter.filter(*cloud_l);
+
+  boxFilter.setMin(cloud_r_min);
+  boxFilter.setMax(cloud_max);
+  boxFilter.setInputCloud(cropped_cloud);
+  PointCloudPtr cloud_r_tmp (new PointCloud);
+  boxFilter.filter(*cloud_r_tmp);
+  pcl::transformPointCloud(*cloud_r_tmp, *cloud_r, T);
+
+  FeatureMatching::Config config;
+  config.model_ss_ = 0.1;
+  config.scene_ss_ = 0.1;
+  config.rf_rad_ = 1.3;
+  config.descr_rad_ = 1.;
+  config.cg_size_ = 0.5;
+  config.cg_thresh_= 5.0;
+  config.model_size_thresh_ = 500;
+  config.keypoints_thresh_ = 300;
+  config.cell_size_x_ = 2.5;
+  config.cell_size_y_ = 2.5;
+  config.show_visualization_ = true;
+  config.show_keypoints_ = false;
+  config.icp.max_iter = 100;
+  config.icp.max_nn_dist = 0.4;
+  config.icp.fitness_eps = 0.05;
+  config.icp.transf_eps = 0.001;
+  config.icp.scene_inflation_dist = 1.0;
+  config.visualize_icp = false;
+  config.feature_cloud.normal_radius = 10.0;
+  config.feature_cloud.downsampling_radius = 0.1;
+  config.feature_cloud.descriptors_radius = 1.5;
+  config.files_path_and_pattern = getCurrentDataAndTime() + "_";
+  config.template_alignment.nr_iterations = 100;
+  config.template_alignment.min_sample_distance = 0.1;
+  config.template_alignment.max_correspondence_distance = 5.0;
+
+  auto model_min = Vector4f(2, -2, -0.5, 1.0);
+  auto model_max = Vector4f(6, 2, 2.0, 1.0);
+
+  FeatureMatching features_matcher(config);
+//  auto result = features_matcher.computeWithSingleModel(cloud_l, cloud_r, true, model_min, model_max);
+  auto result = features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+  result.PrintResult();
+}
+
+TEST(FeaturesMatching, GenerateSpiralTraverse)
 {
   Eigen::Vector2f rectangle_min (-4, -2);
   Eigen::Vector2f rectangle_max (2, 3);
@@ -52,50 +138,7 @@ TEST(IntegrateOctomaps, GenerateSpiralTraverse)
     std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
   }
 }
-
-CGResultsSet estimateTfsByCorrespondenceClustering(CorrespondenceGroupingConfig& config,
-                                                   PointCloudPtr& cloud_l, PointCloudPtr& cloud_r) {
-  // Divide right map into cells
-  Point cell_size(config.cell_size_x_, config.cell_size_y_, 0);
-  CGResultsSet results;
-  FeatureCloudPtr scene = FeatureCloudPtr (new FeatureCloud);
-  scene->setInputCloud(cloud_l);
-
-  Vector4f cloud_r2_min, cloud_r2_max;
-  pcl::getMinMax3D (*cloud_r, cloud_r2_min, cloud_r2_max);
-  Eigen::Vector2f rectangle_min (cloud_r2_min.x(), cloud_r2_min.y());
-  Eigen::Vector2f rectangle_max (cloud_r2_max.x(), cloud_r2_max.y());
-  Eigen::Vector2f step_xy (cell_size.x, cell_size.y);
-
-  std::cout << "Generation of cells for rectangle min: (" << rectangle_min(0) << ", " << rectangle_min(1) << ")  max: (" << rectangle_max(0) << ", " << rectangle_max(1) << ")\n";
-  auto cells_seq = generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
-
-  for (size_t i = 0; i < cells_seq.size(); ++i) {
-    auto cell = cells_seq[i];
-    std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
-    Vector4f model_min = {cell.min(0), cell.min(1), cloud_r2_min(2), 1};
-    Vector4f model_max = {cell.max(0), cell.max(1), cloud_r2_max(2), 1};
-
-    pcl::CropBox<Point> boxFilter;
-    boxFilter.setMin(model_min);
-    boxFilter.setMax(model_max);
-    boxFilter.setInputCloud(cloud_r);
-    PointCloudPtr cloud_model (new PointCloud);
-    boxFilter.filter(*cloud_model);
-
-    if (cloud_model->size() < config.model_size_thresh_) {
-      std::cout << "Model is too small (size= " << cloud_model->size() << "\n";
-      continue;
-    }
-
-    FeatureCloudPtr model = FeatureCloudPtr (new FeatureCloud);
-    model->setInputCloud(cloud_model);
-    calc(scene, model, config, results);
-  }
-  return results;
-}
-
-TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis)
+/*TEST(FeaturesMatching, MatchingWithSpiralTraverse)
 {
   PointCloudPtr orig_cloud (new PointCloud);
   PointCloudPtr cropped_cloud (new PointCloud);
@@ -140,24 +183,44 @@ TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis)
   boxFilter.filter(*cloud_r_tmp);
   pcl::transformPointCloud(*cloud_r_tmp, *cloud_r, T);
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ed4b629... Next part of refactoring
   CorrespondenceGroupingConfig config;
   config.use_hough_ = true;
-  config.model_ss_ = 0.3;
+  config.model_ss_ = 0.1;
   config.scene_ss_ = 0.1;
-  config.rf_rad_ = 1.5;
-  config.descr_rad_ = 1.5;
+  config.rf_rad_ = 1.3;
+  config.descr_rad_ = 1.;
   config.cg_size_ = 0.5;
   config.cg_thresh_= 5.0;
-  config.correspondences_thresh_ = 9;
+  config.correspondences_thresh_ = 10;
   config.model_size_thresh_ = 50;
-  config.cell_size_x_ = 2;
-  config.cell_size_y_ = 2;
+  config.cell_size_x_ = 3;
+  config.cell_size_y_ = 3;
 
   auto start = high_resolution_clock::now();
-  auto results = estimateTfsByCorrespondenceClustering(config, cloud_l, cloud_r);
+  auto results = estimateTfsByFeatureMatching(config, cloud_l, cloud_r);
   auto diff = duration_cast<milliseconds>(high_resolution_clock::now() - start);
-  std::cout << "Time [ms]: " << diff.count() << "\n";
   results.PrintResults();
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+  // Divide right map into cells
+  Point cell_size(5, 5, 0);
+  auto& cloud_r_max = cloud_max;
+  CGResultsSet results;
+  FeatureCloudPtr scene = FeatureCloudPtr (new FeatureCloud);
+  scene->setInputCloud(cloud_l);
+>>>>>>> bd57a90... Next part of refactoring about feature detection method
+=======
+>>>>>>> ed4b629... Next part of refactoring
+=======
+  std::cout << "\nBest result\n";
+  results.PrintBestTransformation();
+  std::cout << "Processing time [s]: " << diff.count() / 1000.0 << "\n";
+>>>>>>> 97f1049... Tests update. Working state
 
 #if SHOW_PCL == 1
   pcl::visualization::PCLVisualizer viewer ("3D Viewer");
@@ -170,11 +233,21 @@ TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis)
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color1(cloud_l, 0, 0, 255);
   viewer.addPointCloud<pcl::PointXYZ>(cloud_l, color1, "tree1");
   viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "tree1");
+<<<<<<< HEAD
 
+<<<<<<< HEAD
   // Visualize second octree as a point cloud --> RED
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color2(cloud_r, 255, 0, 0);
   viewer.addPointCloud<pcl::PointXYZ>(cloud_r, color2, "tree2");
   viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "tree2");
+=======
+    #if CALC_CORRESPONDENCE
+      CorrespondenceGroupingConfig config;
+      FeatureCloudPtr model = FeatureCloudPtr (new FeatureCloud);
+      model->setInputCloud(cloud_model);
+      calc(scene, model, config, results);
+    #endif
+>>>>>>> bd57a90... Next part of refactoring about feature detection method
 
   // Visualize common part octree as a point cloud
   pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color4(cloud_model, 0, 255, 0);
@@ -196,9 +269,37 @@ TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis)
     viewer.spinOnce(100);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+=======
+
+  // Visualize second octree as a point cloud --> RED
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color2(cloud_r, 255, 0, 0);
+  viewer.addPointCloud<pcl::PointXYZ>(cloud_r, color2, "tree2");
+  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "tree2");
+
+  // Visualize common part octree as a point cloud
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> color4(cloud_model, 0, 255, 0);
+  viewer.addPointCloud<pcl::PointXYZ>(cloud_model, color4, "tree_common");
+  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "tree_common");
+//  viewer.addCube(cell.min(0), cell.max(0), cell.min(1), cell.max(1), cloud_min(2), cloud_max(2), 0, 1, 0, "borders");
+  pcl::PointXYZ pmin2, pmax2;
+  pcl::getMinMax3D (*cloud_model, pmin2, pmax2);
+  viewer.addCube(pmin2.x, pmax2.x, pmin2.y, pmax2.y, pmin2.z, pmax2.z, 1, 1, 0, "tree2_borders");
+
+//  for (size_t i = 0; i < cells_seq.size(); ++i) {
+//    auto cell = cells_seq[i];
+//    viewer.addCube(cell.min(0), cell.max(0), cell.min(1), cell.max(1), cloud_min(2), cloud_max(2), 0, 1, 0, "borders" + std::to_string(i));
+//  }
+
+
+  while (!viewer.wasStopped())
+  {
+    viewer.spinOnce(100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+>>>>>>> ed4b629... Next part of refactoring
 #endif
 
-}
+}*/
 
 /*TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis_bac)
 {
@@ -545,7 +646,7 @@ TEST(IntegrateOctomaps, CorrespondenceGroupingPcl_Demo_PclVis)
 }*/
 
 
-TEST(IntegrateOctomaps, CutAndSavePointcloudsPcl_Demo_PclVis)
+/*TEST(FeaturesMatching, CutAndSavePointcloudsPcl_Demo_PclVis)
 {
   auto orig_tree = unpackAndGetOctomap("fr_079");
 
@@ -665,4 +766,4 @@ TEST(IntegrateOctomaps, CutAndSavePointcloudsPcl_Demo_PclVis)
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 #endif
-}
+}*/
