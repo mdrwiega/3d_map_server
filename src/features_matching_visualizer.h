@@ -33,8 +33,8 @@ namespace octomap_tools {
 class FeatureMatchingVisualizer {
  public:
   struct Config {
-    bool show_keypoints;
-    bool save_to_file;
+    bool show_keypoints{false};
+    bool save_to_file {false};
     std::string filename;
   };
 
@@ -46,6 +46,8 @@ class FeatureMatchingVisualizer {
       FeatureCloudPtr& scene, FeatureCloudPtr& model, PointCloudPtr& full_model, std::vector<Rectangle> blocks);
 
   void visualizeICP(PointCloudPtr& scene, PointCloudPtr& model, const Eigen::Matrix4f& transformation);
+
+  void visualizeClouds(PointCloudPtr& cloud1, PointCloudPtr& cloud2);
 
   Config cfg_;
 };

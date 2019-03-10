@@ -141,4 +141,8 @@ void FeatureMatchingVisualizer::visualizeICP(PointCloudPtr& scene, PointCloudPtr
   }
 }
 
+void FeatureMatchingVisualizer::visualizeClouds(PointCloudPtr& cloud1, PointCloudPtr& cloud2) {
+
+}
+
 }
