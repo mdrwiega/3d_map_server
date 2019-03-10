@@ -1,0 +1,6 @@
+<launch>
+  <node name="octomap_tools" pkg="octomap_tools" type="octomap_tools" >
+	</node>
+</launch>
+
+

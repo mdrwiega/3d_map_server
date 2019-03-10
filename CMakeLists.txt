@@ -1,97 +1,57 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8.11)
 project(octomap_tools)
 
-# Turn on tests with: cmake -Doption=ON
-option(BUILD_TESTS "Build and run unit tests. " ON)
-option(BUILD_BIN "Build binaries of tools." ON)
-option(BUILD_DEMOS "Build demos." ON)
+set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS} ")
+set(CMAKE_BUILD_TYPE Release)
+set(CATKIN_ENABLE_TESTING 1)
 
-#set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-std=c++14 -Wall ${CMAKE_CXX_FLAGS} -Wno-deprecated")
-
-set(SRC_DIR "src")
-set(TOOLS_DIR ${SRC_DIR}/tools)
-set(DEMOS_DIR ${SRC_DIR}/demos)
-
-#set(Boost_USE_STATIC_LIBS        ON)
-
-find_package(octomap 1.8.2 REQUIRED)
-find_package(PCL REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED )
-#find_package( Boost REQUIRED)
-
-# The library can be found on https://github.com/mdrwiega/md_utils
-find_library(mdUtils REQUIRED)
-
-include_directories(
-    ${SRC_DIR}
-    ${OCTOMAP_INCLUDE_DIRS}
-    ${PCL_INCLUDE_DIRS} 
-    ${Eigen3_INCLUDE_DIRS}
-#    ${Boost_INCLUDE_DIRS}
+set(CATKIN_PACKAGE_DEPENDENCIES
+  roscpp
+  cmake_modules
+  sensor_msgs
+  std_msgs
+  octomap_msgs
+  octomap_ros
+  pcl_ros
 )
 
-link_libraries(${OCTOMAP_LIBRARIES})
-link_libraries(${Eigen3_LIBRARIES})
-link_libraries(${PCL_LIBRARIES})
-link_libraries(${OpenCV_LIBS})
-#link_libraries(${Boost_LIBRARIES})
+find_package(catkin REQUIRED COMPONENTS ${CATKIN_PACKAGE_DEPENDENCIES})
+find_package(octomap REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED)
+add_definitions(-DOCTOMAP_NODEBUGOUT)
 
-if (BUILD_BIN)
-    add_executable(pointcloud2octree
-        ${TOOLS_DIR}/pointcloud2octree.cpp
-        ${SRC_DIR}/utils/octree_utils.cpp
-    )
-    add_executable(pointcloud_splitter
-        ${TOOLS_DIR}/pointcloud_splitter.cpp
-    )
-    add_executable(pointcloud_info
-        ${TOOLS_DIR}/pointcloud_info.cpp
-    )
-    add_executable(octree2pointcloud
-        ${TOOLS_DIR}/octree2pointcloud.cpp
-        ${SRC_DIR}/utils/octree_utils.cpp
-    )
-    add_executable(octree_splitter
-        ${TOOLS_DIR}/octree_splitter.cpp
-        ${SRC_DIR}/utils/octree_utils.cpp
-    )
-    add_executable(find_octrees_tf
-        ${TOOLS_DIR}/find_octrees_tf.cpp
-        ${SRC_DIR}/octomap_integrator.cpp
-        ${SRC_DIR}/utils/octree_utils.cpp
-        ${SRC_DIR}/octree_transformations.cpp
-        ${SRC_DIR}/pointcloud_transformations.cpp        
-        ${SRC_DIR}/octomap_merger.cpp
-        ${SRC_DIR}/octree_icp.cpp
-        ${SRC_DIR}/octree_nearest_neighbours.cpp
-        ${SRC_DIR}/kdtree/kdtree.c
-    )
-#    add_executable(octomap_merge
-#        ${TOOLS_DIR}/octomap_merge.cpp
-#        ${SRC_DIR}/octomap_merger.cpp
-#        ${SRC_DIR}/utils/octree_utils.cpp
-#        ${SRC_DIR}/octree_transformations.cpp
-#        ${SRC_DIR}/pointcloud_transformations.cpp
-#    )
+catkin_package(
+  INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
+  DEPENDS OCTOMAP EIGEN3 PCL
+)
 
-	set_target_properties(pointcloud2octree PROPERTIES LINKER_LANGUAGE CXX)
-#	set_target_properties(pointcloud_splitter PROPERTIES LINKER_LANGUAGE CXX)
-	set_target_properties(pointcloud_info PROPERTIES LINKER_LANGUAGE CXX)
-#	set_target_properties(octree2pointcloud PROPERTIES LINKER_LANGUAGE CXX)
-#	set_target_properties(octree_splitter PROPERTIES LINKER_LANGUAGE CXX)
-#	set_target_properties(find_octrees_tf PROPERTIES LINKER_LANGUAGE CXX)
-#	set_target_properties(octomap_merge PROPERTIES LINKER_LANGUAGE CXX)
+include_directories( 
+	include 
+	${catkin_INCLUDE_DIRS}
+	${OCTOMAP_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIRS}
+	${PCL_INCLUDE_DIRS}
+)
 
-endif()
+add_definitions(${EIGEN3_DEFINITIONS})
+add_definitions(${PCL_DEFINITIONS})
 
-if (BUILD_DEMOS) 
-    add_executable(correspondence_grouping
-        ${DEMOS_DIR}/correspondence_grouping.cpp
+add_library(${PROJECT_NAME} src/octomap_tools.cpp src/transformations.cpp src/utils.cpp)
+#add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARY_DIRS})
+
+add_executable(octomap_tools_node src/octomap_tools_node.cpp)
+target_link_libraries(octomap_tools_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES})
+
+if (CATKIN_ENABLE_TESTING)
+    set(TESTS_SRC 
+        test/main.cpp
+        test/transformations_test.cpp
     )
-endif()
 
-if (BUILD_TESTS)
-    add_subdirectory(test)
+    catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
+    target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 endif()
