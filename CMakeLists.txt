@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(octomap_tools)
 
-set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS} ")
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_BUILD_TYPE Release)
 set(CATKIN_ENABLE_TESTING 1)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
@@ -13,6 +14,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   octomap_msgs
   octomap_ros
   pcl_ros
+  pcl_conversions
 )
 
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_PACKAGE_DEPENDENCIES})
@@ -39,19 +41,26 @@ include_directories(
 add_definitions(${EIGEN3_DEFINITIONS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_library(${PROJECT_NAME} src/octomap_tools.cpp src/transformations.cpp src/utils.cpp)
+add_library(${PROJECT_NAME}
+	src/octomap_tools.cpp
+	src/transformations.cpp
+	src/utils.cpp
+	src/maps_integrator.cpp
+	src/maps_integrator_visualizer.cpp
+)
+
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(octomap_tools_node src/octomap_tools_node.cpp)
-target_link_libraries(octomap_tools_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES})
+target_link_libraries(octomap_tools_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
 if (CATKIN_ENABLE_TESTING)
     set(TESTS_SRC 
         test/main.cpp
-        test/transformations_test.cpp
+#        test/transformations_test.cpp
+        test/features_matching_test.cpp
     )
-
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
-    target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+    target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 endif()

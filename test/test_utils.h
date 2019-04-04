@@ -5,6 +5,8 @@
 #include <limits>
 #include <cmath>
 
+#include <ros/package.h>
+
 #include <Eigen/Dense>
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
@@ -55,6 +57,29 @@ void checkIfTransformedTreeBoundsAreCorrect(
   EXPECT_VECTOR3F_NEAR(min1t, min2, max_err);
   EXPECT_VECTOR3F_NEAR(max1t, max2, max_err);
 
+}
+
+inline bool isFileExist(const std::string& file_name) {
+    std::ifstream infile(file_name.c_str());
+    return infile.good();
+}
+
+inline std::unique_ptr<OcTree> unpackAndGetOctomap(
+    const std::string& map_name, const std::string ext = "ot") {
+  const std::string tmp_path = "tmp/";
+  const std::string ds_path = ros::package::getPath("octomap_tools") + "/datasets/";
+  const std::string map_path = tmp_path + map_name + "." + ext;
+
+  std::system(("rm -rf " + tmp_path).c_str());
+  std::system(("mkdir -p " + tmp_path).c_str());
+  std::string map_packed_path = ds_path + map_name + "." + ext + ".gz";
+  std::system(("gzip -cd " + map_packed_path + " > " + map_path).c_str());
+  std::cout << "Unpacked file: " << map_packed_path
+            << " to " << map_path << std::endl;
+
+  auto tree = readOctreeFromFile(map_path);
+  printOcTreeInfo(*tree, "Loaded tree");
+  return tree;
 }
 
 }

@@ -47,5 +47,7 @@ void extractIntersectingAndDownsamplePointClouds(
     float voxelSize, const Point& margin,
     PointCloud& cloud1reduced, PointCloud& cloud2reduced);
 
+OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2);
+
 
 }

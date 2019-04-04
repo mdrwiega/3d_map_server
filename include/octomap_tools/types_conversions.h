@@ -21,13 +21,11 @@ constexpr double kPi  = 3.14159265358979323846;
 using Point = pcl::PointXYZ;
 using PointCloud = pcl::PointCloud<Point>;
 
-inline Point ToPcl(const Eigen::Vector3f& v)
-{
+inline Point ToPcl(const Eigen::Vector3f& v) {
   return Point(v(0), v(1), v(2));
 }
 
-inline Point ToPcl(const octomap::point3d& p)
-{
+inline Point ToPcl(const octomap::point3d& p) {
   return Point(p.x(), p.y(), p.z());
 }
 
@@ -43,8 +41,7 @@ inline octomap::point3d ToOctomap(const Eigen::Vector3f& p) {
   return octomap::point3d(p[0], p[1], p[2]);
 }
 
-inline float ToRadians(float deg)
-{
+inline float ToRadians(float deg) {
   return deg * kPi / 180.0;
 }
 
@@ -95,22 +92,19 @@ inline octomap::OcTree PointCloudToOctree(
   return tree;
 }
 
-inline pcl::PointCloud<pcl::PointXYZ> octreeToPointCloud(
-    const octomap::OcTree& tree)
-    {
+inline pcl::PointCloud<pcl::PointXYZ> octreeToPointCloud(const octomap::OcTree& tree) {
   pcl::PointCloud<pcl::PointXYZ> cloud;
-  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i)
-  {
+  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
     if (tree.isNodeOccupied(*i))
       cloud.push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
   }
   return cloud;
-    }
+}
 
 inline PointCloud convertOctreeToPointcloud(octomap::OcTree& tree)
 {
   auto maxDepth = tree.getTreeDepth();
-//  LOG_INF() << "tree depth is " << maxDepth << std::endl;
+  //  LOG_INF() << "tree depth is " << maxDepth << std::endl;
 
   // Expansion of occupied nodes
   std::vector<octomap::OcTreeNode*> collapsedOccNodes;
@@ -127,7 +121,7 @@ inline PointCloud convertOctreeToPointcloud(octomap::OcTree& tree)
     {
       tree.expandNode(*it);
     }
-//    LOG_INF() << "expanded " << collapsedOccNodes.size() << " nodes" << std::endl;
+    //    LOG_INF() << "expanded " << collapsedOccNodes.size() << " nodes" << std::endl;
   } while(collapsedOccNodes.size() > 0);
 
   PointCloud cloud;
