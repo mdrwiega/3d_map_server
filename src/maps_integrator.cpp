@@ -15,57 +15,68 @@
 
 #include <octomap_tools/transformations.h>
 #include "../include/octomap_tools/maps_integrator.h"
+#include <octomap_tools/thread_pool.h>
 
 namespace octomap_tools {
 
+
+void threadFcn(int nr, PointCloudPtr& full_model, std::vector<Rectangle> rec, TemplateAlignment& template_align,
+               MapsIntegrator::Config& cfg) {
+  Point pmin, pmax;
+  pcl::getMinMax3D(*full_model, pmin, pmax);
+  Eigen::Vector4f model_min = {rec[nr].min(0), rec[nr].min(1), pmin.z, 1};
+   Eigen::Vector4f model_max = {rec[nr].max(0), rec[nr].max(1), pmax.z, 1};
+
+   pcl::CropBox<Point> boxFilter;
+   boxFilter.setInputCloud(full_model);
+   boxFilter.setMin(model_min);
+   boxFilter.setMax(model_max);
+   PointCloudPtr filtered_model (new PointCloud);
+   boxFilter.filter(*filtered_model);
+
+   if (filtered_model->size() < cfg.model_size_thresh_) {
+     std::cout << "Model is too small (size: " << filtered_model->size() << ")\n";
+     return;
+   }
+
+   auto model = std::make_shared<FeatureCloud>(filtered_model, cfg.feature_cloud);
+   model->downsampleAndExtractKeypoints();
+   if (model->getKeypoints()->size() < cfg.keypoints_thresh_) {
+     std::cout << "Not enought keypoints: " << model->getKeypoints()->size() << "\n";
+     return;
+   }
+   model->computeSurfaceNormals();
+   model->computeDescriptors();
+
+   auto res = template_align.addTemplateCloudAndAlign(*model);
+   std::cout << "Added template with " << model->getKeypoints()->size() << " keypoints\n";
+
+   //     if (res.fitness_score < cfg_.fitness_score_thresh) {
+   //       std::cout << "Fitness score: " << res.fitness_score << " is smaller than threshold: " << cfg_.fitness_score_thresh << "\n";
+   //       break;
+   //     }
+}
+
 TemplateAlignment::Result MapsIntegrator::initialAlignment(
-    const FeatureCloudPtr& scene, FeatureCloudPtr best_model) {
+    const FeatureCloudPtr& scene, PointCloud& best_model) {
   TemplateAlignment template_align_(cfg_.template_alignment);
   template_align_.setTargetCloud (*scene);
   divideFullModelIntoBlocks(cfg_.cell_size_x_, cfg_.cell_size_y_);
 
-  pcl::CropBox<Point> boxFilter;
-  boxFilter.setInputCloud(model_);
-  Point pmin, pmax;
-  pcl::getMinMax3D(*model_, pmin, pmax);
+  std::vector<Result, Eigen::aligned_allocator<Result>> results_;
 
-  // Add templates
-  int block_nr = 0;
-  for (auto& cell : spiral_blocks_) {
-    std::cout << "Block nr " << block_nr++ << " / " << spiral_blocks_.size() << "\n";
-    Eigen::Vector4f model_min = {cell.min(0), cell.min(1), pmin.z, 1};
-    Eigen::Vector4f model_max = {cell.max(0), cell.max(1), pmax.z, 1};
-
-    boxFilter.setMin(model_min);
-    boxFilter.setMax(model_max);
-    PointCloudPtr filtered_model (new PointCloud);
-    boxFilter.filter(*filtered_model);
-
-    if (filtered_model->size() < cfg_.model_size_thresh_) {
-      std::cout << "Model is too small (size: " << filtered_model->size() << ")\n";
-      continue;
-    }
-
-    auto model = std::make_shared<FeatureCloud>(filtered_model, cfg_.feature_cloud);
-    model->downsampleAndExtractKeypoints();
-    if (model->getKeypoints()->size() < cfg_.keypoints_thresh_) {
-      std::cout << "Not enought keypoints: " << model->getKeypoints()->size() << "\n";
-      continue;
-    }
-    model->computeSurfaceNormals();
-    model->computeDescriptors();
-
-    auto res = template_align_.addTemplateCloudAndAlign(*model);
-    std::cout << "Added template with " << model->getKeypoints()->size() << " keypoints\n";
-
-    if (res.fitness_score < cfg_.fitness_score_thresh) {
-      std::cout << "Fitness score: " << res.fitness_score << " is smaller than threshold: " << cfg_.fitness_score_thresh << "\n";
-      break;
-    }
+  std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool();
+  std::vector<std::future<void>> thread_futures;
+  for (std::uint32_t i = 0; i < spiral_blocks_.size(); ++i) {
+      thread_futures.emplace_back(thread_pool->submit(
+          threadFcn, i, std::ref(model_), std::ref(spiral_blocks_), std::ref(template_align_), std::ref(cfg_)));
   }
 
-  best_model = std::make_shared<FeatureCloud>();
-  *best_model = template_align_.getBestTemplate();
+  for (auto& it: thread_futures) {
+      it.wait();
+  }
+
+  best_model = template_align_.getBestTemplate();
   return template_align_.findBestAlignment();
 }
 
@@ -75,26 +86,25 @@ MapsIntegrator::Result MapsIntegrator::compute() {
   auto scene = std::make_shared<FeatureCloud>(scene_, cfg_.feature_cloud);
   scene->processInput();
 
-  FeatureCloudPtr best_model;
-  TemplateAlignment::Result init_alignment = initialAlignment(scene, best_model);
+  PointCloud best_model_pointcloud;
+  TemplateAlignment::Result init_alignment = initialAlignment(scene, best_model_pointcloud);
 
   std::cout << "Best fitness score: " << init_alignment.fitness_score << "\n";
-
+  std::cout << "Final transformation: " << init_alignment.final_transformation << "\n";
   if (cfg_.icp_correction) {
       PointCloud::Ptr icp_model(new PointCloud);
-      pcl::transformPointCloud(*best_model->getPointCloud(), *icp_model, init_alignment.final_transformation);
+      pcl::transformPointCloud(best_model_pointcloud, *icp_model, init_alignment.final_transformation);
+      std::cout << "Point 3\n";
       ICP icp(scene->getPointCloud(), icp_model, cfg_.icp);
       ICP::Result icp_result = icp.cropAndAlign();
-
       if (icp_result.fitness_score < init_alignment.fitness_score) {
         init_alignment.fitness_score = icp_result.fitness_score;
         init_alignment.final_transformation = init_alignment.final_transformation * icp_result.transformation;
       }
   }
-
   // Create result
   Point pmin, pmax;
-  pcl::getMinMax3D(*(best_model->getPointCloud()), pmin, pmax);
+  pcl::getMinMax3D(best_model_pointcloud, pmin, pmax);
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
   result_ = Result(diff.count(), init_alignment.fitness_score, pmin, pmax, init_alignment.final_transformation);
@@ -112,8 +122,13 @@ MapsIntegrator::Result MapsIntegrator::compute() {
   if (cfg_.show_visualization_) {
     MapsIntegratorVisualizer::Config visualizar_cfg { false, true, cfg_.files_path_and_pattern + "matching.png" };
     MapsIntegratorVisualizer visualizer(visualizar_cfg);
+    PointCloud::Ptr best_model_ptr(new PointCloud);
+    *best_model_ptr = best_model_pointcloud;
+    FeatureCloudPtr best_model = std::make_shared<FeatureCloud>();
+    best_model->setInputCloud(best_model_ptr);
     visualizer.visualize(init_alignment.final_transformation, scene, best_model, model_, spiral_blocks_);
   }
+  std::cout << "POINT 3\n";
   if (cfg_.show_two_pointclouds) {
     PointCloudPtr transformed_model (new PointCloud);
     pcl::transformPointCloud(*model_, *transformed_model, init_alignment.final_transformation);
@@ -124,6 +139,7 @@ MapsIntegrator::Result MapsIntegrator::compute() {
   if (cfg_.show_integrated_octomaps) {
 
   }
+  std::cout << "POINT 4\n";
 
   return result_;
 }

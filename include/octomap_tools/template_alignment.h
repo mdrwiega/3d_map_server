@@ -41,17 +41,12 @@ class TemplateAlignment {
 
   TemplateAlignment(Config config) :
     cfg_(config) {
-    sac_ia_.setMinSampleDistance(cfg_.min_sample_distance);
-    sac_ia_.setMaxCorrespondenceDistance(cfg_.max_correspondence_distance);
-    sac_ia_.setMaximumIterations(cfg_.nr_iterations);
   }
 
   ~TemplateAlignment() = default;
 
   void setTargetCloud (FeatureCloud &target_cloud) {
     target_ = target_cloud;
-    sac_ia_.setInputTarget (target_cloud.getKeypoints());
-    sac_ia_.setTargetFeatures (target_cloud.getDescriptors());
   }
 
   void addTemplateCloud(FeatureCloud &template_cloud) {
@@ -70,7 +65,7 @@ class TemplateAlignment {
     return FeatureCloud();
   }
 
-  FeatureCloud getBestTemplate() {
+  PointCloud getBestTemplate() {
     float lowest_score = std::numeric_limits<float>::infinity();
     int best_template = 0;
     for (size_t i = 0; i < results_.size (); ++i) {
@@ -80,21 +75,28 @@ class TemplateAlignment {
         best_template = static_cast<int>(i);
       }
     }
-    return templates_[best_template];
+    if (best_template < templates_.size())
+      return *templates_[best_template].getPointCloud();
+    throw std::runtime_error("No best template");
   }
 
-  TemplateAlignment::Result align(FeatureCloud &template_cloud)
-  {
+  TemplateAlignment::Result align(FeatureCloud &template_cloud) {
     auto start = std::chrono::high_resolution_clock::now();
+    pcl::SampleConsensusInitialAlignment<Point, Point, DescriptorType> sac_ia_;
+    sac_ia_.setMinSampleDistance(cfg_.min_sample_distance);
+    sac_ia_.setMaxCorrespondenceDistance(cfg_.max_correspondence_distance);
+    sac_ia_.setMaximumIterations(cfg_.nr_iterations);
 
     Point pmin, pmax;
     pcl::getMinMax3D(*template_cloud.getPointCloud(), pmin, pmax);
     std::cout << "Start aligning template with " << template_cloud.getKeypoints()->size() << " keypoints\n";
-    std::cout << "Model MIN: (" << pmin.x << ", " << pmin.y << ", " << pmin.z << ")  ";
-    std::cout << "MAX: (" << pmax.x << ", " << pmax.y << ", " << pmax.z << ")\n";
+    std::cout << "Template Pmin: (" << pmin.x << ", " << pmin.y << ", " << pmin.z << ")  ";
+    std::cout << "Pmax: (" << pmax.x << ", " << pmax.y << ", " << pmax.z << ")\n";
 
     sac_ia_.setInputSource(template_cloud.getKeypoints ());
     sac_ia_.setSourceFeatures (template_cloud.getDescriptors ());
+    sac_ia_.setInputTarget (target_.getKeypoints());
+    sac_ia_.setTargetFeatures (target_.getDescriptors());
 
     pcl::PointCloud<pcl::PointXYZ> registration_output;
     sac_ia_.align (registration_output);
@@ -124,6 +126,10 @@ class TemplateAlignment {
     return results_;
   }
 
+  std::vector<FeatureCloud>& getTemplates() {
+    return templates_;
+  }
+
   TemplateAlignment::Result findBestAlignment() {
     float lowest_score = std::numeric_limits<float>::infinity();
     int best_template = 0;
@@ -134,7 +140,9 @@ class TemplateAlignment {
         best_template = static_cast<int>(i);
       }
     }
-    return results_[best_template];
+    if (best_template < templates_.size())
+      return results_[best_template];
+    throw std::runtime_error("No best alignment");
   }
 
 
@@ -143,7 +151,6 @@ class TemplateAlignment {
   std::vector<FeatureCloud> templates_;
   FeatureCloud target_;
 
-  pcl::SampleConsensusInitialAlignment<Point, Point, DescriptorType> sac_ia_;
   Config cfg_;
   std::vector<Result, Eigen::aligned_allocator<Result>> results_;
 };

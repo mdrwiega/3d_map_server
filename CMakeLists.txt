@@ -47,6 +47,7 @@ add_library(${PROJECT_NAME}
 	src/utils.cpp
 	src/maps_integrator.cpp
 	src/maps_integrator_visualizer.cpp
+	src/thread_pool.cpp
 )
 
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)

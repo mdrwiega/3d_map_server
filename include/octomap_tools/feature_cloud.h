@@ -7,6 +7,7 @@
 #pragma once
 
 #include <chrono>
+#include <exception>
 
 #include <Eigen/Dense>
 #include <pcl/filters/uniform_sampling.h>
@@ -59,7 +60,7 @@ class FeatureCloud {
   }
 
   PointCloud::Ptr getPointCloud() const {
-    return (cloud_);
+    return cloud_;
   }
 
   SurfaceNormals::Ptr getSurfaceNormals() const {

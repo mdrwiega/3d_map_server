@@ -83,7 +83,7 @@ class MapsIntegrator {
   }
 
   TemplateAlignment::Result initialAlignment(const FeatureCloudPtr& scene,
-                                             FeatureCloudPtr best_model);
+                                             PointCloud& best_model);
 
   Result compute();
 
