@@ -82,38 +82,35 @@ class FeatureCloud {
   }
 
   void computeSurfaceNormals() {
-    auto start = std::chrono::high_resolution_clock::now();
-
+//    auto start = std::chrono::high_resolution_clock::now();
     normals_ = SurfaceNormals::Ptr(new SurfaceNormals);
     pcl::NormalEstimationOMP<Point, NormalType> norm_est;
     norm_est.setKSearch (cfg_.normal_radius);
     norm_est.setInputCloud (cloud_);
     norm_est.compute (*normals_);
 
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Surface normals computed in: " << diff.count() << " ms." << std::endl;
+//    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+//        std::chrono::high_resolution_clock::now() - start);
+//    std::cout << "Surface normals computed in: " << diff.count() << " ms." << std::endl;
   }
 
   void downsampleAndExtractKeypoints() {
-    auto start = std::chrono::high_resolution_clock::now();
-
+//    auto start = std::chrono::high_resolution_clock::now();
     pcl::UniformSampling<Point> uniform_sampling;
     uniform_sampling.setInputCloud (cloud_);
     uniform_sampling.setRadiusSearch (cfg_.downsampling_radius);
     keypoints_ = PointCloud::Ptr(new PointCloud());
     uniform_sampling.filter(*keypoints_);
 
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "From cloud (size: " << cloud_->size() << ") extracted "
-        << keypoints_->size () << " keypoints in: "
-        << diff.count() << " ms." << std::endl;
+//    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+//        std::chrono::high_resolution_clock::now() - start);
+//    std::cout << "From cloud (size: " << cloud_->size() << ") extracted "
+//        << keypoints_->size () << " keypoints in: "
+//        << diff.count() << " ms." << std::endl;
   }
 
   void computeDescriptors() {
-    auto start = std::chrono::high_resolution_clock::now();
-
+//    auto start = std::chrono::high_resolution_clock::now();
     descriptors_ = Descriptors::Ptr(new Descriptors);
     pcl::SHOTEstimationOMP<Point, NormalType, DescriptorType> descr_est;
     //    pcl::FPFHEstimation<Point, NormalType, DescriptorType> descr_est;
@@ -123,9 +120,9 @@ class FeatureCloud {
     descr_est.setSearchSurface (cloud_);
     descr_est.compute (*descriptors_);
 
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Descriptors computed in: " << diff.count() << " ms." << std::endl;
+//    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+//        std::chrono::high_resolution_clock::now() - start);
+//    std::cout << "Descriptors computed in: " << diff.count() << " ms." << std::endl;
   }
 
  private:

@@ -106,30 +106,33 @@ class MapsIntegratorTest : public ::testing::Test
 
   void configure() {
     // Feature matching config_uration
-    config_.model_size_thresh_ = 400;
-    config_.keypoints_thresh_ = 150;
-    config_.cell_size_x_ = 3;
-    config_.cell_size_y_ = 3;
     config_.fitness_score_thresh = 0.002;
     config_.show_visualization_ = false;
     config_.show_keypoints_ = false;
     config_.integrate_octomaps = false;
     config_.show_integrated_octomaps = false;
     config_.show_two_pointclouds = false;
-    config_.icp.max_iter = 100;
+    config_.icp.max_iter = 500;
     config_.icp.max_nn_dist = 0.5;
+    config_.icp.fitness_score_dist = 0.5;
     config_.icp.fitness_eps = 0.0005;
     config_.icp.transf_eps = 0.0001;
-    config_.icp.scene_inflation_dist = 1.5;
+    config_.icp.scene_inflation_dist = 2.5;
     config_.icp.visualize = false;
     config_.icp.files_path_and_pattern = date_and_time_ + "_";
-    config_.feature_cloud.normal_radius = 15.0;
-    config_.feature_cloud.downsampling_radius = 0.1;
-    config_.feature_cloud.descriptors_radius = 1.5;
     config_.files_path_and_pattern = date_and_time_ + "_";
-    config_.template_alignment.nr_iterations = 500;
-    config_.template_alignment.min_sample_distance = 0.15;
-    config_.template_alignment.max_correspondence_distance = 5.0;
+
+    config_.template_alignment.nr_iterations = 1000;
+    config_.template_alignment.min_sample_distance = 0.2;
+    config_.template_alignment.max_correspondence_distance = 100.0;
+    config_.template_alignment.fitness_score_dist = 0.5;
+    config_.template_alignment.feature_cloud.normal_radius = 15.0;
+    config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
+    config_.template_alignment.feature_cloud.descriptors_radius = 1.5;
+    config_.template_alignment.cell_size_x = 3;
+    config_.template_alignment.cell_size_y = 3;
+    config_.template_alignment.model_size_thresh_ = 400;
+    config_.template_alignment.keypoints_thresh_ = 150;
   }
 
   PointCloudPtr orig_cloud;
@@ -142,20 +145,6 @@ class MapsIntegratorTest : public ::testing::Test
   Eigen::Matrix4f result_transf_;
   float x_common_;
 };
-
-/* TEST_F(MapsIntegratorTest, Test_Pwr)
-{
-  std::string octomap_name = "pwr_lab509_map2";
-  transformation_ = md::createTransformationMatrix(10.5, 5.5, 0.3, ToRadians(5), ToRadians(5), ToRadians(65));
-  x_common_ = 4;
-  PrepareSceneAndModelWithXDivision(octomap_name);
-
-  config_.show_visualization_ = true;
-  config_.show_two_pointclouds = true;
-
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
-  features_matcher.compute();
-} */
 
 TEST_F(MapsIntegratorTest, Test_fr)
 {
@@ -170,12 +159,81 @@ TEST_F(MapsIntegratorTest, Test_fr)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
-  try {
-    auto res = features_matcher.compute();
-    result_transf_ = res.transformation;
-  } catch(std::exception &e) {
-    std::cout << "Exception: " << e.what() << "\n";
-  }
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+}
+
+TEST_F(MapsIntegratorTest, Test_fr_campus)
+{
+  std::string octomap_name = "fr_campus";
+  auto cloud_min = Vector4f(-10, -10, 1.0, 1.0);
+  auto cloud_max = Vector4f(40, 10, 10.0, 1.0);
+  transformation_ = md::createTransformationMatrix(10, 5, 0.3, ToRadians(5), ToRadians(5), ToRadians(10));
+  x_common_ = 8;
+  PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+ }
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m1)
+{
+  std::string octomap_name = "pwr_d20_f5_m1";
+  transformation_ = md::createTransformationMatrix(10.5, 5.5, 0.3, ToRadians(5), ToRadians(5), ToRadians(65));
+  x_common_ = 4;
+  PrepareSceneAndModelWithXDivision(octomap_name);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  features_matcher.compute();
+}
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
+{
+  std::string octomap_name = "pwr_d20_f5_m3";
+  transformation_ = md::createTransformationMatrix(10.5, 5.5, 0.3, ToRadians(5), ToRadians(5), ToRadians(65));
+  x_common_ = 4;
+  PrepareSceneAndModelWithXDivision(octomap_name);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  features_matcher.compute();
+}
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
+{
+  std::string octomap_name = "pwr_d20_f5_m4";
+  transformation_ = md::createTransformationMatrix(16, 6, 0.3, ToRadians(5), ToRadians(5), ToRadians(90));
+  x_common_ = 3;
+  PrepareSceneAndModelWithXDivision(octomap_name);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  features_matcher.compute();
+}
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
+{
+  std::string octomap_name = "pwr_d20_f5_m4";
+  transformation_ = md::createTransformationMatrix(20, 6, 0.3, ToRadians(5), ToRadians(5), ToRadians(15));
+  x_common_ = 5;
+  PrepareSceneAndModelWithXDivision(octomap_name);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  features_matcher.compute();
 }
 
 /*TEST_F(MapsIntegratorTest, Test_multi_fr)
@@ -269,7 +327,6 @@ TEST_F(MapsIntegratorTest, Test_fr)
 //      }
 //    }
 //  }
-
 }*/
 
 TEST(FeaturesMatching, GenerateSpiralTraverse)

@@ -15,14 +15,12 @@
 #include <octomap/octomap.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
-#include <pcl/registration/ia_ransac.h>
 
 #include <octomap_tools/feature_cloud.h>
-#include <octomap_tools/spiral_generator.h>
-#include <octomap_tools/template_alignment.h>
 #include <octomap_tools/utils.h>
 #include <octomap_tools/icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
+#include "features_matching.h"
 
 namespace octomap_tools {
 
@@ -42,16 +40,11 @@ class MapsIntegrator {
     bool show_integrated_octomaps {false};
     bool show_two_pointclouds{false};
 
-    unsigned model_size_thresh_{50};
-    unsigned keypoints_thresh_{10};
-    float cell_size_x_{2};
-    float cell_size_y_{2};
     float fitness_score_thresh{0.0001};
     bool icp_correction{true};
     std::string files_path_and_pattern;
     ICP::Config icp;
-    FeatureCloud::Config feature_cloud;
-    TemplateAlignment::Config template_alignment;
+    FeaturesMatching::Config template_alignment;
 
     std::string toString();
     std::string toTable();
@@ -82,12 +75,7 @@ class MapsIntegrator {
     cfg_(config) {
   }
 
-  TemplateAlignment::Result initialAlignment(const FeatureCloudPtr& scene,
-                                             PointCloud& best_model);
-
   Result compute();
-
-  void divideFullModelIntoBlocks(float block_size_x, float block_size_y);
 
   OcTreePtr integrateOctrees(const Eigen::Matrix4f& transformation);
 

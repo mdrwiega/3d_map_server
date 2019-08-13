@@ -48,6 +48,7 @@ add_library(${PROJECT_NAME}
 	src/maps_integrator.cpp
 	src/maps_integrator_visualizer.cpp
 	src/thread_pool.cpp
+	src/features_matching.cpp
 )
 
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
@@ -55,6 +56,32 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} $
 
 add_executable(octomap_tools_node src/octomap_tools_node.cpp)
 target_link_libraries(octomap_tools_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
+# Additional tools
+add_executable(octomap_box_filter
+	src/tools/octomap_box_filter.cpp
+	src/utils.cpp
+)
+target_link_libraries(octomap_box_filter ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(octomap_statistical_filter
+	src/tools/octomap_statistical_filter.cpp
+	src/utils.cpp
+)
+target_link_libraries(octomap_statistical_filter ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(octomap_info
+	src/tools/octomap_info.cpp
+	src/utils.cpp
+)
+target_link_libraries(octomap_info ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(radius_outlier_removal
+	src/tools/radius_outlier_removal.cpp
+	src/utils.cpp
+)
+target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
 
 if (CATKIN_ENABLE_TESTING)
     set(TESTS_SRC 

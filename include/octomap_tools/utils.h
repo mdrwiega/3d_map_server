@@ -34,7 +34,7 @@ void writeOcTreeToFile(const OcTree& tree, const std::string& fileName);
 
 
 void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
-                                   const std::string& fileName);
+                                   const std::string& fileName, float resolution = 0.05);
 
 PointCloud createUniformPointCloud(Point min, Point max, Point step);
 

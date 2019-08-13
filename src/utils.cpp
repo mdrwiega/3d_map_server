@@ -22,14 +22,14 @@ void writeOcTreeToFile(const OcTree& tree, const std::string& fileName)
 }
 
 void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
-                                   const std::string& fileName)
+                                   const std::string& fileName, float resolution)
 {
   octomap::Pointcloud scan;
 
   for (const auto& i : cloud->points)
     scan.push_back(i.x, i.y, i.z);
 
-  std::unique_ptr<octomap::OcTree> tree(new octomap::OcTree(0.1));
+  std::unique_ptr<octomap::OcTree> tree(new octomap::OcTree(resolution));
 
   octomap::point3d sensorPose{0,0,0};
   tree->insertPointCloud(scan, sensorPose);
