@@ -3,7 +3,7 @@
  * All rights reserved.
  *****************************************************************************/
 
-#include "utils/octree_utils.h"
+#include <octomap_tools/utils.h>
 
 #include <gtest/gtest.h>
 

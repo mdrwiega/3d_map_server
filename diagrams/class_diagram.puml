@@ -1,0 +1,47 @@
+@startuml
+
+class FeatureCloud {
+  FeatureCloud(cloud, config)
+  processInput()
+  computeSufraceNormals()
+  downsampleAndExtractKeypoints()
+  computeDescriptors()
+}
+
+class FeaturesMatching {
+  FeaturesMatching(config, scene, model)
+  initialAlignment()
+  divideFullModelIntoBlocks()
+  findBestAlignment()
+}
+
+class IcpMatching {
+  cropSceneToInflatedModel()
+  align()
+}
+
+class OctomapsIntegrator {
+  MapsIntegrator(scene, model, config)
+  compute()
+  integrateOctrees()
+  DumpConfigAndResultsToFile()
+}
+
+class 3DMapsIntegratorVisualizer {
+	visualize()
+	visualizeICP()
+	visualizeClouds()
+}
+
+class OctomapsIntegratorRos {
+GetConfigurationFromRosParams()
+IntegrateMaps()
+}
+
+FeaturesMatching o-- FeatureCloud
+OctomapsIntegrator o-- FeaturesMatching
+OctomapsIntegrator o-- IcpMatching
+OctomapsIntegrator o-- 3DMapsIntegratorVisualizer
+OctomapsIntegratorRos *-- OctomapsIntegrator
+
+@enduml

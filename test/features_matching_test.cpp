@@ -68,7 +68,7 @@ class MapsIntegratorTest : public ::testing::Test
       std::string octomap_packed_file,
       Vector4f octomap_min = Vector4f{0,0,0,0}, Vector4f octomap_max = Vector4f{0,0,0,0}) {
     auto orig_tree = unpackAndGetOctomap(octomap_packed_file);
-    *orig_cloud = octreeToPointCloud(*orig_tree);
+    *orig_cloud = OctreeToPointCloud(*orig_tree);
     printPointcloudInfo(*orig_cloud, "orig_cloud");
 
     if (octomap_min != Vector4f{0,0,0,0} && octomap_max != Vector4f{0,0,0,0}) {
@@ -212,7 +212,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
 {
   std::string octomap_name = "pwr_d20_f5_m4";
   transformation_ = md::createTransformationMatrix(16, 6, 0.3, ToRadians(5), ToRadians(5), ToRadians(90));
-  x_common_ = 3;
+  x_common_ = 4;
   PrepareSceneAndModelWithXDivision(octomap_name);
 
   config_.show_visualization_ = true;

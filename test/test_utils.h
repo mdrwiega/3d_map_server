@@ -6,8 +6,15 @@
 #include <cmath>
 
 #include <ros/package.h>
-
+#include <gtest/gtest.h>
 #include <Eigen/Dense>
+
+#include <octomap_tools/utils.h>
+#include <octomap_tools/transformations.h>
+
+using namespace Eigen;
+using namespace octomap;
+using Vector3f = Eigen::Vector3f;
 
 #define EXPECT_POINT3D_EQ(n1, n2) \
     EXPECT_NEAR(n1.x(), n2.x(), 1e-5); \
@@ -38,7 +45,7 @@ bool near_abs(T x, T y, T abs_error) {
     return std::abs(x-y) <= abs_error;
 }
 
-void checkIfTransformedTreeBoundsAreCorrect(
+inline void checkIfTransformedTreeBoundsAreCorrect(
     const OcTree& tree, const OcTree& transf_tree, const Eigen::Matrix4f& transf) {
   Vector3f min1, max1;
   getMinMaxOctree(tree, min1, max1);
@@ -77,7 +84,7 @@ inline std::unique_ptr<OcTree> unpackAndGetOctomap(
   std::cout << "Unpacked file: " << map_packed_path
             << " to " << map_path << std::endl;
 
-  auto tree = readOctreeFromFile(map_path);
+  auto tree = loadOctreeFromFile(map_path);
   printOcTreeInfo(*tree, "Loaded tree");
   return tree;
 }

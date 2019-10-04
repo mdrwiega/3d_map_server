@@ -59,8 +59,8 @@ int main(int argc, char** argv)
   PointCloudPtr cropped_cloud(new PointCloud);
   Vector4f octomap_min = Vector4f{x_min, y_min, z_min, 0};
   Vector4f octomap_max = Vector4f{x_max, y_max, z_max, 0};
-  auto tree = readOctreeFromFile(inFilename);
-  *orig_cloud = octreeToPointCloud(*tree);
+  auto tree = loadOctreeFromFile(inFilename);
+  *orig_cloud = OctreeToPointCloud(*tree);
 
   printOcTreeInfo(*tree, "Loaded tree");
   std::cout << pointcloudInfoToString(*orig_cloud, "orig cloud");

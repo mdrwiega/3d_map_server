@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   }
 
   const std::string inFilename = argv[1];
-  auto tree = readOctreeFromFile(inFilename);
+  auto tree = loadOctreeFromFile(inFilename);
   printOcTreeInfo(*tree, "Octomap info");
   return 0;
 }

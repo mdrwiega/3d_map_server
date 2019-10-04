@@ -30,7 +30,7 @@ using OcTreePtr = std::unique_ptr<octomap::OcTree>;
 using OcTreeNode = octomap::OcTreeNode;
 using OcTreeKey = octomap::OcTreeKey;
 
-void writeOcTreeToFile(const OcTree& tree, const std::string& fileName);
+void saveOcTreeToFile(const OcTree& tree, const std::string& fileName);
 
 
 void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
@@ -38,15 +38,12 @@ void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
 
 PointCloud createUniformPointCloud(Point min, Point max, Point step);
 
-std::unique_ptr<OcTree> readOctreeFromFile(const std::string fileName);
+std::unique_ptr<OcTree> loadOctreeFromFile(const std::string& fileName);
 
 int getNodeDepth(const OcTree& tree, const octomap::point3d& point,
                  const OcTreeNode& node);
 
 int getLeafDepth(const OcTree& tree, const OcTreeNode& node);
-
-void printOcTreeInfo(const OcTree& tree, std::string name);
-
 
 inline void printOcTreeInfo(const OcTree& tree, std::string name) {
   double xMin, xMax, yMin, yMax, zMin, zMax;
@@ -197,6 +194,25 @@ inline PointCloud createCrossShapePointCloud(
 
   return cloud1 + cloud2;
 
+}
+
+inline void expandOccupiedRecursive(octomap::OcTree& tree, octomap::OcTreeNode* node, unsigned depth) {
+  if (depth >= tree.getTreeDepth())
+    return;
+
+  if (!tree.isNodeOccupied(node))
+    return;
+
+  // current node has no children => can be expanded
+  if (!tree.nodeHasChildren(node)){
+    tree.expandNode(node);
+  }
+  // recursively expand children
+  for (unsigned int i=0; i<8; i++) {
+    if (tree.nodeChildExists(node, i)) { // TODO double check (node != NULL)
+      expandOccupiedRecursive(tree, tree.getNodeChild(node, i), depth+1);
+    }
+  }
 }
 
 }

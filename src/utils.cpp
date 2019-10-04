@@ -1,7 +1,7 @@
 /******************************************************************************
  * Software License Agreement (BSD License)
  *
- * Copyright (c) 2017, Michal Drwiega (drwiega.michal@gmail.com)
+ * Copyright (c) 2017-2019, Michal Drwiega (drwiega.michal@gmail.com)
  * All rights reserved.
  *****************************************************************************/
 
@@ -11,12 +11,12 @@
 
 namespace octomap_tools {
 
-void writeOcTreeToFile(const OcTree& tree, const std::string& fileName)
+void saveOcTreeToFile(const OcTree& tree, const std::string& fileName)
 {
-//  LOG_INF() << "Writing OcTree file: " << fileName << std::endl;
+  std::cout  << "Saving Octree to file: " << fileName << std::endl;
   if (!tree.write(fileName))
   {
-//    LOG_ERR() << "Error writing to " << fileName << std::endl;
+    std::cerr << "Error during saving to file: " << fileName << std::endl;
     throw std::runtime_error("Error writing to " + fileName);
   }
 }
@@ -34,11 +34,11 @@ void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
   octomap::point3d sensorPose{0,0,0};
   tree->insertPointCloud(scan, sensorPose);
 
-//  LOG_INF() << "Pruning octree\n\n";
+  //  LOG_INF() << "Pruning octree\n\n";
   tree->updateInnerOccupancy();
   tree->prune();
 
-  writeOcTreeToFile(*tree, fileName);
+  saveOcTreeToFile(*tree, fileName);
 }
 
 PointCloud createUniformPointCloud(Point min, Point max, Point step)
@@ -56,15 +56,11 @@ PointCloud createUniformPointCloud(Point min, Point max, Point step)
   return cloud;
 }
 
-std::unique_ptr<OcTree> readOctreeFromFile(const std::string fileName)
-    {
-//  LOG_INF() << "\nReading OcTree file: " << fileName
-//            << "\n===========================\n";
+std::unique_ptr<OcTree> loadOctreeFromFile(const std::string& fileName) {
+  std::cout << "\nReading OcTree file: " << fileName << std::endl;
   std::ifstream file(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
-
-  if (!file.is_open())
-  {
-//    LOG_ERR() << "Filestream to "<< fileName << " not open, nothing read.";
+  if (!file.is_open()) {
+    std::cerr << "Filestream to "<< fileName << " not open, nothing read.";
     return nullptr;
   }
 
@@ -72,31 +68,26 @@ std::unique_ptr<OcTree> readOctreeFromFile(const std::string fileName)
   std::unique_ptr<octomap::OcTree> tree;
 
   // Reading new format of octree (.ot)
-  if (fileName.length() > 3 && (fileName.compare(fileName.length()-3, 3, ".ot") == 0))
-  {
+  if (fileName.length() > 3 && (fileName.compare(fileName.length()-3, 3, ".ot") == 0)) {
     tree.reset(dynamic_cast<octomap::OcTree*>(octomap::AbstractOcTree::read(file)));
-    if (!tree)
-    {
-//      LOG_ERR() << "Error reading from file " << fileName << std::endl;
+    if (!tree) {
+      std::cerr << "Error reading from file " << fileName << std::endl;
       file.clear();
       file.seekg(streampos);
       return nullptr;
     }
-  }
-  else // Reading old format of octree (.bt)
-  {
+  } else { // Reading old format of octree (.bt)
     std::unique_ptr<octomap::OcTree> bTree (new octomap::OcTree(0.1));
 
-    if (bTree->readBinary(file) && bTree->size() > 1)
+    if (bTree->readBinary(file) && bTree->size() > 1) {
       tree.reset(bTree.release());
-    else
-    {
-//      LOG_ERR() << "Could not detect binary OcTree format in file.";
+    } else {
+      std::cerr << "Could not detect binary OcTree format in file.";
       return nullptr;
     }
   }
   return tree;
-    }
+}
 
 int getNodeDepth(const OcTree& tree, const octomap::point3d& point,
                  const OcTreeNode& node)
@@ -138,12 +129,9 @@ void filterOutPointsNotInRange(const PointCloud& cloudIn,
   }
 }
 
-void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree)
-{
-  for (unsigned k = 0; k < 8; k++)
-  {
-    if (!node->childExists(k))
-    {
+void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree) {
+  for (unsigned k = 0; k < 8; k++) {
+    if (!node->childExists(k)) {
       OcTreeNode* newNode = tree.createNodeChild(node, k);
       newNode->copyData(*node);
     }
@@ -156,7 +144,7 @@ void printPointsAndDistances(std::string title, std::vector<Point>& points,
   std::cout << title << ": Points and distances: \n";
   for (unsigned i = 0; i < points.size(); ++i)
     std::cout << "(" << points[i].x << ", " << points[i].y << ", "
-              << points[i].z << ") = " << distances[i] << "\n";
+    << points[i].z << ") = " << distances[i] << "\n";
 }
 
 int getKeyDepth(const OcTree& tree, const octomap::point3d& point,
@@ -191,8 +179,8 @@ bool contains(OcTree& tree, const Point& query, float sqRadius,
 int getClosestChild(const Point& q, const Point& p)
 {
   return ((q.x - p.x) >= 0) |
-        (((q.y - p.y) >= 0) << 1) |
-        (((q.z - p.z) >= 0) << 2);
+      (((q.y - p.y) >= 0) << 1) |
+      (((q.z - p.z) >= 0) << 2);
 }
 
 float squaredNorm(const Point& p)
