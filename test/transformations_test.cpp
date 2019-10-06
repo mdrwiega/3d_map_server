@@ -10,8 +10,8 @@
 #include <pcl/registration/transforms.h>
 #include "md_utils/math/transformations.h"
 #include <octomap_tools/transformations.h>
-#include <octomap_tools/types_conversions.h>
 #include <octomap_tools/utils.h>
+#include "../include/octomap_tools/conversions.h"
 
 #include "test_utils.h"
 

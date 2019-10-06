@@ -25,8 +25,9 @@
 #include <pcl/filters/crop_box.h>
 
 #include <octomap_tools/utils.h>
-#include "md_utils/math/geometry.h"
-#include <octomap_tools/types_conversions.h>
+#include <octomap_tools/octomap_io.h>
+
+#include "../../include/octomap_tools/conversions.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -59,21 +60,20 @@ int main(int argc, char** argv)
   PointCloudPtr cropped_cloud(new PointCloud);
   Vector4f octomap_min = Vector4f{x_min, y_min, z_min, 0};
   Vector4f octomap_max = Vector4f{x_max, y_max, z_max, 0};
-  auto tree = loadOctreeFromFile(inFilename);
+  auto tree = LoadOcTreeFromFile(inFilename);
   *orig_cloud = OcTreeToPointCloud(*tree);
 
-  printOcTreeInfo(*tree, "Loaded tree");
-  std::cout << pointcloudInfoToString(*orig_cloud, "orig cloud");
+  PrintOcTreeInfo(*tree, "Loaded tree");
+  std::cout << PointCloudInfoToString(*orig_cloud, "orig cloud");
 
   pcl::CropBox<Point> boxFilter;
   boxFilter.setMin(octomap_min);
   boxFilter.setMax(octomap_max);
   boxFilter.setInputCloud(orig_cloud);
   boxFilter.filter(*cropped_cloud);
-  printPointcloudInfo(*cropped_cloud, "cropped_cloud");
-  std::cout << pointcloudInfoToString(*cropped_cloud, "cropped_cloud");
+  std::cout << PointCloudInfoToString(*cropped_cloud, "cropped_cloud");
 
-  writePointCloudAsOctreeToFile(cropped_cloud, outFilename1);
+  SavePointCloudAsOctreeToFile(cropped_cloud, outFilename1, tree->getResolution());
 
   return 0;
 }

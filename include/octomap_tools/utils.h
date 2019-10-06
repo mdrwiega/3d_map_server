@@ -30,22 +30,14 @@ using OcTreePtr = std::unique_ptr<octomap::OcTree>;
 using OcTreeNode = octomap::OcTreeNode;
 using OcTreeKey = octomap::OcTreeKey;
 
-void saveOcTreeToFile(const OcTree& tree, const std::string& fileName);
-
-
-void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
-                                   const std::string& fileName, float resolution = 0.05);
-
 PointCloud createUniformPointCloud(Point min, Point max, Point step);
-
-std::unique_ptr<OcTree> loadOctreeFromFile(const std::string& fileName);
 
 int getNodeDepth(const OcTree& tree, const octomap::point3d& point,
                  const OcTreeNode& node);
 
 int getLeafDepth(const OcTree& tree, const OcTreeNode& node);
 
-inline void printOcTreeInfo(const OcTree& tree, std::string name) {
+inline void PrintOcTreeInfo(const OcTree& tree, std::string name) {
   double xMin, xMax, yMin, yMax, zMin, zMax;
   tree.getMetricMin(xMin, yMin, zMin);
   tree.getMetricMax(xMax, yMax, zMax);
@@ -56,7 +48,7 @@ inline void printOcTreeInfo(const OcTree& tree, std::string name) {
 }
 
 inline void printOcTree(const OcTree& tree, std::string name) {
-  printOcTreeInfo(tree, name);
+  PrintOcTreeInfo(tree, name);
   std::cout << "Leafs:\n";
   for (auto it = tree.begin_leafs(); it != tree.end_leafs(); ++it) {
     std::cout << it.getCoordinate() << "  LogOdds: " << it->getLogOdds()
@@ -102,31 +94,6 @@ inline void downsamplePointCloud(const PointCloud::ConstPtr& cloudIn,
   grid.filter(cloudOut);
 }
 
-inline PointCloudPtr readPointCloudFromFile(const std::string fileName)
-{
-  PointCloudPtr cloud (new PointCloud);
-
-  if (pcl::io::loadPCDFile<Point> (fileName, *cloud) == -1)
-  {
-//    LOG_ERR() << "\nCouldn't read file " << fileName;
-    return nullptr;
-  }
-//  LOG_INF() << "Loaded " << cloud->width * cloud->height
-//      << " data points from " << fileName << std::endl;
-  return cloud;
-}
-
-inline void savePointCloudToFile(const std::string fileName, const PointCloud& cloudIn, bool binary)
-{
-  if (pcl::io::savePCDFile<Point> (fileName, cloudIn, binary) == -1)
-  {
-//    LOG_ERR() << "\nCouldn't save to file " << fileName;
-    return;
-  }
-//  LOG_INF() << "Saved " << cloudIn.width * cloudIn.height
-//      << " data points to " << fileName << std::endl;
-}
-
 /**
  * Splits pointcloud into two parts
  *
@@ -151,14 +118,14 @@ inline void splitPointcloud(const Eigen::Vector4f& plane,
   }
 }
 
-inline std::string pointcloudInfoToString(const PointCloud& cloud, const std::string cloudName)
+inline std::string PointCloudInfoToString(const PointCloud& cloud, const std::string cloudName)
 {
   std::stringstream ss;
   Point min, max;
   pcl::getMinMax3D(cloud, min, max);
 
    ss << "\nPointcloud: " << cloudName
-      << "\nSize: " << cloud.width * cloud.height
+      << "\nSize: " << cloud.size()
       << std::setprecision(3)
       << "\nLimits: x(" << min.x << ", " << max.x << ")  "
       << "y(" << min.y << ", " << max.y << ")  "
@@ -166,37 +133,9 @@ inline std::string pointcloudInfoToString(const PointCloud& cloud, const std::st
   return ss.str();
 }
 
-inline void printPointcloudInfo(const PointCloud& cloud, const std::string cloudName)
-{
-//  LOG_INF() << pointcloudInfoToString(cloud, cloudName);
-}
-
-inline void visualizePointCloud(const PointCloud::Ptr cloud)
-{
-//  pcl::visualization::CloudViewer viewer ("Cloud Viewer");
-//  viewer.showCloud (cloud);
-//  while (!viewer.wasStopped ()) { }
-}
-
-inline PointCloud createCrossShapePointCloud(
-    float length, float width, float height, float res,
-    float offsetX = 0, float offsetY = 0, float offsetZ = 0)
-{
-  auto cloud1 = createUniformPointCloud(
-      Point{-length + offsetX, -width + offsetY, -height + offsetZ},
-      Point{length + offsetX, width + offsetY, height + offsetZ},
-      Point{res, res, res});
-
-  auto cloud2 = createUniformPointCloud(
-      Point{-width + offsetX, -length + offsetY, -height + offsetZ},
-      Point{width + offsetX, length + offsetY, height + offsetZ},
-      Point{res, res, res});
-
-  return cloud1 + cloud2;
-
-}
-
-inline void expandOccupiedRecursive(octomap::OcTree& tree, octomap::OcTreeNode* node, unsigned depth) {
+inline void ExpandOccupiedNodesRecursive(octomap::OcTree& tree,
+                                         octomap::OcTreeNode* node,
+                                         unsigned depth) {
   if (depth >= tree.getTreeDepth()) {
     return;
   }
@@ -212,7 +151,7 @@ inline void expandOccupiedRecursive(octomap::OcTree& tree, octomap::OcTreeNode* 
   // Recursively expand children
   for (unsigned int i=0; i<8; i++) {
     if (tree.nodeChildExists(node, i)) {
-      expandOccupiedRecursive(tree, tree.getNodeChild(node, i), depth+1);
+      ExpandOccupiedNodesRecursive(tree, tree.getNodeChild(node, i), depth+1);
     }
   }
 }

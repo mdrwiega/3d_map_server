@@ -11,36 +11,6 @@
 
 namespace octomap_tools {
 
-void saveOcTreeToFile(const OcTree& tree, const std::string& fileName)
-{
-  std::cout  << "Saving Octree to file: " << fileName << std::endl;
-  if (!tree.write(fileName))
-  {
-    std::cerr << "Error during saving to file: " << fileName << std::endl;
-    throw std::runtime_error("Error writing to " + fileName);
-  }
-}
-
-void writePointCloudAsOctreeToFile(PointCloud::Ptr& cloud,
-                                   const std::string& fileName, float resolution)
-{
-  octomap::Pointcloud scan;
-
-  for (const auto& i : cloud->points)
-    scan.push_back(i.x, i.y, i.z);
-
-  std::unique_ptr<octomap::OcTree> tree(new octomap::OcTree(resolution));
-
-  octomap::point3d sensorPose{0,0,0};
-  tree->insertPointCloud(scan, sensorPose);
-
-  //  LOG_INF() << "Pruning octree\n\n";
-  tree->updateInnerOccupancy();
-  tree->prune();
-
-  saveOcTreeToFile(*tree, fileName);
-}
-
 PointCloud createUniformPointCloud(Point min, Point max, Point step)
 {
   if (min.x > max.x || min.y > max.y || min.z > max.z)
@@ -54,39 +24,6 @@ PointCloud createUniformPointCloud(Point min, Point max, Point step)
         cloud.push_back(Point{(float)i, (float)j, (float)k});
 
   return cloud;
-}
-
-std::unique_ptr<OcTree> loadOctreeFromFile(const std::string& fileName) {
-  std::cout << "\nReading OcTree file: " << fileName << std::endl;
-  std::ifstream file(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
-  if (!file.is_open()) {
-    std::cerr << "Filestream to "<< fileName << " not open, nothing read.";
-    return nullptr;
-  }
-
-  std::istream::pos_type streampos = file.tellg();
-  std::unique_ptr<octomap::OcTree> tree;
-
-  // Reading new format of octree (.ot)
-  if (fileName.length() > 3 && (fileName.compare(fileName.length()-3, 3, ".ot") == 0)) {
-    tree.reset(dynamic_cast<octomap::OcTree*>(octomap::AbstractOcTree::read(file)));
-    if (!tree) {
-      std::cerr << "Error reading from file " << fileName << std::endl;
-      file.clear();
-      file.seekg(streampos);
-      return nullptr;
-    }
-  } else { // Reading old format of octree (.bt)
-    std::unique_ptr<octomap::OcTree> bTree (new octomap::OcTree(0.1));
-
-    if (bTree->readBinary(file) && bTree->size() > 1) {
-      tree.reset(bTree.release());
-    } else {
-      std::cerr << "Could not detect binary OcTree format in file.";
-      return nullptr;
-    }
-  }
-  return tree;
 }
 
 int getNodeDepth(const OcTree& tree, const octomap::point3d& point,

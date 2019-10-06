@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include <octomap_tools/utils.h>
+#include <octomap_tools/octomap_io.h>
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
   }
 
   const std::string inFilename = argv[1];
-  auto tree = loadOctreeFromFile(inFilename);
-  printOcTreeInfo(*tree, "Octomap info");
+  auto tree = LoadOcTreeFromFile(inFilename);
+  PrintOcTreeInfo(*tree, "Octomap info");
   return 0;
 }

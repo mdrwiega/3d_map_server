@@ -11,9 +11,9 @@
 #include <Eigen/Dense>
 
 #include <octomap_tools/utils.h>
-#include "md_utils/math/geometry.h"
-#include <octomap_tools/types_conversions.h>
+#include <octomap_tools/octomap_io.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include "../../include/octomap_tools/conversions.h"
 
 using namespace octomap_tools;
 using namespace Eigen;
@@ -40,11 +40,11 @@ int main(int argc, char** argv)
 
   PointCloudPtr orig_cloud(new PointCloud);
   PointCloudPtr cropped_cloud(new PointCloud);
-  auto tree = loadOctreeFromFile(inFilename);
+  auto tree = LoadOcTreeFromFile(inFilename);
   *orig_cloud = OcTreeToPointCloud(*tree);
 
-  printOcTreeInfo(*tree, "Loaded tree");
-  std::cout << pointcloudInfoToString(*orig_cloud, "orig cloud");
+  PrintOcTreeInfo(*tree, "Loaded tree");
+  std::cout << PointCloudInfoToString(*orig_cloud, "orig cloud");
 
   pcl::RadiusOutlierRemoval<pcl::PointXYZ> sor;
   sor.setInputCloud(orig_cloud);
@@ -52,10 +52,9 @@ int main(int argc, char** argv)
   sor.setMinNeighborsInRadius(min_neighbors);
   sor.filter (*cropped_cloud);
 
-  printPointcloudInfo(*cropped_cloud, "cropped_cloud");
-  std::cout << pointcloudInfoToString(*cropped_cloud, "cropped_cloud");
+  std::cout << PointCloudInfoToString(*cropped_cloud, "cropped_cloud");
 
-  writePointCloudAsOctreeToFile(cropped_cloud, outFilename1);
+  SavePointCloudAsOctreeToFile(cropped_cloud, outFilename1, tree->getResolution());
 
   return 0;
 }

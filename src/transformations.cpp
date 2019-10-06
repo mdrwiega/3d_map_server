@@ -12,7 +12,7 @@
 
 #include <pcl/filters/voxel_grid.h>
 
-#include <octomap_tools/types_conversions.h>
+#include "../include/octomap_tools/conversions.h"
 
 using namespace octomap;
 using namespace Eigen;

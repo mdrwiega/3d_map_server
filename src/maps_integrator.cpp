@@ -5,14 +5,13 @@
 #include <ctime>
 
 #include "md_utils/math/transformations.h"
-#include "octomap_tools/types_conversions.h"
-
 #include <pcl/point_cloud.h>
 
 #include "utils/table_printer.h"
 
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/features_matching.h>
+#include "../include/octomap_tools/conversions.h"
 #include "utils/math.h"
 
 namespace octomap_tools {

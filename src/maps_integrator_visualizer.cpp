@@ -3,12 +3,12 @@
 #include <chrono>
 #include <thread>
 
-#include "octomap_tools/types_conversions.h"
 #include <octomap_tools/utils.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
+#include "../include/octomap_tools/conversions.h"
 
 namespace octomap_tools {
 

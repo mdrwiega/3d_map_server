@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 
 #include <octomap_tools/utils.h>
+#include <octomap_tools/octomap_io.h>
 #include <octomap_tools/transformations.h>
 
 using namespace Eigen;
@@ -84,8 +85,8 @@ inline std::unique_ptr<OcTree> unpackAndGetOctomap(
   std::cout << "Unpacked file: " << map_packed_path
             << " to " << map_path << std::endl;
 
-  auto tree = loadOctreeFromFile(map_path);
-  printOcTreeInfo(*tree, "Loaded tree");
+  auto tree = LoadOcTreeFromFile(map_path);
+  PrintOcTreeInfo(*tree, "Loaded tree");
   return tree;
 }
 
