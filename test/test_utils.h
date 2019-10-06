@@ -64,7 +64,6 @@ inline void checkIfTransformedTreeBoundsAreCorrect(
   double max_err = tree.getResolution() * std::sqrt(3);
   EXPECT_VECTOR3F_NEAR(min1t, min2, max_err);
   EXPECT_VECTOR3F_NEAR(max1t, max2, max_err);
-
 }
 
 inline bool isFileExist(const std::string& file_name) {
@@ -72,7 +71,7 @@ inline bool isFileExist(const std::string& file_name) {
     return infile.good();
 }
 
-inline std::unique_ptr<OcTree> unpackAndGetOctomap(
+inline OcTreePtr unpackAndGetOctomap(
     const std::string& map_name, const std::string ext = "ot") {
   const std::string tmp_path = "tmp/";
   const std::string ds_path = ros::package::getPath("octomap_tools") + "/octomaps_dataset/";
@@ -86,7 +85,6 @@ inline std::unique_ptr<OcTree> unpackAndGetOctomap(
             << " to " << map_path << std::endl;
 
   auto tree = LoadOcTreeFromFile(map_path);
-  PrintOcTreeInfo(*tree, "Loaded tree");
   return tree;
 }
 

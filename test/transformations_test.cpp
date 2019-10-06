@@ -7,11 +7,10 @@
 
 #include <chrono>
 
-#include <pcl/registration/transforms.h>
 #include "md_utils/math/transformations.h"
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
-#include "../include/octomap_tools/conversions.h"
+#include <octomap_tools/conversions.h>
 
 #include "test_utils.h"
 
@@ -40,7 +39,7 @@ class OctreeTransformationsTest : public ::testing::Test {
     validate(tree, transformed_tree, tree_leafs, T);
   }
 
-  void transform(float resolution, const NodesList& tree_leafs, const Eigen::Matrix4f& T) {
+  OcTreePtr transform(float resolution, const NodesList& tree_leafs, const Eigen::Matrix4f& T) {
     OcTree tree(resolution);
     for (auto i : tree_leafs) {
       tree.setNodeValue(i.first, i.second);
@@ -50,6 +49,7 @@ class OctreeTransformationsTest : public ::testing::Test {
     auto transformed_tree = transformOctree(tree, T);
     auto diff = duration_cast<milliseconds>(high_resolution_clock::now() - start);
     std::cout << "Transformation time: " << diff.count() << " ms." << std::endl;
+    return transformed_tree;
   }
 
   void validate(const OcTree& tree, const OcTreePtr& transformed_tree,
@@ -63,7 +63,7 @@ class OctreeTransformationsTest : public ::testing::Test {
 
     for (auto i = transformed_tree->begin_leafs(); i != transformed_tree->end_leafs(); ++i) {
       const auto& point = i.getCoordinate();
-      Eigen::Vector4f p = T.inverse() * Eigen::Vector4f{point.x(), point.y(), point.z(), 0};
+      Eigen::Vector4f p = md::inverseTransform(T) * Eigen::Vector4f{point.x(), point.y(), point.z(), 1};
       const auto& v = i->getValue();
 
       // Find near points in initial set
@@ -102,7 +102,7 @@ class OctreeTransformationsTest : public ::testing::Test {
 
 TEST_F(OctreeTransformationsTest, Translation) {
   const float res = 0.1;
-  const auto T = createTransformationMatrix(0, 0, 0, 0, 0, 3.14);
+  const auto T = createTransformationMatrix(0.2, 0, 0, 0, 0, 0);
   const std::vector<std::pair<point3d, float>> tree_leafs = {
       { point3d{0.05, 0.05, 0.05}, 0.6},
       { point3d{0.25, 0.15, 0.05}, 0.5},
@@ -124,7 +124,7 @@ TEST_F(OctreeTransformationsTest, Rotation) {
   transformAndValidate(res, tree_leafs, T);
 }
 
-TEST_F(OctreeTransformationsTest, ThreeNodes_MultiCase) {
+TEST_F(OctreeTransformationsTest, Transform_ThreeNodes_MultiCase) {
   const float res = 0.1;
   const std::vector<std::pair<point3d, float>> tree_leafs = {
       { point3d{0.05, 0.05, 0.05}, 0.6},
@@ -153,7 +153,7 @@ TEST_F(OctreeTransformationsTest, ThreeNodes_MultiCase) {
   }
 }
 
-TEST_F(OctreeTransformationsTest, RealOcTreeTest)
+TEST_F(OctreeTransformationsTest, Transform_RealOcTreeTest)
 {
   visualize = false;
   auto tree_in = unpackAndGetOctomap("fr_079");
@@ -163,7 +163,7 @@ TEST_F(OctreeTransformationsTest, RealOcTreeTest)
   auto tree = cutOctree(*tree_in, tree_min, tree_max);
 
   std::vector<std::vector<float>> transformations = {
-      {0,   0,   0,   0,   5.0, 0  },
+      {1.0,   0,   0,   0.1,   0, 0  },
   };
 
   for (const auto& t : transformations) {
@@ -175,7 +175,7 @@ TEST_F(OctreeTransformationsTest, RealOcTreeTest)
   }
 }
 
-TEST_F(OctreeTransformationsTest, Performance)
+TEST_F(OctreeTransformationsTest, Transform_Performance)
 {
   visualize = false;
   const float res = 0.1;
@@ -184,13 +184,13 @@ TEST_F(OctreeTransformationsTest, Performance)
   Vector3f min = {-100, -100, -100};
   Vector3f max = {100, 1000, 1000};
 
-  for (unsigned i = 1; i <= 100000; i *= 10) {
+  for (unsigned i = 1; i <= 10000; i *= 10) {
     NodesList tree_leafs;
     unsigned cnt = 1;
     for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
       for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
         for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
-          if (cnt++ > i )
+          if (cnt++ > i)
             break;
           tree_leafs.push_back(std::make_pair(point3d(x, y, z), 0.5));
         }
@@ -200,6 +200,7 @@ TEST_F(OctreeTransformationsTest, Performance)
     transform(res, tree_leafs, T);
   }
 }
+
 
 //TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartExist)
 //{

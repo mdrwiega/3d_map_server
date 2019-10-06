@@ -87,17 +87,17 @@ OcTreePtr MapsIntegrator::integrateOctrees(const Eigen::Matrix4f& transformation
   auto tree_scene = PointCloudToOctree(*scene_, octree_res);
   auto tree_model = PointCloudToOctree(*model_, octree_res);
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Pointclouds converted to octrees in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Pointclouds converted to octrees in " << diff.count() << " ms." << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
   auto tree_model_transformed = transformOctree(tree_model, transformation);
   diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Model octomap transformed in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Model octomap transformed in " << diff.count() << " ms." << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
   auto merged_tree = sumOctrees(*tree_model_transformed, tree_scene);
   diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octomaps merged in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Octomaps merged in " << diff.count() << " ms." << std::endl;
   return merged_tree;
 }
 

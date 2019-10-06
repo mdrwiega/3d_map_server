@@ -7,31 +7,25 @@
 #include <algorithm>
 
 #include <octomap_tools/utils.h>
-#include "md_utils/math/transformations.h"
+#include <octomap_tools/conversions.h>
 #include "md_utils/math/cuboid.h"
 
 #include <pcl/filters/voxel_grid.h>
-
-#include "../include/octomap_tools/conversions.h"
 
 using namespace octomap;
 using namespace Eigen;
 using namespace md;
 
-#define KEEP_UNUSED(var) do { (void)var; } while(false);
-
-
 namespace octomap_tools {
 
 template <typename T>
 constexpr typename std::enable_if<std::is_arithmetic<T>::value, T>::type
-trilinearInterpolation(
-    Vector3<T> p, Vector3<T> p0, Vector3<T> p1,
-    T c000, T c001, T c010, T c011, T c100, T c101, T c110, T c111)
-{
+trilinearInterpolation(Vector3<T> p, Vector3<T> p0, Vector3<T> p1,
+    T c000, T c001, T c010, T c011, T c100, T c101, T c110, T c111) {
+
   if (p0(0) == p1(0) || p0(1) == p1(1) || p0(2) == p1(2)) {
     std::cerr << "p0:" << p0.transpose() << "  p1:" << p1.transpose();
-    std::runtime_error(std::string(__func__) + "p0 == p1");
+    std::runtime_error(std::string(__func__) + ": p0 == p1");
   }
 
   T xd = (p.x() - p0.x()) / (p1.x() - p0.x());
@@ -87,12 +81,10 @@ float calculateNewNodeOccupancy(
   auto p  = Vector3<float>(src_approx_point.x(), src_approx_point.y(), src_approx_point.z());
   auto p0 = Vector3<float>(x0, y0, z0);
   auto p1 = Vector3<float>(x1, y1, z1);
-  return trilinearInterpolation<float>(
-      p, p0, p1, c000, c001, c010, c011, c100, c101, c110, c111);
+  return trilinearInterpolation<float>(p, p0, p1, c000, c001, c010, c011, c100, c101, c110, c111);
 }
 
-OcTreePtr transformOctree(const OcTree& tree_in,
-                          const Matrix4f& transformation) {
+OcTreePtr transformOctree(const OcTree& tree_in, const Matrix4f& transformation) {
   OcTreePtr tree_out = std::make_unique<OcTree>(tree_in.getResolution());
   Matrix4f inv_transform = transformation.inverse();
 
@@ -119,7 +111,6 @@ OcTreePtr transformOctree(const OcTree& tree_in,
           point3d src_point = tree_in.keyToCoord(src_node_key);
 
           auto c = calculateNewNodeOccupancy(src_point, src_approx_point, tree_in, src_node);
-//          tree_out->setNodeValue(tgt_node_key, logodds(c), true);
           auto new_node = tree_out->updateNode(tgt_node_key, true, true);
           new_node->setLogOdds(logodds(c));
         }
@@ -136,9 +127,8 @@ void getMinMaxOctree(const OcTree& tree, Point& min, Point& max) {
   max = {f_min, f_min, f_min};
 
   // Get min and max of tree
-  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i)
-  {
-    auto p = i.getCoordinate();
+  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
+    const auto& p = i.getCoordinate();
     if (p.x() < min.x) min.x = p.x();
     if (p.y() < min.y) min.y = p.y();
     if (p.z() < min.z) min.z = p.z();
@@ -183,11 +173,61 @@ OcTree cutOctree(const OcTree& tree_in, const Vector3f& min, const Vector3f& max
   return tree_out;
 }
 
+OcTreePtr CropOcTree(const OcTree& tree_in, const Vector3f& min, const Vector3f& max) {
+  OcTreePtr tree_out(new OcTree(tree_in.getResolution()));
+  filterOutLeafsNotInRange(tree_in, ToPcl(min), ToPcl(max), *tree_out);
+  return tree_out;
+}
+
+OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2) {
+  OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
+
+  for (auto leaf2 = tree2.begin_leafs(); leaf2 != tree2.end_leafs(); ++leaf2) {
+    point3d point = leaf2.getCoordinate();
+    OcTreeNode* leaf1 = tree_out->search(point);
+
+    // Node in tree1 not exists. Just simply add it.
+    if (leaf1 == nullptr) {
+      auto new_node = tree_out->updateNode(point, true);
+      new_node->setLogOdds(leaf2->getLogOdds());
+    } else {
+      int depth1 = getLeafDepth(*tree_out, *leaf1);
+      if (depth1 != -1) {
+        int depth2 = leaf2.getDepth();
+        int depth_diff = depth2 - depth1;
+        auto leaf2_logodds = leaf2->getLogOdds();
+
+        // Nodes at the same level
+        if (depth_diff == 0) {
+          tree_out->updateNodeLogOdds(leaf1, leaf2_logodds);
+        }
+        else if (depth_diff > 0) { // Node in tree2 is on deeper level than in tree1
+          for(int i = 0; i < depth_diff; i++) {
+            tree_out->expandNode(leaf1);
+            leaf1 = tree_out->search(point);
+          }
+          tree_out->updateNodeLogOdds(leaf1, leaf2_logodds);
+        }
+        else if (depth_diff < 0) { // Node in tree1 is on deeper level than in tree2
+          for (int i = depth2; i < depth1; i++) {
+            OcTreeNode* n = tree_out->search(point, i);
+            n->setLogOdds(leaf2_logodds);
+            expandNodeOnlyEmptyChilds(n, *tree_out);
+          }
+          OcTreeNode* n = tree_out->search(point, depth2);
+          tree_out->updateNodeLogOdds(n, leaf2_logodds);
+        }
+      }
+    }
+  }
+  tree_out->prune();
+  return tree_out;
+}
+
 void extractIntersectingOctrees(
     const OcTree& tree1, const OcTree& tree2,
     const Point& margin,
-    OcTree& out_tree1, OcTree& out_tree2)
-{
+    OcTree& out_tree1, OcTree& out_tree2) {
   Point min_tree1, max_tree1;
   getMinMaxOctree(tree1, min_tree1, max_tree1);
 
@@ -214,8 +254,7 @@ void extractIntersectingOctrees(
 void extractIntersectingAndDownsamplePointClouds(
     const PointCloud& cloud1, const PointCloud& cloud2,
     float voxelSize, const Point& margin,
-    PointCloud& cloud1reduced, PointCloud& cloud2reduced)
-{
+    PointCloud& cloud1reduced, PointCloud& cloud2reduced) {
   PointCloud::Ptr cloud1filtered(new PointCloud);
   PointCloud::Ptr cloud2filtered(new PointCloud);
 
@@ -263,64 +302,6 @@ void extractIntersectingAndDownsamplePointClouds(
 //      << " min: " << min_red1 << " max: " << max_red1 << std::endl
 //      << "Downsampled cloud 2 size: " << cloud2reduced.size()
 //      << " min: " << min_red2 << " max: " << max_red2 << std::endl;
-}
-
-OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2)
-{
-  OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
-
-  for (auto leaf2 = tree2.begin_leafs(); leaf2 != tree2.end_leafs(); ++leaf2)
-  {
-    point3d point = leaf2.getCoordinate();
-    OcTreeNode* leaf1 = tree_out->search(point);
-
-    // Node in tree1 not exists. Just simply add it.
-    if (leaf1 == nullptr)
-    {
-      auto new_node = tree_out->updateNode(point, true);
-      new_node->setLogOdds(leaf2->getLogOdds());
-    }
-    else
-    {
-      int depth1 = getLeafDepth(*tree_out, *leaf1);
-      if (depth1 != -1)
-      {
-        int depth2 = leaf2.getDepth();
-        int depth_diff = depth2 - depth1;
-        auto leaf2_logodds = leaf2->getLogOdds();
-
-        // Nodes at the same level
-        if (depth_diff == 0)
-        {
-          tree_out->updateNodeLogOdds(leaf1, leaf2_logodds);
-        }
-        // Node in tree2 is on deeper level than in tree1
-        else if (depth_diff > 0)
-        {
-          for(int i = 0; i < depth_diff; i++)
-          {
-            tree_out->expandNode(leaf1);
-            leaf1 = tree_out->search(point);
-          }
-          tree_out->updateNodeLogOdds(leaf1, leaf2_logodds);
-        }
-        // Node in tree1 is on deeper level than in tree2
-        else if (depth_diff < 0)
-        {
-          for (int i = depth2; i < depth1; i++)
-          {
-            OcTreeNode* n = tree_out->search(point, i);
-            n->setLogOdds(leaf2_logodds);
-            expandNodeOnlyEmptyChilds(n, *tree_out);
-          }
-          OcTreeNode* n = tree_out->search(point, depth2);
-          tree_out->updateNodeLogOdds(n, leaf2_logodds);
-        }
-      }
-    }
-  }
-  tree_out->prune();
-  return tree_out;
 }
 
 }

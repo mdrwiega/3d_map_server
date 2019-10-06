@@ -18,6 +18,7 @@
 
 #include <octomap_tools/feature_cloud.h>
 #include <octomap_tools/utils.h>
+#include <octomap_tools/conversions.h>
 #include <octomap_tools/icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
 #include "features_matching.h"
@@ -73,6 +74,21 @@ class MapsIntegrator {
     model_(model),
     scene_(scene),
     cfg_(config) {
+    std::cout << "\nSize of model cloud " << model_->size();
+    std::cout << "\nSize of scene cloud " << scene_->size();
+  }
+
+  MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& model_tree, const Config& config) :
+    model_(new PointCloud),
+    scene_(new PointCloud),
+    model_tree_(model_tree),
+    scene_tree_(scene_tree),
+    cfg_(config) {
+    *model_ = OcTreeToPointCloud(*model_tree_);
+    *scene_ = OcTreeToPointCloud(*scene_tree_);
+
+    std::cout << "\nSize of model cloud " << model_->size();
+    std::cout << "\nSize of scene cloud " << scene_->size();
   }
 
   Result compute();
@@ -84,9 +100,10 @@ class MapsIntegrator {
   std::vector<Rectangle> spiral_blocks_;
   PointCloudPtr model_;
   PointCloudPtr scene_;
+  OcTreePtr model_tree_;
+  OcTreePtr scene_tree_;
   Config cfg_;
   Result result_;
-
 };
 
 }

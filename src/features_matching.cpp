@@ -84,7 +84,7 @@ FeaturesMatching::Result FeaturesMatching::initialAlignment(PointCloud& best_mod
   scene->processInput();
   std::vector<Rectangle> blocks_ = divideFullModelIntoBlocks(cfg_.cell_size_x, cfg_.cell_size_y);
 
-  std::cout << "Starting features matching alignment. There are " << blocks_.size() << " blocks.\n";
+  std::cout << "\nStarting features matching alignment. There are " << blocks_.size() << " blocks.\n";
 
   std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool();
   std::vector<std::future<FeaturesMatching::ThreadResult>> thread_futures;

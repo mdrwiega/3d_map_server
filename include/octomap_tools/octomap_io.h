@@ -19,7 +19,7 @@
 
 namespace octomap_tools {
 
-inline std::unique_ptr<OcTree> LoadOcTreeFromFile(const std::string& filename) {
+inline OcTreePtr LoadOcTreeFromFile(const std::string& filename) {
   std::cout << "\nLoading octree from file: " << filename << std::endl;
   std::ifstream file(filename.c_str(), std::ios_base::in | std::ios_base::binary);
   if (!file.is_open()) {
@@ -27,7 +27,7 @@ inline std::unique_ptr<OcTree> LoadOcTreeFromFile(const std::string& filename) {
   }
 
   std::istream::pos_type streampos = file.tellg();
-  std::unique_ptr<octomap::OcTree> tree;
+  OcTreePtr tree;
 
   // Reading new format of octree (.ot)
   if (filename.length() > 3 && (filename.compare(filename.length()-3, 3, ".ot") == 0)) {

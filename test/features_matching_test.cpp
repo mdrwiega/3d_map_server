@@ -7,13 +7,6 @@
 #include <iostream>
 #include <fstream>
 
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/common/common_headers.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/common/transforms.h>
-#include <pcl/filters/crop_box.h>
-
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
 #include "test_utils.h"
@@ -33,21 +26,17 @@ using namespace std::chrono;
 class MapsIntegratorTest : public ::testing::Test
 {
  public:
-  MapsIntegratorTest() :
-    orig_cloud(new PointCloud),
-    cropped_cloud (new PointCloud),
-    cloud_l (new PointCloud),
-    cloud_r (new PointCloud) {
+  MapsIntegratorTest() {
     date_and_time_ = md::getCurrentDateAndTime();
     configure();
   }
 
   ~MapsIntegratorTest() {
     std::ofstream file(date_and_time_ + "_cfg_results2.txt", std::ios_base::app);
-    file << PointCloudInfoToString(*orig_cloud, "orig cloud");
-    file << PointCloudInfoToString(*cropped_cloud, "cropped_cloud");
-    file << PointCloudInfoToString(*cloud_l, "cloud_l");
-    file << PointCloudInfoToString(*cloud_r, "cloud_r");
+    file << OcTreeInfoToString(*orig_tree_, "orig cloud");
+    file << OcTreeInfoToString(*cropped_tree_, "cropped_cloud");
+    file << OcTreeInfoToString(*tree_l_, "cloud_l");
+    file << OcTreeInfoToString(*tree_r_, "cloud_r");
 
     file << "\nReal transformation between maps:\n" << md::transformationMatrixToString(transformation_);
     auto rpy_real = md::rad2deg(md::rotMatrixToRPY(transformation_.block<3,3>(0,0)));
@@ -59,50 +48,36 @@ class MapsIntegratorTest : public ::testing::Test
 
     file << "\n\nError: " << (transformation_ * result_transf_  - Eigen::Matrix4f::Identity()).norm() << "\n";
     file << "x_common: " << x_common_ << "\n";
-    Point min, max;
-    pcl::getMinMax3D(*cropped_cloud, min, max);
+    Eigen::Vector3f min, max;
+    getMinMaxOctree(*cropped_tree_, min, max);
     file << "Common area takes: " << std::setprecision(2)
-         << x_common_ / (max.x - min.x) * 100.0 << " \% of full map\n";
+         << x_common_ / (max[0] - min[0]) * 100.0 << " \% of full map\n";
   }
 
   void PrepareSceneAndModelWithXDivision(
       std::string octomap_packed_file,
-      Vector4f octomap_min = Vector4f{0,0,0,0}, Vector4f octomap_max = Vector4f{0,0,0,0}) {
-    auto orig_tree = unpackAndGetOctomap(octomap_packed_file);
-    *orig_cloud = OcTreeToPointCloud(*orig_tree);
-    std::cout << PointCloudInfoToString(*orig_cloud, "orig_cloud");
+      Vector3f octomap_min = Vector3f{0,0,0}, Vector3f octomap_max = Vector3f{0,0,0}) {
+    orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
+    PrintOcTreeInfo(*orig_tree_, "orig_tree");
 
-    if (octomap_min != Vector4f{0,0,0,0} && octomap_max != Vector4f{0,0,0,0}) {
-      pcl::CropBox<Point> boxFilter;
-      boxFilter.setMin(octomap_min);
-      boxFilter.setMax(octomap_max);
-      boxFilter.setInputCloud(orig_cloud);
-      boxFilter.filter(*cropped_cloud);
-      std::cout << PointCloudInfoToString(*cropped_cloud, "cropped_cloud");
+    if (octomap_min != Vector3f{0,0,0} && octomap_max != Vector3f{0,0,0}) {
+      cropped_tree_ = CropOcTree(*orig_tree_, octomap_min, octomap_max);
+      PrintOcTreeInfo(*cropped_tree_, "cropped_tree");
     } else {
-      *cropped_cloud = *orig_cloud;
+      cropped_tree_ = orig_tree_;
     }
 
-    pcl::PointXYZ minPt, maxPt;
-    pcl::getMinMax3D (*cropped_cloud, minPt, maxPt);
-    Vector4f map_min {minPt.x, minPt.y, minPt.z, 1};
-    Vector4f map_max {maxPt.x, maxPt.y, maxPt.z, 1};
-    Vector4f center = (map_max + map_min) / 2;
-    Vector4f cloud_l_max = {center(0) + x_common_ / 2, map_max(1), map_max(2), 1};
-    Vector4f cloud_r_min = {center(0) - x_common_ / 2, map_min(1), map_min(2), 1};
+    Eigen::Vector3f cropped_min, cropped_max;
+    getMinMaxOctree(*cropped_tree_, cropped_min, cropped_max);
+    Vector3f center = (cropped_max + cropped_min) / 2;
+    Vector3f tree_l_max = {center(0) + x_common_ / 2, cropped_max(1), cropped_max(2)};
+    Vector3f tree_r_min = {center(0) - x_common_ / 2, cropped_min(1), cropped_min(2)};
 
-    pcl::CropBox<Point> boxFilter;
-    boxFilter.setMin(map_min);
-    boxFilter.setMax(cloud_l_max);
-    boxFilter.setInputCloud(cropped_cloud);
-    boxFilter.filter(*cloud_l);
-
-    boxFilter.setMin(cloud_r_min);
-    boxFilter.setMax(map_max);
-    boxFilter.setInputCloud(cropped_cloud);
-    PointCloudPtr cloud_r_tmp (new PointCloud);
-    boxFilter.filter(*cloud_r_tmp);
-    pcl::transformPointCloud(*cloud_r_tmp, *cloud_r, transformation_);
+    tree_l_ = CropOcTree(*orig_tree_, cropped_min, tree_l_max);
+    auto tree_r_tmp = CropOcTree(*orig_tree_, tree_r_min, cropped_max);
+    tree_r_ = transformOctree(*tree_r_tmp, transformation_);
+    PrintOcTreeInfo(*tree_l_, "tree_l");
+    PrintOcTreeInfo(*tree_r_, "tree_r");
   }
 
   void configure() {
@@ -136,10 +111,11 @@ class MapsIntegratorTest : public ::testing::Test
     config_.template_alignment.keypoints_thresh_ = 150;
   }
 
-  PointCloudPtr orig_cloud;
-  PointCloudPtr cropped_cloud;;
-  PointCloudPtr cloud_l;
-  PointCloudPtr cloud_r;
+  OcTreePtr orig_tree_;
+  OcTreePtr cropped_tree_;
+  OcTreePtr tree_l_;
+  OcTreePtr tree_r_;
+
   MapsIntegrator::Config config_;
   Eigen::Matrix4f transformation_;
   std::string date_and_time_;
@@ -150,16 +126,16 @@ class MapsIntegratorTest : public ::testing::Test
 TEST_F(MapsIntegratorTest, Test_fr)
 {
   std::string octomap_name = "fr_079";
-  auto cloud_min = Vector4f(-10, -10, 0.0, 1.0);
-  auto cloud_max = Vector4f(10, 10, 2.0, 1.0);
+  auto cloud_min = Vector3f(-10, -10, 0.0);
+  auto cloud_max = Vector3f(10, 10, 2.0);
   transformation_ = md::createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
-  x_common_ = 4;
+  x_common_ = 4.5;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
 
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   auto res = features_matcher.compute();
   result_transf_ = res.transformation;
 }
@@ -167,8 +143,8 @@ TEST_F(MapsIntegratorTest, Test_fr)
 TEST_F(MapsIntegratorTest, Test_fr_campus)
 {
   std::string octomap_name = "fr_campus";
-  auto cloud_min = Vector4f(-10, -10, 1.0, 1.0);
-  auto cloud_max = Vector4f(40, 10, 10.0, 1.0);
+  auto cloud_min = Vector3f(-10, -10, 1.0);
+  auto cloud_max = Vector3f(40, 10, 10.0);
   transformation_ = md::createTransformationMatrix(10, 5, 0.3, ToRad(5), ToRad(5), ToRad(10));
   x_common_ = 8;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
@@ -176,7 +152,7 @@ TEST_F(MapsIntegratorTest, Test_fr_campus)
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   auto res = features_matcher.compute();
   result_transf_ = res.transformation;
  }
@@ -191,7 +167,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m1)
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   features_matcher.compute();
 }
 
@@ -205,7 +181,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   features_matcher.compute();
 }
 
@@ -219,7 +195,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   features_matcher.compute();
 }
 
@@ -233,7 +209,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
 
-  MapsIntegrator features_matcher(cloud_l, cloud_r, config_);
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   features_matcher.compute();
 }
 
