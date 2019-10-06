@@ -64,16 +64,7 @@ inline Eigen::Matrix3Xf OctreeToPoints(const octomap::OcTree& tree)
   return m;
 }
 
-inline octomap::OcTree PointsToOctree(const Eigen::Matrix3Xf& points, double tree_resolution) {
-  octomap::OcTree tree(tree_resolution);
-  for (auto i = 0; i < points.cols(); ++i)
-  {
-    auto point = octomap::point3d{points(0,i), points(1,i), points(2,i)};
-    tree.setNodeValue(point, 1.0, true);
-  }
-  return tree;
-}
-
+[[deprecated("Conversion from Pointcloud to octree is lossy.")]]
 inline octomap::OcTree PointCloudToOctree(const PointCloud& cloud, double tree_resolution) {
   auto start = std::chrono::high_resolution_clock::now();
   octomap::OcTree tree(tree_resolution);
@@ -87,7 +78,7 @@ inline octomap::OcTree PointCloudToOctree(const PointCloud& cloud, double tree_r
   return tree;
 }
 
-inline PointCloud OctreeToPointCloud(const octomap::OcTree& input_tree) {
+inline PointCloud OcTreeToPointCloud(const octomap::OcTree& input_tree) {
   auto start = std::chrono::high_resolution_clock::now();
 
   octomap::OcTree tree = input_tree;
@@ -100,7 +91,7 @@ inline PointCloud OctreeToPointCloud(const octomap::OcTree& input_tree) {
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octree (" << cloud.size() << " points) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Octree (" << cloud.size() << " occ nodes) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
   return cloud;
 }
 

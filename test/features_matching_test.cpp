@@ -68,7 +68,7 @@ class MapsIntegratorTest : public ::testing::Test
       std::string octomap_packed_file,
       Vector4f octomap_min = Vector4f{0,0,0,0}, Vector4f octomap_max = Vector4f{0,0,0,0}) {
     auto orig_tree = unpackAndGetOctomap(octomap_packed_file);
-    *orig_cloud = OctreeToPointCloud(*orig_tree);
+    *orig_cloud = OcTreeToPointCloud(*orig_tree);
     printPointcloudInfo(*orig_cloud, "orig_cloud");
 
     if (octomap_min != Vector4f{0,0,0,0} && octomap_max != Vector4f{0,0,0,0}) {

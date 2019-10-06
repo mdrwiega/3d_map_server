@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   PointCloudPtr orig_cloud(new PointCloud);
   PointCloudPtr cropped_cloud(new PointCloud);
   auto tree = loadOctreeFromFile(inFilename);
-  *orig_cloud = OctreeToPointCloud(*tree);
+  *orig_cloud = OcTreeToPointCloud(*tree);
 
   printOcTreeInfo(*tree, "Loaded tree");
   std::cout << pointcloudInfoToString(*orig_cloud, "orig cloud");
