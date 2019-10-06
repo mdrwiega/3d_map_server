@@ -34,12 +34,8 @@ TEST(OcTreeConversions, simple) {
       }
     }
   }
+
   printOcTreeInfo(tree, "Tree before conversion");
   OctreeToPointCloud(tree);
-  OctreeToPointCloud2(tree);
-  OctreeToPointCloud2(tree);
-  OctreeToPointCloud(tree);
-  OctreeToPointCloud(tree);
-
 }
 

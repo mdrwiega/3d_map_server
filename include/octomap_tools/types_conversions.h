@@ -14,6 +14,8 @@
 #include <octomap/octomap.h>
 #include <Eigen/Dense>
 
+#include <octomap_tools/utils.h>
+
 namespace octomap_tools {
 
 constexpr double kPi  = 3.14159265358979323846;
@@ -69,7 +71,6 @@ inline octomap::OcTree PointsToOctree(const Eigen::Matrix3Xf& points, double tre
     auto point = octomap::point3d{points(0,i), points(1,i), points(2,i)};
     tree.setNodeValue(point, 1.0, true);
   }
-
   return tree;
 }
 
@@ -86,23 +87,9 @@ inline octomap::OcTree PointCloudToOctree(const PointCloud& cloud, double tree_r
   return tree;
 }
 
-inline PointCloud OctreeToPointCloud3(const octomap::OcTree& input_tree) {
+inline PointCloud OctreeToPointCloud(const octomap::OcTree& input_tree) {
   auto start = std::chrono::high_resolution_clock::now();
-  octomap::OcTree tree = input_tree;
-  tree.expand();
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
-    if (tree.isNodeOccupied(*i))
-      cloud.push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
-  }
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octree (" << cloud.size() << " points) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
-  return cloud;
-}
 
-inline PointCloud OctreeToPointCloud2(const octomap::OcTree& input_tree) {
-  auto start = std::chrono::high_resolution_clock::now();
   octomap::OcTree tree = input_tree;
   expandOccupiedRecursive(tree, tree.getRoot(), 0);
   pcl::PointCloud<pcl::PointXYZ> cloud;
@@ -110,45 +97,10 @@ inline PointCloud OctreeToPointCloud2(const octomap::OcTree& input_tree) {
     if (tree.isNodeOccupied(*i))
       cloud.push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
   }
+
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  std::cout << "2 Octree (" << cloud.size() << " points) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
-  return cloud;
-}
-
-inline PointCloud OctreeToPointCloud(const octomap::OcTree& input_tree) {
-  auto start = std::chrono::high_resolution_clock::now();
-  octomap::OcTree tree = input_tree;
-  const auto max_depth = tree.getTreeDepth();
-
-  // Expand occupied nodes
-  std::vector<octomap::OcTreeNode*> collapsed_occ_nodes;
-  do {
-    collapsed_occ_nodes.clear();
-    for (auto it = tree.begin(); it != tree.end(); ++it) {
-      if(tree.isNodeOccupied(*it) && it.getDepth() < max_depth) {
-        collapsed_occ_nodes.push_back(&(*it));
-      }
-    }
-    for (auto it = collapsed_occ_nodes.begin(); it != collapsed_occ_nodes.end(); ++it)
-    {
-      tree.expandNode(*it);
-    }
-  } while(collapsed_occ_nodes.size() > 0);
-
-  //
-  PointCloud cloud;
-  for (auto it = tree.begin(); it != tree.end(); ++it)
-  {
-    if(tree.isNodeOccupied(*it))
-    {
-      auto p = it.getCoordinate();
-      cloud.push_back({p.x(), p.y(), p.z()});
-    }
-  }
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Full octree (" << cloud.size() << " points) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Octree (" << cloud.size() << " points) converted to pointcloud in: " << diff.count() << " ms." << std::endl;
   return cloud;
 }
 

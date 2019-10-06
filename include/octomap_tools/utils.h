@@ -197,19 +197,21 @@ inline PointCloud createCrossShapePointCloud(
 }
 
 inline void expandOccupiedRecursive(octomap::OcTree& tree, octomap::OcTreeNode* node, unsigned depth) {
-  if (depth >= tree.getTreeDepth())
+  if (depth >= tree.getTreeDepth()) {
     return;
-
-  if (!tree.isNodeOccupied(node))
+  }
+  // Do not expand if node is not occupied
+  if (!tree.isNodeOccupied(node)) {
     return;
-
-  // current node has no children => can be expanded
-  if (!tree.nodeHasChildren(node)){
+  }
+  // Expand node if it doesn't have children
+  if (!tree.nodeHasChildren(node)) {
     tree.expandNode(node);
   }
-  // recursively expand children
+
+  // Recursively expand children
   for (unsigned int i=0; i<8; i++) {
-    if (tree.nodeChildExists(node, i)) { // TODO double check (node != NULL)
+    if (tree.nodeChildExists(node, i)) {
       expandOccupiedRecursive(tree, tree.getNodeChild(node, i), depth+1);
     }
   }
