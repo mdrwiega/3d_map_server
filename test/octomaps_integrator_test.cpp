@@ -56,7 +56,7 @@ class MapsIntegratorTest : public ::testing::Test
 
   void PrepareSceneAndModelWithXDivision(
       std::string octomap_packed_file,
-      Vector3f octomap_min = Vector3f{0,0,0}, Vector3f octomap_max = Vector3f{0,0,0}) {
+      Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
     orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
     PrintOcTreeInfo(*orig_tree_, "orig_tree");
 

@@ -48,10 +48,8 @@ MapsIntegrator::Result MapsIntegrator::compute() {
   // Create result
   Point pmin, pmax;
   pcl::getMinMax3D(*best_model, pmin, pmax);
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - start);
+  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   result_ = Result(diff.count(), ia_result.fitness_score, pmin, pmax, ia_result.transformation);
-//  std::cout << "Configuration\n" << cfg_.toTable();
   result_.PrintResult();
 
   OcTreePtr merged_tree;
@@ -83,19 +81,12 @@ MapsIntegrator::Result MapsIntegrator::compute() {
 OcTreePtr MapsIntegrator::integrateOctrees(const Eigen::Matrix4f& transformation) {
   auto start = std::chrono::high_resolution_clock::now();
 
-  float octree_res = 0.05;
-  auto tree_scene = PointCloudToOctree(*scene_, octree_res);
-  auto tree_model = PointCloudToOctree(*model_, octree_res);
+  auto tree_model_transformed = transformOctree(*model_tree_, transformation);
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Pointclouds converted to octrees in " << diff.count() << " ms." << std::endl;
-
-  start = std::chrono::high_resolution_clock::now();
-  auto tree_model_transformed = transformOctree(tree_model, transformation);
-  diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   std::cout << "Model octomap transformed in " << diff.count() << " ms." << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
-  auto merged_tree = sumOctrees(*tree_model_transformed, tree_scene);
+  auto merged_tree = sumOctrees(*tree_model_transformed, *scene_tree_);
   diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   std::cout << "Octomaps merged in " << diff.count() << " ms." << std::endl;
   return merged_tree;

@@ -48,6 +48,6 @@ TEST(OcTreeConversions, octree_to_cloud) {
     }
   }
 
-  EXPECT_EQ(cloud.size(), num_occ_leafs);
+  EXPECT_EQ(cloud->size(), num_occ_leafs);
 }
 

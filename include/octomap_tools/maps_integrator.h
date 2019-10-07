@@ -70,25 +70,12 @@ class MapsIntegrator {
       void PrintResult();
   };
 
-  MapsIntegrator(const PointCloudPtr& scene, const PointCloudPtr& model, const Config& config) :
-    model_(model),
-    scene_(scene),
-    cfg_(config) {
-    std::cout << "\nSize of model cloud " << model_->size();
-    std::cout << "\nSize of scene cloud " << scene_->size();
-  }
-
   MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& model_tree, const Config& config) :
-    model_(new PointCloud),
-    scene_(new PointCloud),
     model_tree_(model_tree),
     scene_tree_(scene_tree),
     cfg_(config) {
-    *model_ = OcTreeToPointCloud(*model_tree_);
-    *scene_ = OcTreeToPointCloud(*scene_tree_);
-
-    std::cout << "\nSize of model cloud " << model_->size();
-    std::cout << "\nSize of scene cloud " << scene_->size();
+    model_ = OcTreeToPointCloud(*model_tree_);
+    scene_ = OcTreeToPointCloud(*scene_tree_);
   }
 
   Result compute();

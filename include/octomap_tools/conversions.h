@@ -69,20 +69,20 @@ inline Eigen::Matrix3Xf OctreeToPoints(const octomap::OcTree& input_tree) {
   return m;
 }
 
-inline PointCloud OcTreeToPointCloud(const octomap::OcTree& input_tree) {
+inline PointCloudPtr OcTreeToPointCloud(const octomap::OcTree& input_tree) {
   auto start = std::chrono::high_resolution_clock::now();
 
   octomap::OcTree tree = input_tree;
   ExpandOccupiedNodesRecursive(tree, tree.getRoot(), 0);
-  pcl::PointCloud<pcl::PointXYZ> cloud;
+  PointCloudPtr cloud(new PointCloud);
   for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
     if (tree.isNodeOccupied(*i))
-      cloud.push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
+      cloud->push_back(pcl::PointXYZ(i.getX(), i.getY(), i.getZ()));
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octree (" << cloud.size() << " occ nodes) converted to pointcloud in: "
+  std::cout << "Octree (" << cloud->size() << " occ nodes) converted to pointcloud in: "
             << diff.count() << " ms." << std::endl;
   return cloud;
 }

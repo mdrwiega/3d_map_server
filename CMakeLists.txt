@@ -82,8 +82,9 @@ if (CATKIN_ENABLE_TESTING)
     set(TESTS_SRC 
         test/main.cpp
         test/transformations_test.cpp
-        test/features_matching_test.cpp
+        test/octomaps_integrator_test.cpp
         test/conversions_test.cpp
+        test/feature_cloud_test.cpp
     )
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})
