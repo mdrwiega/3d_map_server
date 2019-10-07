@@ -39,6 +39,11 @@ class FeatureCloud {
     float downsampling_radius = 0.1;
     float descriptors_radius = 1.5;
     KeypointsDetectMethod keypoints_method = KeypointsDetectMethod::Uniform;
+    float iss_model_resolution = 0.05;
+    int iss_min_neighbours = 4;
+    int iss_num_of_threads = 8;
+    float iss_threshold21 = 0.975;
+    float iss_threshold32 = 0.975;
   };
 
   FeatureCloud() = default;
@@ -113,14 +118,13 @@ class FeatureCloud {
     else if (cfg_.keypoints_method == KeypointsDetectMethod::Iss3d) {
       pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
       pcl::ISSKeypoint3D<pcl::PointXYZ, pcl::PointXYZ> iss_detector;
-      auto model_resolution = 0.05;
       iss_detector.setSearchMethod (tree);
-      iss_detector.setSalientRadius (6 * model_resolution);
-      iss_detector.setNonMaxRadius (4 * model_resolution);
-      iss_detector.setThreshold21 (0.975);
-      iss_detector.setThreshold32 (0.975);
-      iss_detector.setMinNeighbors (4);
-      iss_detector.setNumberOfThreads (8);
+      iss_detector.setSalientRadius (6 * cfg_.iss_model_resolution);
+      iss_detector.setNonMaxRadius (4 * cfg_.iss_model_resolution);
+      iss_detector.setThreshold21 (cfg_.iss_threshold21);
+      iss_detector.setThreshold32 (cfg_.iss_threshold32);
+      iss_detector.setMinNeighbors (cfg_.iss_min_neighbours);
+      iss_detector.setNumberOfThreads (cfg_.iss_num_of_threads);
       iss_detector.setInputCloud (cloud_);
       iss_detector.compute (*keypoints_);
     }

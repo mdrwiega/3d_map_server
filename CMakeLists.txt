@@ -42,12 +42,11 @@ add_definitions(${EIGEN3_DEFINITIONS})
 add_definitions(${PCL_DEFINITIONS})
 
 add_library(${PROJECT_NAME}
-	src/octomap_tools.cpp
-	src/transformations.cpp
-	src/maps_integrator.cpp
-	src/maps_integrator_visualizer.cpp
-	src/thread_pool.cpp
 	src/features_matching.cpp
+	src/maps_integrator_visualizer.cpp
+	src/maps_integrator.cpp
+	src/thread_pool.cpp
+	src/transformations.cpp
 )
 
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
@@ -85,6 +84,7 @@ if (CATKIN_ENABLE_TESTING)
         test/octomaps_integrator_test.cpp
         test/conversions_test.cpp
         test/feature_cloud_test.cpp
+        test/features_matching_test.cpp
     )
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})

@@ -306,7 +306,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
 //  }
 }*/
 
-TEST(FeaturesMatching, GenerateSpiralTraverse)
+TEST(SpiralTest, GenerateSpiralTraverse)
 {
   Eigen::Vector2f rectangle_min (-4, -2);
   Eigen::Vector2f rectangle_max (2, 3);

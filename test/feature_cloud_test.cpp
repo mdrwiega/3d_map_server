@@ -4,18 +4,19 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
+
 #include <iostream>
 #include <fstream>
 #include <thread>
 #include <chrono>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/utils.h>
-#include "test_utils.h"
-#include <octomap_tools/feature_cloud.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "../include/octomap_tools/conversions.h"
+#include <octomap_tools/transformations.h>
+#include <octomap_tools/utils.h>
+#include <octomap_tools/feature_cloud.h>
+#include <octomap_tools/conversions.h>
+#include "test_utils.h"
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -29,8 +30,7 @@ class FeatureCloudTest : public ::testing::Test
     configure();
   }
 
-  ~FeatureCloudTest() {
-  }
+  ~FeatureCloudTest() {}
 
   void PrepareOcTree(
       std::string octomap_packed_file,
@@ -50,6 +50,12 @@ class FeatureCloudTest : public ::testing::Test
     cfg_.normal_radius = 15.0;
     cfg_.downsampling_radius = 0.15;
     cfg_.descriptors_radius = 1.5;
+    cfg_.keypoints_method = FeatureCloud::KeypointsDetectMethod::Iss3d;
+    cfg_.iss_min_neighbours = 4;
+    cfg_.iss_model_resolution = 0.05;
+    cfg_.iss_num_of_threads = 8;
+    cfg_.iss_threshold21 = 0.975;
+    cfg_.iss_threshold32 = 0.975;
   }
 
   void ShowPointCloudAndKeypoints() {
@@ -67,7 +73,7 @@ class FeatureCloudTest : public ::testing::Test
     auto keypoints = feature_cloud_->getKeypoints();
     pcl::visualization::PointCloudColorHandlerCustom<Point> keypoints_color(keypoints, 255, 0, 0);
     viewer.addPointCloud(keypoints, keypoints_color, "keypoints");
-    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "keypoints");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints");
 
     while (!viewer.wasStopped()) {
       viewer.spinOnce(100);

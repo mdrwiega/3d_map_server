@@ -117,6 +117,10 @@ OcTreePtr transformOctree(const OcTree& tree_in, const Matrix4f& transformation)
       }
     }
   }
+
+  std::cout << "\nOcTree transformed.\n";
+  std::cout << OcTreeInfoToString(tree_in, "input tree");
+  std::cout << OcTreeInfoToString(*tree_out, "transformed tree");
   return tree_out;
 }
 

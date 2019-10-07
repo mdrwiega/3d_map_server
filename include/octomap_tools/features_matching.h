@@ -47,6 +47,9 @@ class FeaturesMatching {
 
   FeaturesMatching::Result initialAlignment(PointCloud& best_model);
 
+  FeaturesMatching::Result Align(int nr, FeaturesMatching::Config& cfg,
+                                 const FeatureCloudPtr model, const FeatureCloudPtr scene);
+
  protected:
   std::vector<Rectangle> divideFullModelIntoBlocks(float block_size_x, float block_size_y);
 
