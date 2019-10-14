@@ -13,36 +13,34 @@
 
 namespace octomap_tools {
 
-using Vector3f = Eigen::Vector3f;
-
 /**
  * Transforms octree based on passed transformation
  */
-OcTreePtr transformOctree(const OcTree& tree,
-                          const Eigen::Matrix4f& transformation);
+OcTreePtr FastOcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformation);
 
-// Get min and max of tree in O(log n) where n is number of tree nodes
-void getMinMaxOctree(const OcTree& tree, Vector3f& min, Vector3f& max);
+/**
+ * More accurate transformation method but also less efficient
+ */
+OcTreePtr OcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformation);
 
 /**
  * Crop the octree based on specified min and max vectors
  */
-OcTree cutOctree(const OcTree& tree_in, const Vector3f& min, const Vector3f& max);
+OcTreePtr CropOcTree(const OcTree& tree_in, const Eigen::Vector3f& min, const Eigen::Vector3f& max);
 
-OcTreePtr CropOcTree(const OcTree& tree_in, const Vector3f& min, const Vector3f& max);
+OcTreePtr SumOctrees(const OcTree& tree1, const OcTree& tree2);
 
-OcTreePtr sumOctrees(const OcTree& tree1, const OcTree& tree2);
+void FilterLeafsNotInRange(const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out);
 
-void extractIntersectingOctrees(const OcTree& tree1, const OcTree& tree2,
-                                const Point& margin,
-                                OcTree& out_tree1, OcTree& out_tree2);
+void ExtractIntersectingOctrees(
+    const OcTree& tree1, const OcTree& tree2, const Point& margin, OcTree& out_tree1, OcTree& out_tree2);
 
-void filterOutLeafsNotInRange(
-    const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out);
-
-void extractIntersectingAndDownsamplePointClouds(
-    const PointCloud& cloud1, const PointCloud& cloud2,
-    float voxelSize, const Point& margin,
+void ExtractIntersectingPointClouds(
+    const PointCloud& cloud1, const PointCloud& cloud2, float voxelSize, const Point& margin,
     PointCloud& cloud1reduced, PointCloud& cloud2reduced);
+
+float calculateNewNodeOccupancy(
+    const octomap::point3d& src_point, const octomap::point3d& src_approx_point,
+    const OcTree& tree_in, const octomap::OcTreeNode* src_node);
 
 }

@@ -11,10 +11,7 @@
 
 namespace octomap_tools {
 
-struct Rectangle {
-  Eigen::Vector2f min;
-  Eigen::Vector2f max;
-};
+
 
 
 /*  k - starting row index

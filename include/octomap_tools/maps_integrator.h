@@ -8,7 +8,6 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>
 #include <algorithm>
 
 #include <Eigen/Dense>
@@ -16,12 +15,12 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 
-#include <octomap_tools/feature_cloud.h>
 #include <octomap_tools/utils.h>
 #include <octomap_tools/conversions.h>
+#include <octomap_tools/feature_cloud.h>
+#include <octomap_tools/features_matching.h>
 #include <octomap_tools/icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
-#include "features_matching.h"
 
 namespace octomap_tools {
 

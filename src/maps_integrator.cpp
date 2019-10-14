@@ -4,15 +4,13 @@
 #include <iomanip>
 #include <ctime>
 
-#include "md_utils/math/transformations.h"
 #include <pcl/point_cloud.h>
-
-#include "utils/table_printer.h"
 
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/features_matching.h>
-#include "../include/octomap_tools/conversions.h"
-#include "utils/math.h"
+#include <octomap_tools/conversions.h>
+#include <octomap_tools/math.h>
+#include "utils/table_printer.h"
 
 namespace octomap_tools {
 
@@ -81,12 +79,12 @@ MapsIntegrator::Result MapsIntegrator::compute() {
 OcTreePtr MapsIntegrator::integrateOctrees(const Eigen::Matrix4f& transformation) {
   auto start = std::chrono::high_resolution_clock::now();
 
-  auto tree_model_transformed = transformOctree(*model_tree_, transformation);
+  auto tree_model_transformed = FastOcTreeTransform(*model_tree_, transformation);
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   std::cout << "Model octomap transformed in " << diff.count() << " ms." << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
-  auto merged_tree = sumOctrees(*tree_model_transformed, *scene_tree_);
+  auto merged_tree = SumOctrees(*tree_model_transformed, *scene_tree_);
   diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   std::cout << "Octomaps merged in " << diff.count() << " ms." << std::endl;
   return merged_tree;

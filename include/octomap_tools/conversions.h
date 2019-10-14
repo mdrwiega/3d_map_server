@@ -20,10 +20,6 @@ namespace octomap_tools {
 
 constexpr double kPi  = 3.14159265358979323846;
 
-
-using Point = pcl::PointXYZ;
-using PointCloud = pcl::PointCloud<Point>;
-
 inline Point ToPcl(const Eigen::Vector3f& v) {
   return Point(v(0), v(1), v(2));
 }

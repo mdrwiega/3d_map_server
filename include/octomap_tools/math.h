@@ -19,9 +19,45 @@ namespace octomap_tools {
 template <typename T>
 using Vector3 = Eigen::Matrix<T, 3, 1>;
 
-inline Eigen::Matrix3f rotationMatrixFromRPY(
-    float roll, float pitch, float yaw)
-{
+class Cuboid {
+ public:
+  Cuboid() = default;
+
+  Cuboid(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax) {
+    using namespace Eigen;
+    vertices[0] = Vector3f(xMax, yMin, zMin); vertices[1] = Vector3f(xMin, yMin, zMin);
+    vertices[2] = Vector3f(xMin, yMax, zMin); vertices[3] = Vector3f(xMax, yMax, zMin);
+    vertices[4] = Vector3f(xMax, yMin, zMax); vertices[5] = Vector3f(xMin, yMin, zMax);
+    vertices[6] = Vector3f(xMin, yMax, zMax); vertices[7] = Vector3f(xMax, yMax, zMax);
+  }
+
+  Eigen::Vector3f& operator [](unsigned vertexNr) {
+    if (vertexNr >= vertices.size())
+      throw std::out_of_range(std::string(__func__) + ": Incorrect index");
+    return vertices[vertexNr];
+  }
+
+  void transform(Eigen::Matrix4f transform) {
+    for (auto& v : vertices) {
+      Eigen::Vector4f point(v.x(), v.y(), v.z(), 1);
+      point = transform * point;
+      v = Eigen::Vector3f(point.x(), point.y(), point.z());
+    }
+  }
+
+  void getMinMax(Eigen::Vector3f& pMin, Eigen::Vector3f& pMax) {
+    for (std::size_t i = 0; i < 3; ++i) {
+      auto result = std::minmax_element(vertices.cbegin(), vertices.cend(),
+                                        [&i](auto& a, auto& b) { return a(i) < b(i); });
+      pMin(i) = (*result.first)(i);
+      pMax(i) = (*result.second)(i);
+    }
+  }
+ private:
+  std::array<Eigen::Vector3f, 8> vertices;
+};
+
+inline Eigen::Matrix3f rotationMatrixFromRPY(float roll, float pitch, float yaw) {
   using namespace Eigen;
   Matrix3f m;
   m = AngleAxisf(roll,  Vector3f::UnitX())
@@ -30,9 +66,7 @@ inline Eigen::Matrix3f rotationMatrixFromRPY(
   return m;
 }
 
-inline Eigen::Matrix4f transformationMat(
-    const Eigen::Matrix3f& R, const Eigen::Vector3f& T)
-{
+inline Eigen::Matrix4f transformationMat(const Eigen::Matrix3f& R, const Eigen::Vector3f& T) {
   Eigen::Matrix4f transform;
   transform.block<3,3>(0,0) = R;
   transform.block<3,1>(0,3) = T;
@@ -40,16 +74,13 @@ inline Eigen::Matrix4f transformationMat(
   return transform;
 }
 
-inline Eigen::Matrix4f createTransformationMatrix(
-    float x, float y, float z, float roll, float pitch, float yaw)
-{
+inline Eigen::Matrix4f createTransformationMatrix(float x, float y, float z, float roll, float pitch, float yaw) {
   const auto R = rotationMatrixFromRPY(roll, pitch, yaw);
   Eigen::Vector3f T = {x, y, z};
   return transformationMat(R, T);
 }
 
-inline Eigen::Matrix4f inverseTransform(const Eigen::Matrix4f& transform)
-{
+inline Eigen::Matrix4f inverseTransform(const Eigen::Matrix4f& transform) {
   Eigen::Matrix4f T_inv;
   Eigen::Matrix3f R = transform.block<3,3>(0,0).transpose();
 
@@ -72,9 +103,7 @@ inline std::string transformationMatrixToString(const Eigen::Matrix4f& Mat) {
   return ss.str();
 }
 
-inline float transoformationsError(
-    const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2)
-{
+inline float transoformationsError(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
   return (t1.inverse() * t2 - Eigen::Matrix4f::Identity()).norm();
 }
 

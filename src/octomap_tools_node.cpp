@@ -35,7 +35,6 @@
 int main(int argc, char **argv) {
 
   ros::init(argc, argv, "octomap_tools");
-  octomap_tools::OctomapTools merger;
   ros::spinOnce();
 
   return 0;

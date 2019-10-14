@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include <Eigen/Dense>
 #include <pcl/point_types.h>
 

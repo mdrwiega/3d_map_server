@@ -102,7 +102,6 @@ class FeaturesMatchingTest : public ::testing::Test
     viewer.addPointCloud(transformed_model, transformed_model_color_handler, "transformed_model");
     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "transformed_model");
 
-
     while (!viewer.wasStopped()) {
       viewer.spinOnce(100);
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -124,8 +123,8 @@ TEST_F(FeaturesMatchingTest, Test_fr)
   auto cloud_max = Vector3f(5, 5, 2.0);
   PrepareOcTree(octomap_name, cloud_min, cloud_max);
 
-  auto T = md::createTransformationMatrix(15.0, 0, 0.0, ToRad(0), ToRad(0), ToRad(0));
-  auto tree_model = transformOctree(*cropped_tree_, T);
+  auto T = md::createTransformationMatrix(15.0, 0, 0.0, ToRad(0), ToRad(0), ToRad(10));
+  auto tree_model = FastOcTreeTransform(*cropped_tree_, T);
 
   auto scene_cloud = OcTreeToPointCloud(*cropped_tree_);
   auto model_cloud = OcTreeToPointCloud(*tree_model);

@@ -8,13 +8,9 @@
 #pragma once
 
 #include <Eigen/Dense>
-
 #include <pcl/point_types.h>
-#include <octomap_tools/feature_cloud.h>
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/common/transforms.h>
 
-#include <octomap_tools/spiral_generator.h>
+#include <octomap_tools/utils.h>
 
 namespace octomap_tools {
 

@@ -30,6 +30,11 @@ using OcTreePtr = std::shared_ptr<octomap::OcTree>;
 using OcTreeNode = octomap::OcTreeNode;
 using OcTreeKey = octomap::OcTreeKey;
 
+struct Rectangle {
+  Eigen::Vector2f min;
+  Eigen::Vector2f max;
+};
+
 inline PointCloud createUniformPointCloud(Point min, Point max, Point step) {
   if (min.x > max.x || min.y > max.y || min.z > max.z)
     throw std::runtime_error("Incorrect ranges");
@@ -61,8 +66,7 @@ inline int getLeafDepth(const OcTree& tree, const OcTreeNode& node) {
   return -1;
 }
 
-inline std::string OcTreeInfoToString(const OcTree& input_tree, std::string name) {
-  std::stringstream ss;
+inline int getNumberOfOccupiedNodes(const OcTree& input_tree) {
   octomap::OcTree tree = input_tree;
   tree.expand();
   int num_occupied = 0;
@@ -70,10 +74,17 @@ inline std::string OcTreeInfoToString(const OcTree& input_tree, std::string name
      if (tree.isNodeOccupied(*i))
        num_occupied++;
    }
+  return num_occupied;
+}
+
+inline std::string OcTreeInfoToString(const OcTree& tree, std::string name) {
+  std::stringstream ss;
 
   double xMin, xMax, yMin, yMax, zMin, zMax;
   tree.getMetricMin(xMin, yMin, zMin);
   tree.getMetricMax(xMax, yMax, zMax);
+
+  int num_occupied = getNumberOfOccupiedNodes(tree);
   ss << "OcTree: " << name << "\n"
       << "Size: " << tree.size() << "  Leafs: " << tree.getNumLeafNodes() << "  Occupied nodes: " << num_occupied << "  Resolution: " << tree.getResolution() << "\n"
       << "Limits: x(" << xMin << ", " << xMax << ")  "
@@ -95,10 +106,35 @@ inline void printOcTree(const OcTree& tree, std::string name) {
   std::cout << std::endl;
 }
 
+// Get min and max of tree in O(log n) where n is number of tree nodes
+inline void getMinMaxOctree(const OcTree& tree, Point& min, Point& max) {
+  constexpr auto f_min = std::numeric_limits<float>::min();
+  constexpr auto f_max = std::numeric_limits<float>::max();
+  min = {f_max, f_max, f_max};
+  max = {f_min, f_min, f_min};
+
+  // Get min and max of tree
+  for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
+    const auto& p = i.getCoordinate();
+    if (p.x() < min.x) min.x = p.x();
+    if (p.y() < min.y) min.y = p.y();
+    if (p.z() < min.z) min.z = p.z();
+    if (p.x() > max.x) max.x = p.x();
+    if (p.y() > max.y) max.y = p.y();
+    if (p.z() > max.z) max.z = p.z();
+  }
+}
+
+inline void getMinMaxOctree(const OcTree& tree, Eigen::Vector3f& min, Eigen::Vector3f& max) {
+  Point pmin, pmax;
+  getMinMaxOctree(tree, pmin, pmax);
+  min = Eigen::Vector3f{pmin.x, pmin.y, pmin.z};
+  max = Eigen::Vector3f{pmax.x, pmax.y, pmax.z};
+}
+
 inline void filterOutPointsNotInRange(const PointCloud& cloudIn,
                                const Point& min, const Point& max,
-                               PointCloud& cloudOut)
-{
+                               PointCloud& cloudOut) {
   auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax){
     return (point.x < rMax.x && point.x > rMin.x) &&
         (point.y < rMax.y && point.y > rMin.y) &&
@@ -123,39 +159,32 @@ inline void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree) {
 }
 
 inline void printPointsAndDistances(std::string title, std::vector<Point>& points,
-                             std::vector<float>& distances)
-{
+                             std::vector<float>& distances) {
   std::cout << title << ": Points and distances: \n";
   for (unsigned i = 0; i < points.size(); ++i)
     std::cout << "(" << points[i].x << ", " << points[i].y << ", "
     << points[i].z << ") = " << distances[i] << "\n";
 }
 
-inline int getKeyDepth(const OcTree& tree, const octomap::point3d& point,
-                const octomap::OcTreeKey& key)
-{
-  for (int depth = tree.getTreeDepth(); depth > 1; --depth)
-  {
+inline int getKeyDepth(const OcTree& tree, const octomap::point3d& point, const octomap::OcTreeKey& key) {
+  for (int depth = tree.getTreeDepth(); depth > 1; --depth) {
     if (tree.coordToKey(point, depth) == key)
       return depth;
   }
   return -1;
 }
 
-inline float squaredNorm(const Point& p)
-{
+inline float squaredNorm(const Point& p) {
   return p.x * p.x + p.y * p.y + p.z * p.z;
 }
 
-inline float squaredDistance(const Point& p, const Point& q)
-{
+inline float squaredDistance(const Point& p, const Point& q) {
   Point x(p.x - q.x, p.y - q.y, p.z - q.z);
   return squaredNorm(x);
 }
 
 inline bool contains(OcTree& tree, const Point& query, float sqRadius,
-              const octomap::OcTreeKey& o)
-{
+              const octomap::OcTreeKey& o) {
   auto p = tree.keyToCoord(o);
   auto x = std::abs(query.x - p.x());
   auto y = std::abs(query.y - p.y());

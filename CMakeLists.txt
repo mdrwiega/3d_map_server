@@ -3,7 +3,7 @@ project(octomap_tools)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(CMAKE_CXX_STANDARD 14)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 set(CATKIN_ENABLE_TESTING 1)
 
 set(CATKIN_PACKAGE_DEPENDENCIES

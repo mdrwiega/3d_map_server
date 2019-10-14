@@ -75,7 +75,7 @@ class MapsIntegratorTest : public ::testing::Test
 
     tree_l_ = CropOcTree(*orig_tree_, cropped_min, tree_l_max);
     auto tree_r_tmp = CropOcTree(*orig_tree_, tree_r_min, cropped_max);
-    tree_r_ = transformOctree(*tree_r_tmp, transformation_);
+    tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
     PrintOcTreeInfo(*tree_l_, "tree_l");
     PrintOcTreeInfo(*tree_r_, "tree_r");
   }
