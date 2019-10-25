@@ -14,12 +14,11 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
-#include "md_utils/math/transformations.h"
-#include <md_utils/math/math_utils.h>
+#include <octomap_tools/math.h>
 #include "test_utils.h"
 #include <octomap_tools/feature_cloud.h>
 #include <octomap_tools/features_matching.h>
-#include "../include/octomap_tools/conversions.h"
+#include <octomap_tools/conversions.h>
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -123,7 +122,7 @@ TEST_F(FeaturesMatchingTest, Test_fr)
   auto cloud_max = Vector3f(5, 5, 2.0);
   PrepareOcTree(octomap_name, cloud_min, cloud_max);
 
-  auto T = md::createTransformationMatrix(15.0, 0, 0.0, ToRad(0), ToRad(0), ToRad(10));
+  auto T = createTransformationMatrix(15.0, 0, 0.0, ToRad(0), ToRad(0), ToRad(10));
   auto tree_model = FastOcTreeTransform(*cropped_tree_, T);
 
   auto scene_cloud = OcTreeToPointCloud(*cropped_tree_);
@@ -155,13 +154,13 @@ TEST_F(FeaturesMatchingTest, Test_fr)
 
   FeaturesMatching matcher(cfg_, scene_cloud, scene_cloud);
   FeaturesMatching::Result result = matcher.Align(0, cfg_, model_, scene_);
-  std::cout << "\nReal transformation between maps:\n" << md::transformationMatrixToString(T);
-  auto rpy_real = md::rad2deg(md::rotMatrixToRPY(T.block<3,3>(0,0)));
+  std::cout << "\nReal transformation between maps:\n" << transformationMatrixToString(T);
+  auto rpy_real = ToRad(rotMatrixToRPY(T.block<3,3>(0,0)));
   std::cout << "Real RPY: (" << rpy_real[0] << ", " << rpy_real[1] << ", " << rpy_real[2] << ")\n";
 
   result_transf_ = result.transformation;
-  std::cout << "\n\nEstimated transformation between maps:\n" << md::transformationMatrixToString(result_transf_);
-  auto rpy_est = md::rad2deg(md::rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
+  std::cout << "\n\nEstimated transformation between maps:\n" << transformationMatrixToString(result_transf_);
+  auto rpy_est = ToRad(rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
   std::cout << "Real RPY: (" << rpy_est[0] << ", " << rpy_est[1] << ", " << rpy_est[2] << ")\n";
 
   ShowPointCloudAndKeypoints(result.transformation);

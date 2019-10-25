@@ -8,9 +8,9 @@
 #include <chrono>
 #include <thread>
 
-#include "md_utils/math/transformations.h"
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
+#include <octomap_tools/math.h>
 #include <octomap_tools/conversions.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
@@ -18,7 +18,6 @@
 #include "test_utils.h"
 
 using namespace octomap;
-using namespace md;
 using namespace Eigen;
 using namespace std::chrono;
 
@@ -66,7 +65,7 @@ class OctreeTransformationsTest : public ::testing::Test {
 
     for (auto i = transformed_tree->begin_leafs(); i != transformed_tree->end_leafs(); ++i) {
       const auto& point = i.getCoordinate();
-      Eigen::Vector4f p = md::inverseTransform(T) * Eigen::Vector4f{point.x(), point.y(), point.z(), 1};
+      Eigen::Vector4f p = inverseTransform(T) * Eigen::Vector4f{point.x(), point.y(), point.z(), 1};
       const auto& v = i->getValue();
 
       // Find near points in initial set
@@ -247,7 +246,7 @@ TEST_F(OctreeTransformationsTest, FastMethod_fr) {
   auto cloud_max = Vector3f(5, 5, 2.0);
   PrepareOcTree(octomap_name, cloud_min, cloud_max);
 
-  auto T = md::createTransformationMatrix(20.1, 0, 0.0, ToRad(0), ToRad(0), ToRad(90));
+  auto T = createTransformationMatrix(20.1, 0, 0.0, ToRad(0), ToRad(0), ToRad(90));
 
   auto start = std::chrono::high_resolution_clock::now();
   auto transformed_tree = FastOcTreeTransform(*cropped_tree_, T);

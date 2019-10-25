@@ -9,10 +9,8 @@
 
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
+#include <octomap_tools/math.h>
 #include "test_utils.h"
-#include "md_utils/math/transformations.h"
-#include <md_utils/math/math_utils.h>
-#include <md_utils/utils.h>
 
 #include "../include/octomap_tools/conversions.h"
 #include "../include/octomap_tools/maps_integrator.h"
@@ -20,14 +18,13 @@
 using namespace Eigen;
 using namespace octomap_tools;
 using namespace octomap;
-using namespace md;
 using namespace std::chrono;
 
 class MapsIntegratorTest : public ::testing::Test
 {
  public:
   MapsIntegratorTest() {
-    date_and_time_ = md::getCurrentDateAndTime();
+    date_and_time_ = getCurrentDateAndTime();
     configure();
   }
 
@@ -38,12 +35,12 @@ class MapsIntegratorTest : public ::testing::Test
     file << OcTreeInfoToString(*tree_l_, "cloud_l");
     file << OcTreeInfoToString(*tree_r_, "cloud_r");
 
-    file << "\nReal transformation between maps:\n" << md::transformationMatrixToString(transformation_);
-    auto rpy_real = md::rad2deg(md::rotMatrixToRPY(transformation_.block<3,3>(0,0)));
+    file << "\nReal transformation between maps:\n" << transformationMatrixToString(transformation_);
+    auto rpy_real = ToRad(rotMatrixToRPY(transformation_.block<3,3>(0,0)));
     file << "Real RPY: (" << rpy_real[0] << ", " << rpy_real[1] << ", " << rpy_real[2] << ")\n";
 
-    file << "\n\nEstimated transformation between maps:\n" << md::transformationMatrixToString(result_transf_);
-    auto rpy_est = md::rad2deg(md::rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
+    file << "\n\nEstimated transformation between maps:\n" << transformationMatrixToString(result_transf_);
+    auto rpy_est =ToRad(rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
     file << "Real RPY: (" << rpy_est[0] << ", " << rpy_est[1] << ", " << rpy_est[2] << ")\n";
 
     file << "\n\nError: " << (transformation_ * result_transf_  - Eigen::Matrix4f::Identity()).norm() << "\n";
@@ -128,7 +125,7 @@ TEST_F(MapsIntegratorTest, Test_fr)
   std::string octomap_name = "fr_079";
   auto cloud_min = Vector3f(-10, -10, 0.0);
   auto cloud_max = Vector3f(10, 10, 2.0);
-  transformation_ = md::createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
+  transformation_ = createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
   x_common_ = 4.5;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
 
@@ -145,7 +142,7 @@ TEST_F(MapsIntegratorTest, Test_fr_campus)
   std::string octomap_name = "fr_campus";
   auto cloud_min = Vector3f(-10, -10, 1.0);
   auto cloud_max = Vector3f(40, 10, 10.0);
-  transformation_ = md::createTransformationMatrix(10, 5, 0.3, ToRad(5), ToRad(5), ToRad(10));
+  transformation_ = createTransformationMatrix(10, 5, 0.3, ToRad(5), ToRad(5), ToRad(10));
   x_common_ = 8;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
 
@@ -160,7 +157,7 @@ TEST_F(MapsIntegratorTest, Test_fr_campus)
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m1)
 {
   std::string octomap_name = "pwr_d20_f5_m1";
-  transformation_ = md::createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5), ToRad(5), ToRad(65));
+  transformation_ = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5), ToRad(5), ToRad(65));
   x_common_ = 4;
   PrepareSceneAndModelWithXDivision(octomap_name);
 
@@ -174,7 +171,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m1)
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
 {
   std::string octomap_name = "pwr_d20_f5_m3";
-  transformation_ = md::createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5), ToRad(5), ToRad(65));
+  transformation_ = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5), ToRad(5), ToRad(65));
   x_common_ = 4;
   PrepareSceneAndModelWithXDivision(octomap_name);
 
@@ -188,7 +185,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
 {
   std::string octomap_name = "pwr_d20_f5_m4";
-  transformation_ = md::createTransformationMatrix(16, 6, 0.3, ToRad(5), ToRad(5), ToRad(90));
+  transformation_ = createTransformationMatrix(16, 6, 0.3, ToRad(5), ToRad(5), ToRad(90));
   x_common_ = 4;
   PrepareSceneAndModelWithXDivision(octomap_name);
 
@@ -202,7 +199,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
 {
   std::string octomap_name = "pwr_d20_f5_m4";
-  transformation_ = md::createTransformationMatrix(20, 6, 0.3, ToRad(5), ToRad(5), ToRad(15));
+  transformation_ = createTransformationMatrix(20, 6, 0.3, ToRad(5), ToRad(5), ToRad(15));
   x_common_ = 5;
   PrepareSceneAndModelWithXDivision(octomap_name);
 
@@ -218,7 +215,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
   std::string octomap_name = "fr_079";
   auto cloud_min = Vector4f(-10, -10, -0.5, 1.0);
   auto cloud_max = Vector4f(7, 7, 2.0, 1.0);
-  transformation_ = md::createTransformationMatrix(8.5, 1.5, 0.1, ToRadians(3), ToRadians(2), ToRadians(25));
+  transformation_ = createTransformationMatrix(8.5, 1.5, 0.1, ToRadians(3), ToRadians(2), ToRadians(25));
   x_common_ = 4;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
 

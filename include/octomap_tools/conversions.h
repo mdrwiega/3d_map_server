@@ -8,6 +8,7 @@
 #pragma once
 
 #include <chrono>
+#include <cmath>
 
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -17,8 +18,6 @@
 #include <octomap_tools/utils.h>
 
 namespace octomap_tools {
-
-constexpr double kPi  = 3.14159265358979323846;
 
 inline Point ToPcl(const Eigen::Vector3f& v) {
   return Point(v(0), v(1), v(2));
@@ -41,15 +40,12 @@ inline octomap::point3d ToOctomap(const Eigen::Vector3f& p) {
 }
 
 template <typename T>
-constexpr T pi() { return std::atan(1)*4; }
-
-template <typename T>
 constexpr T ToDeg(T angle) {
-  return angle * 180.0 / pi<T>();
+  return angle * 180.0 / M_PI;
 }
 
 template <typename T> constexpr T ToRad(T angle) {
-  return angle * pi<T>() / 180.0;
+  return angle * M_PI / 180.0;
 }
 
 inline Eigen::Matrix3Xf OctreeToPoints(const octomap::OcTree& input_tree) {

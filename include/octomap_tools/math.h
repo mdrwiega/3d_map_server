@@ -122,4 +122,13 @@ inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& Mat) {
   return ss.str();
 }
 
+inline std::string getCurrentDateAndTime() {
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+  return oss.str();
+}
+
 }
