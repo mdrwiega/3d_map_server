@@ -99,13 +99,14 @@ class MapsIntegratorTest : public ::testing::Test
     config_.template_alignment.min_sample_distance = 0.2;
     config_.template_alignment.max_correspondence_distance = 100.0;
     config_.template_alignment.fitness_score_dist = 0.5;
-    config_.template_alignment.feature_cloud.normal_radius = 15.0;
+    config_.template_alignment.feature_cloud.normal_radius = 20.0;
     config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
     config_.template_alignment.feature_cloud.descriptors_radius = 1.5;
+    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsDetectMethod::Iss3d;
     config_.template_alignment.cell_size_x = 3;
     config_.template_alignment.cell_size_y = 3;
     config_.template_alignment.model_size_thresh_ = 400;
-    config_.template_alignment.keypoints_thresh_ = 150;
+    config_.template_alignment.keypoints_thresh_ = 40;
   }
 
   OcTreePtr orig_tree_;
@@ -315,4 +316,10 @@ TEST(SpiralTest, GenerateSpiralTraverse)
     auto cell = cells_seq[i];
     std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
   }
+}
+
+int main(int argc, char **argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

@@ -61,6 +61,14 @@ class ICP {
       scene = scene_;
     }
 
+    if (model_->size() == 0) {
+      throw std::runtime_error("ICP: Empty model");
+    }
+
+    if (scene_->size() == 0) {
+      throw std::runtime_error("ICP: Empty scene");
+    }
+
     pcl::IterativeClosestPoint <Point, Point> icp;
     icp.setMaxCorrespondenceDistance(cfg_.max_nn_dist);
     icp.setMaximumIterations(cfg_.max_iter);
@@ -68,6 +76,8 @@ class ICP {
     icp.setEuclideanFitnessEpsilon(cfg_.fitness_eps);
     icp.setInputSource(model_);
     icp.setInputTarget(scene);
+
+
 
     PointCloud dummy_output;
     icp.align (dummy_output);

@@ -30,8 +30,12 @@ catkin_package(
   DEPENDS OCTOMAP EIGEN3 PCL
 )
 
-include_directories( 
-	include 
+### FOR PROFILING (need to set after catkin_package)
+#add_compile_options(-pg)
+#set(catkin_LIBRARIES ${catkin_LIBRARIES} -pg)
+
+include_directories(
+	include
 	${catkin_INCLUDE_DIRS}
 	${OCTOMAP_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
@@ -78,10 +82,14 @@ target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES}
 
 
 if (CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+    add_rostest_gtest(octomaps_integrator_test test/octomaps_integrator.test test/octomaps_integrator_test.cpp)
+    target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
+
     set(TESTS_SRC 
-        test/main.cpp
+        test/test_octomap_tools.cpp
         test/transformations_test.cpp
-        test/octomaps_integrator_test.cpp
+#        test/octomaps_integrator_test.cpp
         test/conversions_test.cpp
         test/feature_cloud_test.cpp
         test/features_matching_test.cpp

@@ -288,4 +288,16 @@ inline void ExpandOccupiedNodesRecursive(octomap::OcTree& tree,
   }
 }
 
+inline int GetNumberOfNaNInPointCloud(const PointCloud &cloud) {
+    int j = 0;
+    for (int i = 0; i < static_cast<int>(cloud.points.size ()); ++i) {
+      if (!std::isfinite (cloud.points[i].x) || 
+          !std::isfinite (cloud.points[i].y) || 
+          !std::isfinite (cloud.points[i].z)) {
+            j++;
+          }
+    }
+    return j;
+}
+
 }

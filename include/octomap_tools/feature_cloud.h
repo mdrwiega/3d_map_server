@@ -17,7 +17,7 @@
 #include <pcl/keypoints/sift_keypoint.h>
 #include <pcl/keypoints/impl/sift_keypoint.hpp>
 #include <pcl/keypoints/iss_3d.h>
-
+#include <pcl/filters/extract_indices.h>
 #include <octomap_tools/utils.h>
 
 namespace octomap_tools {
@@ -44,30 +44,12 @@ class FeatureCloud {
     float iss_threshold32 = 0.975;
   };
 
-  FeatureCloud() = default;
-
-  FeatureCloud(Config config) :
-    cfg_(config) {
-  }
-
   FeatureCloud(PointCloud::Ptr cloud, Config config) :
     cloud_(cloud),
     cfg_(config) {
   }
 
   ~FeatureCloud() = default;
-
-  void setInputCloud (PointCloud::Ptr cloud) {
-    cloud_ = cloud;
-    processInput();
-  }
-
-  // Load and process the cloud in the given PCD file
-  void loadInputCloud (const std::string &pcd_file) {
-    cloud_ = PointCloud::Ptr (new PointCloud);
-    pcl::io::loadPCDFile (pcd_file, *cloud_);
-    processInput();
-  }
 
   PointCloud::Ptr getPointCloud() const {
     return cloud_;
@@ -127,6 +109,21 @@ class FeatureCloud {
       iss_detector.compute (*keypoints_);
     }
 
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    for (size_t i = 0; i < keypoints_->size(); ++i) {
+      if (!std::isfinite (keypoints_->points[i].x) || 
+          !std::isfinite (keypoints_->points[i].y) || 
+          !std::isfinite (keypoints_->points[i].z)) {
+        inliers->indices.push_back(i);
+      }
+    }
+    std::cout << "\nRemoved " << inliers->indices.size() << " keypoints with NaN\n";
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud(keypoints_);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter(*keypoints_);
+
     //    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
     //        std::chrono::high_resolution_clock::now() - start);
     //    std::cout << "From cloud (size: " << cloud_->size() << ") extracted "
@@ -139,11 +136,32 @@ class FeatureCloud {
     descriptors_ = Descriptors::Ptr(new Descriptors);
     pcl::SHOTEstimationOMP<Point, NormalType, DescriptorType> descr_est;
     //    pcl::FPFHEstimation<Point, NormalType, DescriptorType> descr_est;
+    
     descr_est.setRadiusSearch (cfg_.descriptors_radius);
     descr_est.setInputCloud (keypoints_);
     descr_est.setInputNormals (normals_);
     descr_est.setSearchSurface (cloud_);
     descr_est.compute (*descriptors_);
+
+    // Remove NaN descriptors and related keypoints
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+    for (size_t i = 0; i < descriptors_->size(); ++i) {
+      if (pcl_isnan( (*descriptors_)[i].descriptor[0]) || pcl_isnan((*descriptors_)[i].rf[0])) {
+        inliers->indices.push_back(i);
+      }
+    }
+
+  pcl::ExtractIndices<pcl::PointXYZ> extract;
+  extract.setInputCloud(keypoints_);
+  extract.setIndices(inliers);
+  extract.setNegative(true);
+  extract.filter(*keypoints_);
+
+  pcl::ExtractIndices<DescriptorType> extract_descriptors;
+  extract_descriptors.setInputCloud(descriptors_);
+  extract_descriptors.setIndices(inliers);
+  extract_descriptors.setNegative(true);
+  extract_descriptors.filter(*descriptors_);
 
     //    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
     //        std::chrono::high_resolution_clock::now() - start);

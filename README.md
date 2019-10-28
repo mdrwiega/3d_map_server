@@ -33,3 +33,7 @@ Run merge octomaps test - fr079
 
 Run merge octomaps test - pwr d20
 `~/catkin_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m4_t2`
+
+### Rostests
+
+`rostest octomap_tools octomaps_integrator.test --text`

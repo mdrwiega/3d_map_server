@@ -239,18 +239,27 @@ FeaturesMatching::Result align(int nr, FeaturesMatching::Config& cfg,
   using DescriptorType = FeatureCloud::DescriptorType;
 
   auto start = std::chrono::high_resolution_clock::now();
+
+  Point ppmin, ppmax;
+  pcl::getMinMax3D(*(model->getPointCloud()), ppmin, ppmax);
+  std::cout << "Task " << nr << ": Align template with " << model->getKeypoints()->size() << " keypoints, ";
+  std::cout << std::setprecision(2) << std::fixed;
+  std::cout << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  ";
+  std::cout << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n";
+  std::cout << "  Scene size: " << scene->getPointCloud()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->getPointCloud())
+            << " keypoints: " << scene->getKeypoints()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->getKeypoints())
+            << " descriptors: " << scene->getDescriptors()->size()
+            << "\n"
+            << "  Model size: " << model->getPointCloud()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*model->getPointCloud())
+            << " keypoints: " << model->getKeypoints()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*model->getKeypoints())
+            << " descriptors: " << model->getDescriptors()->size()
+            << "\n\n";
+
   pcl::SampleConsensusInitialAlignment<Point, Point, DescriptorType> sac_ia_;
   sac_ia_.setMinSampleDistance(cfg.min_sample_distance);
   sac_ia_.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
   sac_ia_.setMaximumIterations(cfg.nr_iterations);
   sac_ia_.setNumberOfSamples(3);
-
-  Point ppmin, ppmax;
-  pcl::getMinMax3D(*(model->getPointCloud()), ppmin, ppmax);
-  std::cout << "T" << nr << ": Align template with " << model->getKeypoints()->size() << " keypoints, ";
-  std::cout << std::setprecision(2) << std::fixed;
-  std::cout << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  ";
-  std::cout << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n";
 
   sac_ia_.setInputSource(model->getKeypoints());
   sac_ia_.setSourceFeatures (model->getDescriptors());
@@ -266,7 +275,7 @@ FeaturesMatching::Result align(int nr, FeaturesMatching::Config& cfg,
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  std::cout << "T" << nr <<  ": Clouds aligned with score: " << result.fitness_score << " in: " << diff.count() << " ms." << std::endl;
+  std::cout << "Task " << nr <<  ": Clouds aligned with score: " << result.fitness_score << " in: " << diff.count() << " ms." << std::endl;
   return result;
 }
 
