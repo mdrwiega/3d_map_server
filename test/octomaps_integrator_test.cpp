@@ -82,7 +82,7 @@ class MapsIntegratorTest : public ::testing::Test
     config_.fitness_score_thresh = 0.002;
     config_.show_visualization_ = false;
     config_.show_keypoints_ = false;
-    config_.integrate_octomaps = false;
+    config_.integrate_octomaps = true;
     config_.show_integrated_octomaps = false;
     config_.show_two_pointclouds = false;
     config_.icp.max_iter = 500;
@@ -102,7 +102,7 @@ class MapsIntegratorTest : public ::testing::Test
     config_.template_alignment.feature_cloud.normal_radius = 20.0;
     config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
     config_.template_alignment.feature_cloud.descriptors_radius = 1.5;
-    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsDetectMethod::Iss3d;
+    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsDetectMethod::Uniform;
     config_.template_alignment.cell_size_x = 3;
     config_.template_alignment.cell_size_y = 3;
     config_.template_alignment.model_size_thresh_ = 400;
@@ -129,6 +129,78 @@ TEST_F(MapsIntegratorTest, Test_fr)
   transformation_ = createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
   x_common_ = 4.5;
   PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+}
+
+TEST_F(MapsIntegratorTest, Test_fr_cascade_step2)
+{
+  std::string octomap_name = "fr_079";
+  auto octomap_min = Vector3f(-10, -10, 0.0);
+  auto octomap_max = Vector3f(25, 10, 2.0);
+  transformation_ = createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
+
+  orig_tree_ = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*orig_tree_, "orig_tree");
+
+  if (octomap_min != Vector3f{0,0,0} && octomap_max != Vector3f{0,0,0}) {
+    cropped_tree_ = CropOcTree(*orig_tree_, octomap_min, octomap_max);
+    PrintOcTreeInfo(*cropped_tree_, "cropped_tree");
+  } else {
+    cropped_tree_ = orig_tree_;
+  }
+
+  Eigen::Vector3f cropped_min, cropped_max;
+  getMinMaxOctree(*cropped_tree_, cropped_min, cropped_max);
+  Vector3f tree_l_max = {10.0, cropped_max(1), cropped_max(2)};
+  Vector3f tree_r_min = {8.0, cropped_min(1), cropped_min(2)};
+
+  tree_l_ = CropOcTree(*orig_tree_, cropped_min, tree_l_max);
+  auto tree_r_tmp = CropOcTree(*orig_tree_, tree_r_min, cropped_max);
+  tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+}
+
+TEST_F(MapsIntegratorTest, Test_fr_cascade_step3)
+{
+  std::string octomap_name = "fr_079";
+  auto octomap_min = Vector3f(-10, -10, 0.0);
+  auto octomap_max = Vector3f(40, 10, 2.0);
+  transformation_ = createTransformationMatrix(12, 6, 0.5, ToRad(5), ToRad(5), ToRad(60));
+
+  orig_tree_ = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*orig_tree_, "orig_tree");
+
+  if (octomap_min != Vector3f{0,0,0} && octomap_max != Vector3f{0,0,0}) {
+    cropped_tree_ = CropOcTree(*orig_tree_, octomap_min, octomap_max);
+    PrintOcTreeInfo(*cropped_tree_, "cropped_tree");
+  } else {
+    cropped_tree_ = orig_tree_;
+  }
+
+  Eigen::Vector3f cropped_min, cropped_max;
+  getMinMaxOctree(*cropped_tree_, cropped_min, cropped_max);
+  Vector3f tree_l_max = {25.0, cropped_max(1), cropped_max(2)};
+  Vector3f tree_r_min = {22.0, cropped_min(1), cropped_min(2)};
+
+  tree_l_ = CropOcTree(*orig_tree_, cropped_min, tree_l_max);
+  auto tree_r_tmp = CropOcTree(*orig_tree_, tree_r_min, cropped_max);
+  tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
 
   config_.show_visualization_ = true;
   config_.show_two_pointclouds = true;
@@ -196,6 +268,71 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
   features_matcher.compute();
 }
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
+{
+  std::string octomap_name = "pwr_d20_f5_m3";
+  transformation_ = createTransformationMatrix(14, 6, 0.5, ToRad(5), ToRad(5), ToRad(30));
+
+  orig_tree_ = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*orig_tree_, "orig_tree");
+
+  Vector3f map1_min = {-17.0, 12, 0};
+  Vector3f map1_max = {6.0, 20, 2};
+
+  Vector3f map2_min = {2.0, 6, 0};
+  Vector3f map2_max = {20.0, 20, 2};
+
+  tree_l_ = CropOcTree(*orig_tree_, map1_min, map1_max);
+  auto tree_r_tmp = CropOcTree(*orig_tree_, map2_min, map2_max);
+  tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
+
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+}
+
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
+{
+  std::string octomap_name = "pwr_d20_f5_m3";
+  transformation_ = createTransformationMatrix(18, 4, 0.5, ToRad(5), ToRad(5), ToRad(30));
+
+  orig_tree_ = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*orig_tree_, "orig_tree");
+
+  Vector3f map1_min = {-17.0, 6, 0};
+  Vector3f map1_max = {20.0, 20, 2};
+
+  Vector3f map2p1_min = {-18.0, -17, 0};
+  Vector3f map2p1_max = {7.0, 4, 2};
+
+  Vector3f map2p2_min = {-10.0, -17, 0};
+  Vector3f map2p2_max = {0.0, 20, 2};
+
+  auto tree2_p1 = CropOcTree(*orig_tree_, map2p1_min, map2p1_max);
+  auto tree2_p2 = CropOcTree(*orig_tree_, map2p2_min, map2p2_max);
+  auto tree_r_tmp = FastSumOctrees(*tree2_p1, *tree2_p2);
+
+  tree_l_ = CropOcTree(*orig_tree_, map1_min, map1_max);
+  tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
+
+  config_.template_alignment.cell_size_x = 4.5;
+  config_.template_alignment.cell_size_y = 4.5;
+  config_.show_visualization_ = true;
+  config_.show_two_pointclouds = true;
+
+  MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
+  auto res = features_matcher.compute();
+  result_transf_ = res.transformation;
+}
+
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
 {
@@ -304,22 +441,23 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
 //  }
 }*/
 
-TEST(SpiralTest, GenerateSpiralTraverse)
-{
-  Eigen::Vector2f rectangle_min (-4, -2);
-  Eigen::Vector2f rectangle_max (2, 3);
-  Eigen::Vector2f step_xy (1, 2);
+// TEST(SpiralTest, GenerateSpiralTraverse)
+// {
+//   Eigen::Vector2f rectangle_min (-4, -2);
+//   Eigen::Vector2f rectangle_max (2, 3);
+//   Eigen::Vector2f step_xy (1, 2);
 
-  auto cells_seq = generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
+//   auto cells_seq = generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
 
-  for (size_t i = 0; i < cells_seq.size(); ++i) {
-    auto cell = cells_seq[i];
-    std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
-  }
-}
+//   for (size_t i = 0; i < cells_seq.size(); ++i) {
+//     auto cell = cells_seq[i];
+//     std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
+//   }
+// }
 
-int main(int argc, char **argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+// int main(int argc, char **argv)
+// {
+//   ::testing::InitGoogleTest(&argc, argv);
+//   return RUN_ALL_TESTS();
+// }
+

@@ -83,13 +83,13 @@ target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES}
 
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
-    add_rostest_gtest(octomaps_integrator_test test/octomaps_integrator.test test/octomaps_integrator_test.cpp)
+    add_rostest_gtest(octomaps_integrator_test test/octomaps_integrator.test test/octomaps_integrator_test.cpp test/test_octomap_tools.cpp)
     target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
 
-    set(TESTS_SRC 
+    set(TESTS_SRC
         test/test_octomap_tools.cpp
         test/transformations_test.cpp
-#        test/octomaps_integrator_test.cpp
+        test/octomaps_integrator_test.cpp
         test/conversions_test.cpp
         test/feature_cloud_test.cpp
         test/features_matching_test.cpp

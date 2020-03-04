@@ -143,6 +143,17 @@ OcTreePtr CropOcTree(const OcTree& tree_in, const Eigen::Vector3f& min, const Ei
   return tree_out;
 }
 
+OcTreePtr FastSumOctrees(const OcTree& tree1, const OcTree& tree2) {
+  OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
+  for (auto leaf2 = tree2.begin_leafs(); leaf2 != tree2.end_leafs(); ++leaf2) {
+    point3d point = leaf2.getCoordinate();
+    auto node = tree_out->updateNode(point, true);
+    node->setLogOdds(leaf2->getLogOdds());
+  }
+  tree_out->prune();
+  return tree_out;
+}
+
 OcTreePtr SumOctrees(const OcTree& tree1, const OcTree& tree2) {
   OcTreePtr tree_out = std::make_unique<OcTree>(tree1);
 

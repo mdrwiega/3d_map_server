@@ -28,6 +28,8 @@ OcTreePtr OcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformat
  */
 OcTreePtr CropOcTree(const OcTree& tree_in, const Eigen::Vector3f& min, const Eigen::Vector3f& max);
 
+OcTreePtr FastSumOctrees(const OcTree& tree1, const OcTree& tree2);
+
 OcTreePtr SumOctrees(const OcTree& tree1, const OcTree& tree2);
 
 void FilterLeafsNotInRange(const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out);

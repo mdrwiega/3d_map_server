@@ -10,6 +10,7 @@
 #include <octomap_tools/features_matching.h>
 #include <octomap_tools/conversions.h>
 #include <octomap_tools/math.h>
+#include <octomap_tools/octomap_io.h>
 #include "utils/table_printer.h"
 
 namespace octomap_tools {
@@ -53,6 +54,7 @@ MapsIntegrator::Result MapsIntegrator::compute() {
   OcTreePtr merged_tree;
   if (cfg_.integrate_octomaps) {
     merged_tree = integrateOctrees(ia_result.transformation);
+    SaveOcTreeToFile(*merged_tree, cfg_.files_path_and_pattern + "merged_tree.ot");
   }
 
   if (cfg_.dump_to_file_) {
@@ -84,7 +86,7 @@ OcTreePtr MapsIntegrator::integrateOctrees(const Eigen::Matrix4f& transformation
   std::cout << "Model octomap transformed in " << diff.count() << " ms." << std::endl;
 
   start = std::chrono::high_resolution_clock::now();
-  auto merged_tree = SumOctrees(*tree_model_transformed, *scene_tree_);
+  auto merged_tree = FastSumOctrees(*tree_model_transformed, *scene_tree_);
   diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
   std::cout << "Octomaps merged in " << diff.count() << " ms." << std::endl;
   return merged_tree;
