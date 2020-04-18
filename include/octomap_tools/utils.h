@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2017-2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <memory>
@@ -15,25 +8,14 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <octomap/octomap.h>
 #include <Eigen/Dense>
 
+#include <octomap_tools/types.h>
+
 namespace octomap_tools {
-
-using Point = pcl::PointXYZ;
-using PointCloud = pcl::PointCloud<Point>;
-using PointCloudPtr = PointCloud::Ptr;
-
-using OcTree = octomap::OcTree;
-using OcTreePtr = std::shared_ptr<octomap::OcTree>;
-using OcTreeNode = octomap::OcTreeNode;
-using OcTreeKey = octomap::OcTreeKey;
-
-struct Rectangle {
-  Eigen::Vector2f min;
-  Eigen::Vector2f max;
-};
 
 inline PointCloud createUniformPointCloud(Point min, Point max, Point step) {
   if (min.x > max.x || min.y > max.y || min.z > max.z)
@@ -151,7 +133,7 @@ inline void filterOutPointsNotInRange(const PointCloud& cloudIn,
 
 inline void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree) {
   for (unsigned k = 0; k < 8; k++) {
-    if (!node->childExists(k)) {
+    if (!tree.nodeChildExists(node, k)) {
       OcTreeNode* newNode = tree.createNodeChild(node, k);
       newNode->copyData(*node);
     }
@@ -291,13 +273,38 @@ inline void ExpandOccupiedNodesRecursive(octomap::OcTree& tree,
 inline int GetNumberOfNaNInPointCloud(const PointCloud &cloud) {
     int j = 0;
     for (int i = 0; i < static_cast<int>(cloud.points.size ()); ++i) {
-      if (!std::isfinite (cloud.points[i].x) || 
-          !std::isfinite (cloud.points[i].y) || 
+      if (!std::isfinite (cloud.points[i].x) ||
+          !std::isfinite (cloud.points[i].y) ||
           !std::isfinite (cloud.points[i].z)) {
             j++;
           }
     }
     return j;
+}
+
+inline void FilterOutNaNs(PointCloud::Ptr& cloud_ptr, bool debug = false) {
+  // Find points with NaNs
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
+
+  for (size_t i = 0; i < cloud_ptr->size(); ++i) {
+    if (!std::isfinite (cloud_ptr->points[i].x) ||
+        !std::isfinite (cloud_ptr->points[i].y) ||
+        !std::isfinite (cloud_ptr->points[i].z)) {
+      inliers->indices.push_back(i);
+    }
+  }
+
+  // Filter out points with NANs
+  if (inliers->indices.size() > 0) {
+    pcl::ExtractIndices<pcl::PointXYZ> extract;
+    extract.setInputCloud(cloud_ptr);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter(*cloud_ptr);
+    if (debug) {
+      std::cout << "\nRemoved " << inliers->indices.size() << " points with NaN\n";
+    }
+  }
 }
 
 }

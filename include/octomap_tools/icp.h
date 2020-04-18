@@ -40,9 +40,9 @@ class ICP {
   };
 
   struct Result {
-    float fitness_score;
+    double fitness_score;
     Eigen::Matrix4f transformation;
-    float processing_time_ms;
+    double processing_time_ms;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   };
 
@@ -77,8 +77,6 @@ class ICP {
     icp.setInputSource(model_);
     icp.setInputTarget(scene);
 
-
-
     PointCloud dummy_output;
     icp.align (dummy_output);
 
@@ -90,7 +88,7 @@ class ICP {
       MapsIntegratorVisualizer visualizer(visualizar_cfg);
       visualizer.visualizeICP(scene, model_, icp.getFinalTransformation());
     }
-    return Result {icp.getFitnessScore(cfg_.fitness_score_dist), icp.getFinalTransformation(), static_cast<float>(diff_time)};
+    return Result {icp.getFitnessScore(cfg_.fitness_score_dist), icp.getFinalTransformation(), static_cast<double>(diff_time)};
   }
 
  protected:

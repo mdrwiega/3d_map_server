@@ -1,10 +1,19 @@
-cmake_minimum_required(VERSION 2.8.11)
-project(octomap_tools)
+cmake_minimum_required(VERSION 3.10.0)
+project(octomap_tools CXX)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_BUILD_TYPE Debug)
 set(CATKIN_ENABLE_TESTING 1)
+
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE Release)
+
+add_compile_options(
+  -Wall
+  # -Werror
+  # -pthread
+)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   roscpp
@@ -46,6 +55,7 @@ add_definitions(${EIGEN3_DEFINITIONS})
 add_definitions(${PCL_DEFINITIONS})
 
 add_library(${PROJECT_NAME}
+  src/feature_cloud.cpp
 	src/features_matching.cpp
 	src/maps_integrator_visualizer.cpp
 	src/maps_integrator.cpp
@@ -87,12 +97,12 @@ if (CATKIN_ENABLE_TESTING)
     target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
 
     set(TESTS_SRC
-        test/test_octomap_tools.cpp
-        test/transformations_test.cpp
-        test/octomaps_integrator_test.cpp
         test/conversions_test.cpp
         test/feature_cloud_test.cpp
         test/features_matching_test.cpp
+        test/octomaps_integrator_test.cpp
+        test/test_octomap_tools.cpp
+        test/transformations_test.cpp
     )
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})

@@ -4,7 +4,7 @@ class FeatureCloud {
   FeatureCloud(cloud, config)
   processInput()
   computeSufraceNormals()
-  downsampleAndExtractKeypoints()
+  ExtractKeypoints()
   computeDescriptors()
 }
 

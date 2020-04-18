@@ -7,12 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "test_utils.h"
-
-using namespace octomap_tools;
-using namespace Eigen;
-
-TEST(OcTreeConversions, octree_to_cloud) {
+TEST(Conversions, octree_to_pointcloud) {
   auto tree_res = 0.1;
   octomap::OcTree tree(tree_res);
 
@@ -36,8 +31,8 @@ TEST(OcTreeConversions, octree_to_cloud) {
     }
   }
 
-  PrintOcTreeInfo(tree, "Tree before conversion");
-  auto cloud = OcTreeToPointCloud(tree);
+  // PrintOcTreeInfo(tree, "Tree before conversion");
+  auto cloud = octomap_tools::OcTreeToPointCloud(tree);
 
   // Calculate num of occupied nodes in tree for comparison
   tree.expand();
@@ -47,7 +42,6 @@ TEST(OcTreeConversions, octree_to_cloud) {
       num_occ_leafs++;
     }
   }
-
   EXPECT_EQ(cloud->size(), num_occ_leafs);
 }
 

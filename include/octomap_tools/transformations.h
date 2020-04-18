@@ -9,12 +9,12 @@
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
 
-#include <octomap_tools/utils.h>
+#include <octomap_tools/types.h>
 
 namespace octomap_tools {
 
 /**
- * Transforms octree based on passed transformation
+ * Transforms octree
  */
 OcTreePtr FastOcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformation);
 

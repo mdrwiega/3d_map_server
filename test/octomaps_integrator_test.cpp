@@ -102,7 +102,7 @@ class MapsIntegratorTest : public ::testing::Test
     config_.template_alignment.feature_cloud.normal_radius = 20.0;
     config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
     config_.template_alignment.feature_cloud.descriptors_radius = 1.5;
-    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsDetectMethod::Uniform;
+    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Uniform;
     config_.template_alignment.cell_size_x = 3;
     config_.template_alignment.cell_size_y = 3;
     config_.template_alignment.model_size_thresh_ = 400;

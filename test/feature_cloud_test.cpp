@@ -6,35 +6,41 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
-#include <fstream>
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
 #include <octomap_tools/feature_cloud.h>
 #include <octomap_tools/conversions.h>
 #include "test_utils.h"
 
-using namespace Eigen;
 using namespace octomap_tools;
 using namespace octomap;
 using namespace std::chrono;
 
-class FeatureCloudTest : public ::testing::Test
-{
+class FeatureCloudTest : public ::testing::Test {
  public:
   FeatureCloudTest() {
-    configure();
+    Configure();
   }
 
-  ~FeatureCloudTest() {}
+  void Configure() {
+    cfg_.normal_radius = 15.0;
+    cfg_.downsampling_radius = 0.15;
+    cfg_.descriptors_radius = 1.5;
+    cfg_.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
+    cfg_.iss_min_neighbours = 4;
+    cfg_.iss_model_resolution = 0.05;
+    cfg_.iss_num_of_threads = 8;
+    cfg_.iss_threshold21 = 0.975;
+    cfg_.iss_threshold32 = 0.975;
+    cfg_.debug = true;
+  }
 
-  void PrepareOcTree(
-      std::string octomap_packed_file,
-      Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
+  void PrepareOcTree(const std::string& octomap_packed_file,
+                     Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
     orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
     PrintOcTreeInfo(*orig_tree_, "orig_tree");
 
@@ -46,38 +52,26 @@ class FeatureCloudTest : public ::testing::Test
     }
   }
 
-  void configure() {
-    cfg_.normal_radius = 15.0;
-    cfg_.downsampling_radius = 0.15;
-    cfg_.descriptors_radius = 1.5;
-    cfg_.keypoints_method = FeatureCloud::KeypointsDetectMethod::Iss3d;
-    cfg_.iss_min_neighbours = 4;
-    cfg_.iss_model_resolution = 0.05;
-    cfg_.iss_num_of_threads = 8;
-    cfg_.iss_threshold21 = 0.975;
-    cfg_.iss_threshold32 = 0.975;
-  }
-
+  // Open a PCL Visualizer window and show extracted keypoints
   void ShowPointCloudAndKeypoints() {
     pcl::visualization::PCLVisualizer viewer ("3D Viewer");
     viewer.setBackgroundColor(255, 255, 255);
     viewer.addCoordinateSystem(1.0);
 
     // Cloud --> BLUE
-    auto cloud = feature_cloud_->getPointCloud();
+    auto cloud = feature_cloud_->GetPointCloud();
     pcl::visualization::PointCloudColorHandlerCustom<Point> cloud_color(cloud, 0, 0, 255);
     viewer.addPointCloud(cloud, cloud_color, "cloud");
     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud");
 
     // Keypoints --> RED
-    auto keypoints = feature_cloud_->getKeypoints();
+    auto keypoints = feature_cloud_->GetKeypoints();
     pcl::visualization::PointCloudColorHandlerCustom<Point> keypoints_color(keypoints, 255, 0, 0);
     viewer.addPointCloud(keypoints, keypoints_color, "keypoints");
     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints");
 
     while (!viewer.wasStopped()) {
       viewer.spinOnce(100);
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
 
@@ -88,8 +82,7 @@ class FeatureCloudTest : public ::testing::Test
   Eigen::Matrix4f result_transf_;
 };
 
-TEST_F(FeatureCloudTest, Test_fr)
-{
+TEST_F(FeatureCloudTest, Test_fr) {
   std::string octomap_name = "fr_079";
   auto cloud_min = Vector3f(-5, -5, 0.0);
   auto cloud_max = Vector3f(5, 5, 2.0);
@@ -97,15 +90,13 @@ TEST_F(FeatureCloudTest, Test_fr)
 
   auto cloud = OcTreeToPointCloud(*cropped_tree_);
   feature_cloud_ = std::make_shared<FeatureCloud>(cloud, cfg_);
-  auto start = std::chrono::high_resolution_clock::now();
-  feature_cloud_->downsampleAndExtractKeypoints();
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::high_resolution_clock::now() - start);
-  std::cout << "From cloud (size: " << feature_cloud_->getPointCloud()->size() << ") extracted "
-      << feature_cloud_->getKeypoints()->size() << " keypoints in: "
-      << diff.count() << " ms." << std::endl;
-  feature_cloud_->computeSurfaceNormals();
-  feature_cloud_->computeDescriptors();
+
+  feature_cloud_->ExtractKeypoints();
+
+  feature_cloud_->ComputeSurfaceNormals();
+
+  feature_cloud_->ComputeDescriptors();
+
   ShowPointCloudAndKeypoints();
 }
 
