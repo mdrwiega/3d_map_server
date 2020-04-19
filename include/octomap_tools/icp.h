@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <iostream>
@@ -18,7 +11,9 @@
 #include <pcl/registration/icp.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "maps_integrator_visualizer.h"
+#include <octomap_tools/maps_integrator_visualizer.h>
+
+using std::chrono::high_resolution_clock;
 
 namespace octomap_tools {
 
@@ -52,8 +47,9 @@ class ICP {
     cfg_(config) {
   }
 
-  Result align() {
-    auto start = std::chrono::high_resolution_clock::now();
+  Result Align() {
+    auto start = high_resolution_clock::now();
+
     PointCloudPtr scene (new PointCloud);
     if (cfg_.crop_scene) {
       cropSceneToInflatedModel(scene);
@@ -64,7 +60,6 @@ class ICP {
     if (model_->size() == 0) {
       throw std::runtime_error("ICP: Empty model");
     }
-
     if (scene_->size() == 0) {
       throw std::runtime_error("ICP: Empty scene");
     }
@@ -78,17 +73,21 @@ class ICP {
     icp.setInputTarget(scene);
 
     PointCloud dummy_output;
-    icp.align (dummy_output);
+    icp.align(dummy_output);
 
-    auto diff_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start).count();
+    auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - start);
 
     if (cfg_.visualize) {
-      MapsIntegratorVisualizer::Config visualizar_cfg { false, true, cfg_.files_path_and_pattern + "matching_icp.png" };
-      MapsIntegratorVisualizer visualizer(visualizar_cfg);
-      visualizer.visualizeICP(scene, model_, icp.getFinalTransformation());
+      MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching_icp.png" });
+      visualizer.VisualizeICP(scene, model_, icp.getFinalTransformation());
     }
-    return Result {icp.getFitnessScore(cfg_.fitness_score_dist), icp.getFinalTransformation(), static_cast<double>(diff_time)};
+
+    // Prepare result
+    Result result;
+    result.fitness_score = icp.getFitnessScore(cfg_.fitness_score_dist);
+    result.transformation = icp.getFinalTransformation();
+    result.processing_time_ms = static_cast<double>(dt.count());
+    return result;
   }
 
  protected:

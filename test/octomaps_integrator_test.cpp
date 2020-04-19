@@ -80,11 +80,8 @@ class MapsIntegratorTest : public ::testing::Test
   void configure() {
     // Feature matching config_uration
     config_.fitness_score_thresh = 0.002;
-    config_.show_visualization_ = false;
-    config_.show_keypoints_ = false;
-    config_.integrate_octomaps = true;
-    config_.show_integrated_octomaps = false;
-    config_.show_two_pointclouds = false;
+    config_.show_visualization_ = true;
+    config_.show_two_pointclouds = true;
     config_.icp.max_iter = 500;
     config_.icp.max_nn_dist = 0.5;
     config_.icp.fitness_score_dist = 0.5;
@@ -103,8 +100,8 @@ class MapsIntegratorTest : public ::testing::Test
     config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
     config_.template_alignment.feature_cloud.descriptors_radius = 1.5;
     config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Uniform;
-    config_.template_alignment.cell_size_x = 3;
-    config_.template_alignment.cell_size_y = 3;
+    config_.template_alignment.cell_size_x = 2;
+    config_.template_alignment.cell_size_y = 2;
     config_.template_alignment.model_size_thresh_ = 400;
     config_.template_alignment.keypoints_thresh_ = 40;
   }
@@ -134,7 +131,7 @@ TEST_F(MapsIntegratorTest, Test_fr)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
 }
 
@@ -170,7 +167,7 @@ TEST_F(MapsIntegratorTest, Test_fr_cascade_step2)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
 }
 
@@ -206,7 +203,7 @@ TEST_F(MapsIntegratorTest, Test_fr_cascade_step3)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
 }
 
@@ -223,7 +220,7 @@ TEST_F(MapsIntegratorTest, Test_fr_campus)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
  }
 
@@ -238,7 +235,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m1)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  features_matcher.compute();
+  features_matcher.EstimateTransformation();
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
@@ -252,7 +249,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  features_matcher.compute();
+  features_matcher.EstimateTransformation();
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
@@ -266,7 +263,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  features_matcher.compute();
+  features_matcher.EstimateTransformation();
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
@@ -293,7 +290,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
 }
 
@@ -329,7 +326,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  auto res = features_matcher.compute();
+  auto res = features_matcher.EstimateTransformation();
   result_transf_ = res.transformation;
 }
 
@@ -345,7 +342,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
   config_.show_two_pointclouds = true;
 
   MapsIntegrator features_matcher(tree_l_, tree_r_, config_);
-  features_matcher.compute();
+  features_matcher.EstimateTransformation();
 }
 
 /*TEST_F(MapsIntegratorTest, Test_multi_fr)
@@ -368,7 +365,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
   for (auto icp_max_nn_dist : icp_max_nn_dist_vec) {
     config_.icp.max_nn_dist = icp_max_nn_dist;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
@@ -376,42 +373,42 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
     config_.cell_size_x_ = cell_size;
     config_.cell_size_y_ = cell_size;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto normal_radius : normal_radius_vec) {
     config_.feature_cloud.normal_radius = normal_radius;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto downsampling_radius : downsampling_radius_vec) {
     config_.feature_cloud.downsampling_radius = downsampling_radius;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto descriptors_radius : descriptors_radius_vec) {
     config_.feature_cloud.descriptors_radius = descriptors_radius;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto min_sample_distance : min_sample_distance_vec) {
     config_.template_alignment.min_sample_distance = min_sample_distance;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto max_correspondence_distance : max_correspondence_distance_vec) {
     config_.template_alignment.max_correspondence_distance = max_correspondence_distance;
     MapsIntegrator features_matcher(config_);
-    features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+    features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
 //  for (auto max_correspondence_distance : max_correspondence_distance_vec) {
@@ -431,7 +428,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
 //                config_.icp.max_nn_dist = icp_max_nn_dist_vec;
 //
 //                MapsIntegrator features_matcher(config_);
-//                features_matcher.computeWithModelDivision(cloud_l, cloud_r);
+//                features_matcher.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
 //              }
 //            }
 //          }

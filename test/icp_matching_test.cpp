@@ -1,4 +1,3 @@
-
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -8,7 +7,7 @@
 #include <octomap_tools/utils.h>
 #include <octomap_tools/math.h>
 #include <octomap_tools/feature_cloud.h>
-#include <octomap_tools/features_matching.h>
+#include <octomap_tools/icp.h>
 #include <octomap_tools/conversions.h>
 
 #include "test_utils.h"
@@ -16,38 +15,26 @@
 using namespace octomap_tools;
 using namespace octomap;
 
-class FeaturesMatchingTest : public ::testing::Test
+class IcpMatchingTest : public ::testing::Test
 {
  public:
-  FeaturesMatchingTest() {
+  IcpMatchingTest() {
     Configure();
   }
 
   void Configure() {
-    cfg_.feature_cloud.normal_radius = 15.0;
-    cfg_.feature_cloud.downsampling_radius = 0.15;
-    cfg_.feature_cloud.descriptors_radius = 1.5;
-    cfg_.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
-    cfg_.feature_cloud.debug = true;
-
-    cfg_.nr_iterations = 1000;
-    cfg_.min_sample_distance = 0.2;
-    cfg_.max_correspondence_distance = 100.0;
+    cfg_.max_iter = 500;
+    cfg_.max_nn_dist = 0.5;
     cfg_.fitness_score_dist = 0.5;
-    cfg_.cell_size_x = 3;
-    cfg_.cell_size_y = 3;
-    cfg_.model_size_thresh_ = 400;
-    cfg_.keypoints_thresh_ = 150;
-
-    cfg_.method = FeaturesMatching::AlignmentMethod::GeometryConsistencyClustering;
-    // cfg_.method = FeaturesMatching::AlignmentMethod::SampleConsensus;
+    cfg_.fitness_eps = 0.0005;
+    cfg_.transf_eps = 0.0001;
+    cfg_.scene_inflation_dist = 2.5;
     cfg_.visualize = true;
-    cfg_.debug = true;
+    cfg_.crop_scene = false;
   }
 
-  void PrepareOcTree(
-      std::string octomap_packed_file,
-      Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
+  void PrepareOcTree(std::string octomap_packed_file,
+                     Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
     orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
     PrintOcTreeInfo(*orig_tree_, "orig_tree");
 
@@ -61,37 +48,25 @@ class FeaturesMatchingTest : public ::testing::Test
 
   OcTreePtr orig_tree_;
   OcTreePtr cropped_tree_;
-  FeaturesMatching::Config cfg_;
-  FeatureCloudPtr scene_;
-  FeatureCloudPtr model_;
+  ICP::Config cfg_;
   Eigen::Matrix4f result_transf_;
 };
 
-TEST_F(FeaturesMatchingTest, Test_fr)
+TEST_F(IcpMatchingTest, Test_fr)
 {
   std::string octomap_name = "fr_079";
   auto map_min = Vector3f(-5, -5, 0.0);
   auto map_max = Vector3f(5, 5, 2.0);
   PrepareOcTree(octomap_name, map_min, map_max);
 
-  auto T = createTransformationMatrix(15.0, 0.5, 0.0, ToRad(0), ToRad(0), ToRad(15));
+  auto T = createTransformationMatrix(0.5, 0.0, 0.0, ToRad(0), ToRad(0), ToRad(10.0));
   auto tree_model = FastOcTreeTransform(*cropped_tree_, T);
 
   auto scene_cloud = OcTreeToPointCloud(*cropped_tree_);
   auto model_cloud = OcTreeToPointCloud(*tree_model);
 
-  // Prepare scene
-  scene_ = std::make_shared<FeatureCloud>(scene_cloud, cfg_.feature_cloud);
-  std::cout << "\nScene size: " << scene_->GetPointCloud()->size() << std::endl;
-  scene_->ComputeDescriptors();
-
-  // Prepare model
-  model_ = std::make_shared<FeatureCloud>(model_cloud, cfg_.feature_cloud);
-  std::cout << "\nModel size: " << model_->GetPointCloud()->size() << std::endl;
-  model_->ComputeDescriptors();
-
-  FeaturesMatching matcher(cfg_, scene_cloud, scene_cloud);
-  FeaturesMatching::Result result = matcher.Align(0, cfg_, model_, scene_);
+  ICP matcher(scene_cloud, model_cloud, cfg_);
+  auto result = matcher.Align();
 
   std::cout << "\nReal transformation between maps:\n" << transformationMatrixToString(T);
   auto rpy_real = ToRad(rotMatrixToRPY(T.block<3,3>(0,0)));

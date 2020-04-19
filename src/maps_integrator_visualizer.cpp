@@ -13,150 +13,126 @@
 
 namespace octomap_tools {
 
-void MapsIntegratorVisualizer::visualize(const Eigen::Matrix4f& transformation,
+void MapsIntegratorVisualizer::VisualizeICP(PointCloudPtr& scene, PointCloudPtr& model,
+                                            const Eigen::Matrix4f& transformation) {
+  // Transform model
+  PointCloud::Ptr transformed_model(new PointCloud());
+  pcl::transformPointCloud(*model, *transformed_model, transformation);
+
+  Visualize(scene, model, transformed_model, nullptr, nullptr, nullptr, nullptr);
+}
+
+void MapsIntegratorVisualizer::VisualizeClouds(const PointCloudPtr& cloud1, const PointCloudPtr& cloud2) {
+  Visualize(cloud1, cloud2);
+}
+
+void MapsIntegratorVisualizer::VisualizeFeatureMatching(const FeatureCloudPtr scene, const FeatureCloudPtr model,
+                                                        const Eigen::Matrix4f& transformation,
+                                                        const pcl::CorrespondencesPtr& correspondences) {
+  auto scene_cloud = scene->GetPointCloud();
+  auto model_cloud = model->GetPointCloud();
+  auto scene_keypoints = model->GetKeypoints();
+  auto model_keypoints = scene->GetKeypoints();
+
+  // Transform model
+  PointCloud::Ptr transformed_model(new PointCloud());
+  pcl::transformPointCloud(*model_cloud, *transformed_model, transformation);
+
+  Visualize(scene_cloud, model_cloud, transformed_model, nullptr, scene_keypoints, model_keypoints, correspondences);
+}
+
+void MapsIntegratorVisualizer::VisualizeFeatureMatchingWithDividedModel(
                                          PointCloudPtr& scene, PointCloudPtr& model,
                                          PointCloudPtr& full_model,
+                                         const Eigen::Matrix4f& transformation,
                                          std::vector<Rectangle> blocks) {
-  bool show_blocks = true;
+  // Transform model
+  PointCloud::Ptr transformed_model(new PointCloud());
+  pcl::transformPointCloud(*model, *transformed_model, transformation);
+
+  Visualize(scene, full_model, model, transformed_model, nullptr, nullptr, nullptr, blocks);
+}
+
+void MapsIntegratorVisualizer::Visualize(
+  const PointCloudPtr& cloud1,
+  const PointCloudPtr& cloud2,
+  const PointCloudPtr& cloud3,
+  const PointCloudPtr& cloud4,
+  const PointCloudPtr& keypoints1,
+  const PointCloudPtr& keypoints2,
+  const pcl::CorrespondencesPtr& correspondences,
+  std::vector<Rectangle> blocks) {
 
   pcl::visualization::PCLVisualizer viewer ("3D Viewer");
   viewer.setBackgroundColor(255, 255, 255);
   viewer.addCoordinateSystem(1.0);
-//  viewer.initCameraParameters();
-//  viewer.setCameraPosition(0.0, 0.0, 25.0, 0.0, 0.0, 0.0);
 
-  // Visualize scene point cloud --> BLUE
-  pcl::visualization::PointCloudColorHandlerCustom<Point> scene_color(scene, 0, 0, 255);
-  viewer.addPointCloud(scene, scene_color, "scene_cloud");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "scene_cloud");
+  // Cloud1 / Scene --> BLUE
+  if (cloud1) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(cloud1, 0, 0, 255);
+    viewer.addPointCloud(cloud1, color, "cloud1");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud1");
+  }
 
-  // Visualize full model point cloud --> RED
-  pcl::visualization::PointCloudColorHandlerCustom<Point> full_model_color(full_model, 255, 0, 0);
-  viewer.addPointCloud(full_model, full_model_color, "full_model");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "full_model");
+  // Cloud2 / Model --> RED
+  if (cloud2) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> cloud2_color(cloud2, 255, 0, 0);
+    viewer.addPointCloud(cloud2, cloud2_color, "cloud2");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud2");
+  }
 
-  // Visualize model before transformation --> RED
-  pcl::visualization::PointCloudColorHandlerCustom<Point> model_color(model, 255, 255, 0);
-  viewer.addPointCloud(model, model_color, "model");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "model");
+  // Cloud3 --> YELLOW
+  if (cloud3) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(cloud3, 255, 255, 0);
+    viewer.addPointCloud(cloud3, color, "cloud3");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud3");
+  }
 
-  // Visualize off scene model point cloud --> RED
-  PointCloud::Ptr off_scene_model(new PointCloud());
-  PointCloud::Ptr off_scene_model_keypoints(new PointCloud());
+  // Cloud4 --> GREEN
+  if (cloud4) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(cloud4, 0, 255, 0);
+    viewer.addPointCloud(cloud4, color, "cloud4");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud4");
+  }
 
-//  if (cfg_.show_keypoints) {
-//    //  We are translating the model so that it doesn't end in the middle of the scene representation
-//    pcl::transformPointCloud(*model, *off_scene_model,
-//                             Eigen::Vector3f(-1, 0, 0),
-//                             Eigen::Quaternionf(1, 0, 0, 0));
-//    pcl::transformPointCloud(*model->getKeypoints(),
-//                             *off_scene_model_keypoints,
-//                             Eigen::Vector3f(-1, 0, 0),
-//                             Eigen::Quaternionf(1, 0, 0, 0));
-//    pcl::visualization::PointCloudColorHandlerCustom<Point> off_scene_model_color_handler(
-//        off_scene_model, 255, 255, 128);
-//    viewer.addPointCloud(off_scene_model, off_scene_model_color_handler,
-//                         "off_scene_model");
-//  }
+  // Keypoints1 / Scene --> BLACK
+  if (keypoints1) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints1, 255, 255, 255);
+    viewer.addPointCloud(keypoints1, color, "keypoints1");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints1");
+  }
 
-//  if (cfg_.show_keypoints) {
-//    pcl::visualization::PointCloudColorHandlerCustom<Point> scene_keypoints_color_handler(
-//        scene->getKeypoints(), 0, 0, 255);
-//    viewer.addPointCloud(scene->getKeypoints(), scene_keypoints_color_handler,
-//                         "scene_keypoints");
-//    viewer.setPointCloudRenderingProperties(
-//        pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "scene_keypoints");
-//    pcl::visualization::PointCloudColorHandlerCustom<Point> off_scene_model_keypoints_color_handler(
-//        off_scene_model_keypoints, 0, 0, 255);
-//    viewer.addPointCloud(off_scene_model_keypoints,
-//                         off_scene_model_keypoints_color_handler, "off_scene_model_keypoints");
-//    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 5, "off_scene_model_keypoints");
-//  }
+  // Keypoints2 / Model --> BLACK
+  if (keypoints2) {
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints2, 255, 255, 255);
+    viewer.addPointCloud(keypoints2, color, "keypoints2");
+    viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints2");
+  }
 
-  PointCloud::Ptr rotated_model(new PointCloud());
-  pcl::transformPointCloud(*model, *rotated_model, transformation);
-  std::stringstream ss_cloud;
-  ss_cloud << "instance1";
-  pcl::visualization::PointCloudColorHandlerCustom<Point> rotated_model_color_handler(rotated_model, 0, 255, 0);
-  viewer.addPointCloud(rotated_model, rotated_model_color_handler, ss_cloud.str());
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, ss_cloud.str());
-
-  if (show_blocks) {
-    int i = 0;
-    for (auto& rec : blocks) {
+  // Correspondences --> ORANGE
+  if (correspondences) {
+    for (size_t j = 0; j < (*correspondences).size (); ++j) {
       std::stringstream ss_line;
-      ss_line << "rect" << i;
-      viewer.addCube(rec.min(0), rec.max(0), rec.min(1), rec.max(1), 0, 0, 0, 0, 0.5, ss_line.str());
-      ++i;
+      ss_line << "correspondence_line" << j;
+      Point& model_point = keypoints1->at((*correspondences)[j].index_query);
+      Point& scene_point = keypoints2->at((*correspondences)[j].index_match);
+
+      // Draw line for each pair of correspondences found between model and scene
+      viewer.addLine<Point, Point>(model_point, scene_point, 1.0, 0.7, 0, ss_line.str());
     }
   }
 
-  while (!viewer.wasStopped())
-  {
+  // Show grid
+  int i = 0;
+  for (auto& rec : blocks) {
+    std::stringstream ss_line;
+    ss_line << "rect" << i;
+    viewer.addCube(rec.min(0), rec.max(0), rec.min(1), rec.max(1), 0, 0, 0, 0, 0.5, ss_line.str());
+    ++i;
+  }
+
+  while (!viewer.wasStopped()) {
     viewer.spinOnce(100);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  if (cfg_.save_to_file && !cfg_.filename.empty()) {
-    viewer.saveScreenshot(cfg_.filename);
-    std::cout << "Screenshot has been saved to file: " << cfg_.filename << "\n";
-  }
-}
-
-void MapsIntegratorVisualizer::visualizeICP(PointCloudPtr& scene, PointCloudPtr& model,
-                                             const Eigen::Matrix4f& transformation) {
-  pcl::visualization::PCLVisualizer viewer ("3D Viewer");
-  viewer.setBackgroundColor(255, 255, 255);
-  viewer.addCoordinateSystem(1.0);
-
-  // Scene --> BLUE
-  pcl::visualization::PointCloudColorHandlerCustom<Point> scene_color(scene, 0, 0, 255);
-  viewer.addPointCloud(scene, scene_color, "scene");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "scene");
-
-  // Model before transformation --> RED
-  pcl::visualization::PointCloudColorHandlerCustom<Point> full_model_color(model, 255, 0, 0);
-  viewer.addPointCloud(model, full_model_color, "model");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "model");
-
-  // Model after transformation --> GREEN
-  PointCloud::Ptr rotated_model(new PointCloud());
-  pcl::transformPointCloud(*model, *rotated_model, transformation);
-  pcl::visualization::PointCloudColorHandlerCustom<Point> rotated_model_color_handler(rotated_model, 0, 255, 0);
-  viewer.addPointCloud(rotated_model, rotated_model_color_handler, "transformed_model");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "transformed_model");
-
-  while (!viewer.wasStopped())
-  {
-    viewer.spinOnce(100);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-
-  if (cfg_.save_to_file && !cfg_.filename.empty()) {
-    viewer.saveScreenshot(cfg_.filename);
-    std::cout << "Screenshot has been saved to file: " << cfg_.filename << "\n";
-  }
-}
-
-void MapsIntegratorVisualizer::visualizeClouds(const PointCloudPtr& cloud1, const PointCloudPtr& cloud2) {
-  pcl::visualization::PCLVisualizer viewer ("3D Viewer");
-  viewer.setBackgroundColor(255, 255, 255);
-  viewer.addCoordinateSystem(1.0);
-
-  // Scene --> BLUE
-  pcl::visualization::PointCloudColorHandlerCustom<Point> scene_color(cloud1, 0, 0, 255);
-  viewer.addPointCloud(cloud1, scene_color, "cloud1");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud1");
-
-  // Model before transformation --> RED
-  pcl::visualization::PointCloudColorHandlerCustom<Point> full_model_color(cloud2, 255, 0, 0);
-  viewer.addPointCloud(cloud2, full_model_color, "cloud2");
-  viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "cloud2");
-
-  while (!viewer.wasStopped())
-  {
-    viewer.spinOnce(100);
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
   if (cfg_.save_to_file && !cfg_.filename.empty()) {

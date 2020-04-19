@@ -22,7 +22,7 @@ class IcpMatching {
 
 class OctomapsIntegrator {
   MapsIntegrator(scene, model, config)
-  compute()
+  EstimateTransformation()
   integrateOctrees()
   DumpConfigAndResultsToFile()
 }

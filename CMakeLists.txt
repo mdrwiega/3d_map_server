@@ -103,6 +103,7 @@ if (CATKIN_ENABLE_TESTING)
         test/octomaps_integrator_test.cpp
         test/test_octomap_tools.cpp
         test/transformations_test.cpp
+        test/icp_matching_test.cpp
     )
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})

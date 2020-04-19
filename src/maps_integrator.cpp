@@ -13,98 +13,114 @@
 #include <octomap_tools/octomap_io.h>
 #include "utils/table_printer.h"
 
+using std::chrono::high_resolution_clock;
+using std::chrono::milliseconds;
+
 namespace octomap_tools {
 
-MapsIntegrator::Result MapsIntegrator::compute() {
-  auto start = std::chrono::high_resolution_clock::now();
+MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& model_tree, const Config& config) :
+  model_tree_(model_tree),
+  scene_tree_(scene_tree),
+  cfg_(config) {
+  model_ = OcTreeToPointCloud(*model_tree_);
+  scene_ = OcTreeToPointCloud(*scene_tree_);
+}
 
-  // Initial features based alignment
+MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
+  auto start = high_resolution_clock::now();
+
+  // Features based initial alignment
   PointCloud::Ptr best_model(new PointCloud);
   FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
-  FeaturesMatching::Result ia_result = features_matching.initialAlignment(*best_model);
+  FeaturesMatching::Result ia_result = features_matching.DivideModelAndAlign(*best_model);
 
-  std::cout << std::setprecision(6) << "\nIA fitness score: " << ia_result.fitness_score << "\n";
-  std::cout << std::setprecision(1) << "IA processing takes: " << ia_result.processing_time_ms << " ms\n";
-  std::cout << "IA transformation:" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
+  if (cfg_.debug) {
+    std::cout << std::setprecision(6) << "\nIA fitness score: " << ia_result.fitness_score << "\n";
+    std::cout << std::setprecision(1) << "IA time: " << ia_result.processing_time_ms << " ms\n";
+    std::cout << "IA transformation:" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
+  }
 
   // ICP correction
   if (cfg_.icp_correction) {
       PointCloud::Ptr icp_model(new PointCloud);
       pcl::transformPointCloud(*best_model, *icp_model, ia_result.transformation);
       ICP icp(scene_, icp_model, cfg_.icp);
-      ICP::Result icp_result = icp.align();
-
-      std::cout << std::setprecision(6) << "\nICP fitness score is " << icp_result.fitness_score << std::endl;
-      std::cout << std::setprecision(1) << "ICP processing takes: " << icp_result.processing_time_ms << " ms." << std::endl;
+      ICP::Result icp_result = icp.Align();
 
       if (icp_result.fitness_score < ia_result.fitness_score) {
         ia_result.fitness_score = icp_result.fitness_score;
         ia_result.transformation = icp_result.transformation * ia_result.transformation;
-        std::cout << "ICP transformation:\n" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
+      }
+
+      if (cfg_.debug) {
+        std::cout << std::setprecision(6) << "ICP fitness score: " << icp_result.fitness_score << "\n";
+        std::cout << std::setprecision(1) << "ICP time: " << icp_result.processing_time_ms << " ms\n";
+        std::cout << "ICP transformation:" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
       }
   }
 
   // Create result
-  Point pmin, pmax;
-  pcl::getMinMax3D(*best_model, pmin, pmax);
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  result_ = Result(diff.count(), ia_result.fitness_score, pmin, pmax, ia_result.transformation);
-  result_.PrintResult();
+  result_ = Result();
+  result_.time_ms = (std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
+  result_.fitness_score = ia_result.fitness_score;
+  pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
+  result_.transformation = ia_result.transformation;
 
-  OcTreePtr merged_tree;
-  if (cfg_.integrate_octomaps) {
-    merged_tree = integrateOctrees(ia_result.transformation);
-    SaveOcTreeToFile(*merged_tree, cfg_.files_path_and_pattern + "merged_tree.ot");
-  }
+  result_.PrintResult();
 
   if (cfg_.dump_to_file_) {
     DumpConfigAndResultsToFile();
   }
   if (cfg_.show_visualization_) {
-    MapsIntegratorVisualizer::Config visualizar_cfg { false, true, cfg_.files_path_and_pattern + "matching.png" };
-    MapsIntegratorVisualizer visualizer(visualizar_cfg);
-    visualizer.visualize(ia_result.transformation, scene_, best_model, model_, spiral_blocks_);
+    MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching.png" });
+    visualizer.VisualizeFeatureMatchingWithDividedModel(
+      scene_, best_model, model_, ia_result.transformation, spiral_blocks_);
   }
   if (cfg_.show_two_pointclouds) {
     PointCloudPtr transformed_model (new PointCloud);
     pcl::transformPointCloud(*model_, *transformed_model, ia_result.transformation);
-    MapsIntegratorVisualizer::Config visualizar_cfg { false, true, cfg_.files_path_and_pattern + "matching_2clouds.png" };
-    MapsIntegratorVisualizer visualizer(visualizar_cfg);
-    visualizer.visualizeClouds(scene_, transformed_model);
-  }
-  if (cfg_.show_integrated_octomaps) {
-
+    MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching_2clouds.png" });
+    visualizer.VisualizeClouds(scene_, transformed_model);
   }
   return result_;
 }
 
-OcTreePtr MapsIntegrator::integrateOctrees(const Eigen::Matrix4f& transformation) {
-  auto start = std::chrono::high_resolution_clock::now();
+OcTreePtr MapsIntegrator::Merge(const Eigen::Matrix4f& transformation, bool save_to_file) {
+  auto start = high_resolution_clock::now();
 
+  // Transform map
   auto tree_model_transformed = FastOcTreeTransform(*model_tree_, transformation);
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Model octomap transformed in " << diff.count() << " ms." << std::endl;
 
-  start = std::chrono::high_resolution_clock::now();
+  if (cfg_.debug) {
+    auto diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
+    std::cout << "Map transformed in " << diff.count() << " ms." << std::endl;
+  }
+
+  start = high_resolution_clock::now();
+
+  // Merge maps which are already in the same coordination system
   auto merged_tree = FastSumOctrees(*tree_model_transformed, *scene_tree_);
-  diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octomaps merged in " << diff.count() << " ms." << std::endl;
+
+  if (cfg_.debug) {
+    auto diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
+    std::cout << "Maps merged in " << diff.count() << " ms." << std::endl;
+  }
+
+  if (save_to_file) {
+    SaveOcTreeToFile(*merged_tree, cfg_.files_path_and_pattern + "merged_tree.ot");
+  }
   return merged_tree;
+}
+
+OcTreePtr MapsIntegrator::Merge(bool save_to_file) {
+  EstimateTransformation();
+  return Merge(result_.transformation, save_to_file);
 }
 
 void MapsIntegrator::DumpConfigAndResultsToFile() {
   std::ofstream file(cfg_.files_path_and_pattern + "cfg_results.txt");
   file << cfg_.toTable();
   file << result_.toString();
-}
-
-MapsIntegrator::Result::Result(float _time_ms, float _fitness_score,
-                                Point _model_min, Point _model_max, Eigen::Matrix4f _tf) :
-  time_ms(_time_ms),
-  fitness_score(_fitness_score),
-  model_min(_model_min),
-  model_max(_model_max),
-  transformation(_tf) {
 }
 
 std::string MapsIntegrator::Result::toString() {

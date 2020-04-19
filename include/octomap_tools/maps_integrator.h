@@ -34,12 +34,10 @@ class MapsIntegrator {
  public:
   struct Config {
     bool show_visualization_{false};
-    bool show_keypoints_ {true};
-    bool dump_to_file_{true};
-    bool integrate_octomaps {false};
-    bool show_integrated_octomaps {false};
     bool show_two_pointclouds{false};
-
+    bool dump_to_file_{true};
+    bool debug{true};
+ 
     float fitness_score_thresh{0.0001};
     bool icp_correction{true};
     std::string files_path_and_pattern;
@@ -51,38 +49,37 @@ class MapsIntegrator {
     std::vector<std::string> getHeader();
   };
 
-  class Result {
-   public:
-    float time_ms;
-    float fitness_score;
-    Point model_min;
-    Point model_max;
-    Eigen::Matrix4f transformation;
+  struct Result {
+    float time_ms{0};
+    float fitness_score{0};
+    Point model_min{};
+    Point model_max{};
+    Eigen::Matrix4f transformation{};
 
-    Result() :
-      time_ms(0), fitness_score(0), model_min{}, model_max{}, transformation{} {}
-
-      Result(float _time_ms, float _fitness_score, Point _model_min, Point _model_max, Eigen::Matrix4f _tf);
-
-      std::string toString();
-
-      void PrintResult();
+    std::string toString();
+    void PrintResult();
   };
 
-  MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& model_tree, const Config& config) :
-    model_tree_(model_tree),
-    scene_tree_(scene_tree),
-    cfg_(config) {
-    model_ = OcTreeToPointCloud(*model_tree_);
-    scene_ = OcTreeToPointCloud(*scene_tree_);
-  }
+  MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& model_tree, const Config& config);
 
-  Result compute();
+  /**
+   * Estimate transformation between two maps
+   */
+  Result EstimateTransformation();
 
-  OcTreePtr integrateOctrees(const Eigen::Matrix4f& transformation);
+  /**
+   * Merge maps based on provided transformation
+   */
+  OcTreePtr Merge(const Eigen::Matrix4f& transformation, bool save_to_file = false);
+
+  /**
+   * Estimate transformation between maps and merge them
+   */
+  OcTreePtr Merge(bool save_to_file = false);
 
   void DumpConfigAndResultsToFile();
 
+ private:
   std::vector<Rectangle> spiral_blocks_;
   PointCloudPtr model_;
   PointCloudPtr scene_;
