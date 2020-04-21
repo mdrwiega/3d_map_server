@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #include <cstdlib>
 #include <iostream>
 
@@ -32,15 +25,15 @@ int main(int argc, char** argv)
   if (argc != 5)
     printHelp(argv[0]);
 
-  const std::string inFilename = argv[1];
-  const std::string outFilename1 = argv[2];
+  const std::string in_filename = argv[1];
+  const std::string out_filename = argv[2];
 
   const float radius = std::strtof(argv[3], nullptr);
   const float min_neighbors = std::strtof(argv[4], nullptr);
 
   PointCloudPtr orig_cloud(new PointCloud);
   PointCloudPtr cropped_cloud(new PointCloud);
-  auto tree = LoadOcTreeFromFile(inFilename);
+  auto tree = LoadOcTreeFromFile(in_filename);
   orig_cloud = OcTreeToPointCloud(*tree);
 
   PrintOcTreeInfo(*tree, "Loaded tree");
@@ -54,7 +47,7 @@ int main(int argc, char** argv)
 
   std::cout << PointCloudInfoToString(*cropped_cloud, "cropped_cloud");
 
-  SavePointCloudAsOctreeToFile(cropped_cloud, outFilename1, tree->getResolution());
+  SavePointCloudAsOctreeToFile(cropped_cloud, out_filename, tree->getResolution());
 
   return 0;
 }

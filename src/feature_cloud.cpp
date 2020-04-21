@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include <ros/console.h>
+
 #include <pcl/keypoints/iss_3d.h>
 
 #include <pcl/keypoints/narf_keypoint.h>
@@ -9,10 +11,12 @@
 #include <pcl/keypoints/impl/sift_keypoint.hpp>
 #include <pcl/filters/uniform_sampling.h>
 
+using namespace std::chrono;
+
 namespace octomap_tools {
 
 FeatureCloud::FeatureCloud(PointCloud::Ptr cloud, Config config) :
-    cloud_(cloud),
+    cloud_(std::move(cloud)),
     cfg_(config) {
   }
 
@@ -48,23 +52,22 @@ void FeatureCloud::ProcessInput() {
 }
 
 void FeatureCloud::ComputeSurfaceNormals() {
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = high_resolution_clock::now();
 
   normals_ = SurfaceNormals::Ptr(new SurfaceNormals);
   pcl::NormalEstimationOMP<Point, NormalType> norm_est;
-  norm_est.setKSearch (cfg_.normal_radius);
+  norm_est.setKSearch (20); // TODO Move to params
+  // norm_est.setRadiusSearch(cfg_.normal_radius);
   norm_est.setInputCloud (cloud_);
   norm_est.compute (*normals_);
 
-  if (cfg_.debug) {
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Surface normals computed in " << diff.count() << " ms." << std::endl;
-  }
+  auto diff = duration_cast<milliseconds>(
+      high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Surface normals computed in " << diff.count() << " ms.");
 }
 
 void FeatureCloud::ExtractKeypoints() {
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = high_resolution_clock::now();
   keypoints_ = PointCloud::Ptr(new PointCloud());
   if (cfg_.keypoints_method == KeypointsExtractionMethod::Uniform) {
     pcl::UniformSampling<Point> uniform_sampling;
@@ -73,27 +76,25 @@ void FeatureCloud::ExtractKeypoints() {
     uniform_sampling.filter(*keypoints_);
   }
   else if (cfg_.keypoints_method == KeypointsExtractionMethod::Iss3d) {
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ> ());
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
     pcl::ISSKeypoint3D<pcl::PointXYZ, pcl::PointXYZ> iss_detector;
-    iss_detector.setSearchMethod (tree);
-    iss_detector.setSalientRadius (6 * cfg_.iss_model_resolution);
-    iss_detector.setNonMaxRadius (4 * cfg_.iss_model_resolution);
-    iss_detector.setThreshold21 (cfg_.iss_threshold21);
-    iss_detector.setThreshold32 (cfg_.iss_threshold32);
-    iss_detector.setMinNeighbors (cfg_.iss_min_neighbours);
-    iss_detector.setNumberOfThreads (cfg_.iss_num_of_threads);
-    iss_detector.setInputCloud (cloud_);
-    iss_detector.compute (*keypoints_);
+    iss_detector.setSearchMethod(tree);
+
+    iss_detector.setSalientRadius(cfg_.iss_salient_radius);
+    iss_detector.setNonMaxRadius(cfg_.iss_non_max_radius);
+    iss_detector.setThreshold21(cfg_.iss_threshold21);
+    iss_detector.setThreshold32(cfg_.iss_threshold32);
+    iss_detector.setMinNeighbors(cfg_.iss_min_neighbours);
+    iss_detector.setNumberOfThreads(cfg_.iss_num_of_threads);
+    iss_detector.setInputCloud(cloud_);
+    iss_detector.compute(*keypoints_);
   }
 
   FilterOutNaNs(keypoints_, cfg_.debug);
 
-  if (cfg_.debug) {
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Extracted " << keypoints_->size () << " keypoints in "
-              << diff.count() << " ms." << std::endl;
-  }
+  auto diff = duration_cast<milliseconds>(
+      high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Extracted " << keypoints_->size () << " keypoints in " << diff.count() << " ms.");
 }
 
 void FeatureCloud::ComputeDescriptors() {
@@ -105,7 +106,7 @@ void FeatureCloud::ComputeDescriptors() {
     ExtractKeypoints();
   }
 
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start = high_resolution_clock::now();
   descriptors_ = Descriptors::Ptr(new Descriptors);
   pcl::SHOTEstimationOMP<Point, NormalType, DescriptorType> descr_est;
   //    pcl::FPFHEstimation<Point, NormalType, DescriptorType> descr_est;
@@ -136,11 +137,9 @@ void FeatureCloud::ComputeDescriptors() {
   extract_descriptors.setNegative(true);
   extract_descriptors.filter(*descriptors_);
 
-  if (cfg_.debug) {
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Descriptors computed in: " << diff.count() << " ms." << std::endl;
-  }
+  auto diff = duration_cast<milliseconds>(
+      high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Descriptors computed in: " << diff.count() << " ms.");
 }
 
-}
+} // namespace octomap_tools

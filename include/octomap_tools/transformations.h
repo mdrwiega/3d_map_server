@@ -16,12 +16,12 @@ namespace octomap_tools {
 /**
  * Transforms octree
  */
-OcTreePtr FastOcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformation);
+OcTreePtr FastOcTreeTransform(const OcTree& tree_in, const Eigen::Matrix4f& transf);
 
 /**
  * More accurate transformation method but also less efficient
  */
-OcTreePtr OcTreeTransform(const OcTree& tree, const Eigen::Matrix4f& transformation);
+OcTreePtr OcTreeTransform(const OcTree& tree_in, const Eigen::Matrix4f& transformation);
 
 /**
  * Crop the octree based on specified min and max vectors
@@ -45,4 +45,4 @@ float calculateNewNodeOccupancy(
     const octomap::point3d& src_point, const octomap::point3d& src_approx_point,
     const OcTree& tree_in, const octomap::OcTreeNode* src_node);
 
-}
+} // namespace octomap_tools

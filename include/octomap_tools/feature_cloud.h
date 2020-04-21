@@ -19,16 +19,20 @@ class FeatureCloud {
   enum class KeypointsExtractionMethod { Uniform, Iss3d };
 
   struct Config {
-    float normal_radius = 10.0;
-    float downsampling_radius = 0.1;
-    float descriptors_radius = 1.5;
-    KeypointsExtractionMethod keypoints_method = KeypointsExtractionMethod::Uniform;
-    float iss_model_resolution = 0.05;
-    int iss_min_neighbours = 4;
-    int iss_num_of_threads = 8;
-    float iss_threshold21 = 0.975;
-    float iss_threshold32 = 0.975;
     bool debug = false;
+
+    float normal_radius;
+    float downsampling_radius;
+    float descriptors_radius;
+    KeypointsExtractionMethod keypoints_method = KeypointsExtractionMethod::Uniform;
+
+    // ISS 3D
+    float iss_salient_radius;
+    float iss_non_max_radius;
+    float iss_threshold21;
+    float iss_threshold32;
+    int iss_min_neighbours;
+    int iss_num_of_threads;
   };
 
   FeatureCloud(PointCloud::Ptr cloud, Config config);
@@ -66,4 +70,4 @@ class FeatureCloud {
 
 using FeatureCloudPtr = std::shared_ptr<FeatureCloud>;
 
-}
+} // namespace octomap_tools

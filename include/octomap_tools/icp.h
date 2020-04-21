@@ -23,15 +23,15 @@ namespace octomap_tools {
 class ICP {
  public:
   struct Config {
-    unsigned max_iter = 100;     // Max number of iterations (ICP)
+    int max_iter = 100;     // Max number of iterations (ICP)
     float max_nn_dist = 0.3;     // Max correspondence distance (NN)
     float fitness_eps = 0.05;    // Euclidean fitness epsilon (ICP)
-    float transf_eps = 0.001;    // Transformation epsilon (ICP)
     float fitness_score_dist = 0.5;
+    float transf_eps = 0.001;    // Transformation epsilon (ICP)
     float scene_inflation_dist = 1.0;
     bool visualize = false;
     bool crop_scene = true;
-    std::string files_path_and_pattern;
+    std::string output_dir;
   };
 
   struct Result {
@@ -44,7 +44,7 @@ class ICP {
   ICP(const PointCloudPtr& scene, const PointCloudPtr& model, Config config) :
     scene_(scene),
     model_(model),
-    cfg_(config) {
+    cfg_(std::move(config)) {
   }
 
   Result Align() {
@@ -57,10 +57,10 @@ class ICP {
       scene = scene_;
     }
 
-    if (model_->size() == 0) {
+    if (model_->empty()) {
       throw std::runtime_error("ICP: Empty model");
     }
-    if (scene_->size() == 0) {
+    if (scene_->empty()) {
       throw std::runtime_error("ICP: Empty scene");
     }
 
@@ -78,7 +78,7 @@ class ICP {
     auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - start);
 
     if (cfg_.visualize) {
-      MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching_icp.png" });
+      MapsIntegratorVisualizer visualizer({ false, true, cfg_.output_dir + "icp.png" });
       visualizer.VisualizeICP(scene, model_, icp.getFinalTransformation());
     }
 
@@ -93,14 +93,14 @@ class ICP {
  protected:
   void cropSceneToInflatedModel(PointCloudPtr& cropped_scene) {
     // Crop scene to model + inflation
-    pcl::CropBox<Point> boxFilter;
-    boxFilter.setInputCloud(scene_);
+    pcl::CropBox<Point> box_filter;
+    box_filter.setInputCloud(scene_);
     Point pmin, pmax;
     pcl::getMinMax3D(*model_, pmin, pmax);
     auto inflation = cfg_.scene_inflation_dist;
-    boxFilter.setMin({pmin.x - inflation, pmin.y - inflation, pmin.z - inflation, 1});
-    boxFilter.setMax({pmax.x + inflation, pmax.y + inflation, pmax.z + inflation, 1});
-    boxFilter.filter(*cropped_scene);
+    box_filter.setMin({pmin.x - inflation, pmin.y - inflation, pmin.z - inflation, 1});
+    box_filter.setMax({pmax.x + inflation, pmax.y + inflation, pmax.z + inflation, 1});
+    box_filter.filter(*cropped_scene);
   }
 
  private:
@@ -109,4 +109,4 @@ class ICP {
   Config cfg_;
 };
 
-}
+} // namespace octomap_tools

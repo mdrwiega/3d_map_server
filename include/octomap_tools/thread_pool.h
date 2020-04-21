@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 #include <vector>
 #include <string>
 #include <queue>
@@ -14,78 +13,110 @@
 
 namespace thread_pool {
 
-class Semaphore;
-std::unique_ptr<Semaphore> createSemaphore(std::uint32_t value);
-
-class ThreadPool;
-std::unique_ptr<ThreadPool> createThreadPool(
-    std::uint32_t num_threads = std::thread::hardware_concurrency());
-
 class Semaphore {
-public:
-    ~Semaphore() = default;
+ public:
+  Semaphore(int count = 0) :  count_(count) {}
 
-    std::uint32_t value() const { return value_; }
-    void wait();
-    void post();
+  inline void Wait() {
+    std::unique_lock<decltype(mutex_)> lock(mutex_);
+    condition_var_.wait(lock, [&]() { return count_; }); // block if value_ == 0
+    --count_;
+  }
 
-    friend std::unique_ptr<Semaphore> createSemaphore(std::uint32_t value);
-private:
-    Semaphore(std::uint32_t value);
-    Semaphore(const Semaphore&) = delete;
-    const Semaphore& operator=(const Semaphore&) = delete;
+  inline void Notify() {
+    std::unique_lock<decltype(mutex_)> lock(mutex_);
+    ++count_;
+    condition_var_.notify_one();
+  }
 
-    std::mutex mutex_;
-    std::condition_variable condition_;
-    std::uint32_t value_;
+ private:
+  Semaphore(const Semaphore&) = delete;
+  const Semaphore& operator=(const Semaphore&) = delete;
+
+  std::mutex mutex_;
+  std::condition_variable condition_var_;
+  std::uint32_t count_;
 };
 
 class ThreadPool {
-public:
-    ~ThreadPool();
-
-    std::uint32_t num_threads() const { return threads_.size(); }
-    const std::vector<std::thread::id>& thread_identifiers() const {
-        return thread_identifiers_;
+ public:
+  ThreadPool(int threads_num = std::thread::hardware_concurrency()) {
+    if (threads_num == 0) {
+      throw std::invalid_argument("Wrong number of threads.");
     }
 
-    template<typename T, typename... Ts>
-    auto submit(T&& routine, Ts&&... params)
-        -> std::future<typename std::result_of<T(Ts...)>::type> {
+    terminate_ = false;
 
-        auto task = std::make_shared<std::packaged_task<typename std::result_of<T(Ts...)>::type()>>(
-            std::bind(std::forward<T>(routine), std::forward<Ts>(params)...)
-        );
-        auto task_result = task->get_future();
-        auto task_wrapper = [task]() {
-            (*task)();
-        };
+    for (int i = 0; i < threads_num; ++i) {
+      threads_.emplace_back(std::thread(&ThreadPool::WorkerThread, this));
+    }
+  }
 
-        queue_sem_->wait();
-        task_queue_.emplace(task_wrapper);
-        queue_sem_->post();
-        active_sem_->post();
+  ~ThreadPool() {
+    terminate_ = true;
 
-        return task_result;
+    for (unsigned i = 0; i < threads_.size(); ++i) {
+        active_sem_.Notify();
     }
 
-    friend std::unique_ptr<ThreadPool> createThreadPool(std::uint32_t num_threads);
+    for (auto& it: threads_) {
+        it.join();
+    }
+  }
+
+  int GetThreadsNum() const {
+    return threads_.size();
+  }
+
+  template<typename T, typename... Ts>
+  auto Submit(T&& function, Ts&&... params) -> std::future<typename std::result_of<T(Ts...)>::type> {
+
+    auto task = std::make_shared<std::packaged_task<typename std::result_of<T(Ts...)>::type()>>(
+        std::bind(std::forward<T>(function), std::forward<Ts>(params)...)
+    );
+    auto task_result = task->get_future();
+
+    queue_sem_.Wait();
+    task_queue_.emplace([task]() { (*task)(); });
+    queue_sem_.Notify();
+    active_sem_.Notify();
+
+    return task_result;
+  }
+
 private:
-    ThreadPool(std::uint32_t num_threads);
     ThreadPool(const ThreadPool&) = delete;
     const ThreadPool& operator=(const ThreadPool&) = delete;
 
-    static void worker_thread(ThreadPool* thread_pool);
+    void WorkerThread() {
+      while (true) {
+        active_sem_.Wait();
+        if (terminate_) {
+            break;
+        }
+
+        queue_sem_.Wait();
+
+        auto task = std::move(task_queue_.front());
+        task_queue_.pop();
+
+        queue_sem_.Notify();
+
+        if (terminate_) {
+            break;
+        }
+        task();
+      }
+    }
 
     std::vector<std::thread> threads_;
-    std::vector<std::thread::id> thread_identifiers_;
 
     std::queue<std::function<void()>> task_queue_;
 
-    std::unique_ptr<Semaphore> queue_sem_;
-    std::unique_ptr<Semaphore> active_sem_;
+    Semaphore queue_sem_{1};
+    Semaphore active_sem_{0};
 
     std::atomic<bool> terminate_;
 };
 
-}
+} // namespace thread_pool

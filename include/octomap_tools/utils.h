@@ -10,12 +10,47 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 
+#include <ros/package.h>
+#include <ros/console.h>
+
 #include <octomap/octomap.h>
 #include <Eigen/Dense>
 
 #include <octomap_tools/types.h>
+#include <octomap_tools/octomap_io.h>
 
 namespace octomap_tools {
+
+inline bool exists(const std::string& file_path) {
+  std::ifstream f(file_path.c_str());
+  return f.good();
+}
+
+inline OcTreePtr unpackAndGetOctomap(
+    const std::string& map_name, const std::string& ext = "ot") {
+  const std::string tmp_path = "tmp/";
+  const std::string ds_path = ros::package::getPath("octomap_tools") + "/octomaps_dataset/";
+  const std::string map_path = tmp_path + map_name + "." + ext;
+
+  std::system(("rm -rf " + tmp_path).c_str());
+  std::system(("mkdir -p " + tmp_path).c_str());
+  std::string map_packed_path = ds_path + map_name + "." + ext + ".gz";
+  std::system(("gzip -cd " + map_packed_path + " > " + map_path).c_str());
+  std::cout << "Unpacked file: " << map_packed_path
+            << " to " << map_path << std::endl;
+
+  auto tree = LoadOcTreeFromFile(map_path);
+  return tree;
+}
+
+inline std::string getCurrentDateAndTime() {
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+  return oss.str();
+}
 
 inline PointCloud createUniformPointCloud(Point min, Point max, Point step) {
   if (min.x > max.x || min.y > max.y || min.z > max.z)
@@ -23,10 +58,20 @@ inline PointCloud createUniformPointCloud(Point min, Point max, Point step) {
 
   PointCloud cloud;
 
-  for (float i = min.x; i < max.x; i += step.x)
-    for (float j = min.y; j < max.y; j += step.y)
-      for (float k = min.z; k < max.z; k += step.z)
-        cloud.push_back(Point{(float)i, (float)j, (float)k});
+  int i_max = (max.x - min.x) / step.x;
+  int j_max = (max.y - min.y) / step.y;
+  int k_max = (max.z - min.z) / step.z;
+
+  for (int i = 0; i < i_max; ++i) {
+    float x = min.x + step.x * i;
+    for (int j = 0; j < j_max; ++j) {
+      float y = min.y + step.y * j;
+      for (int k = 0; k < k_max; ++k) {
+        float z = min.z + step.z * k;
+        cloud.push_back(Point{x, y, z});
+      }
+    }
+  }
 
   return cloud;
 }
@@ -59,26 +104,30 @@ inline int getNumberOfOccupiedNodes(const OcTree& input_tree) {
   return num_occupied;
 }
 
-inline std::string OcTreeInfoToString(const OcTree& tree, std::string name) {
+inline std::string OcTreeInfoToString(const OcTree& tree, const std::string& name) {
   std::stringstream ss;
+  ss << "OcTree: " << name << "\n";
+  ss << "Size: " << tree.size();
+  ss << "  Resolution: " << tree.getResolution();
 
-  double xMin, xMax, yMin, yMax, zMin, zMax;
-  tree.getMetricMin(xMin, yMin, zMin);
-  tree.getMetricMax(xMax, yMax, zMax);
+  if (tree.size() > 0) {
+    ss << "  Leafs: " << tree.getNumLeafNodes();
+    ss << "  Occupied nodes: " << getNumberOfOccupiedNodes(tree) << "\n";
 
-  int num_occupied = getNumberOfOccupiedNodes(tree);
-  ss << "OcTree: " << name << "\n"
-      << "Size: " << tree.size() << "  Leafs: " << tree.getNumLeafNodes() << "  Occupied nodes: " << num_occupied << "  Resolution: " << tree.getResolution() << "\n"
-      << "Limits: x(" << xMin << ", " << xMax << ")  "
-      << "y(" << yMin << ", " << yMax << ")  z(" << zMin << ", " << zMax << ")\n";
+    double x_min, x_max, y_min, y_max, z_min, z_max;
+    tree.getMetricMin(x_min, y_min, z_min);
+    tree.getMetricMax(x_max, y_max, z_max);
+    ss << "Limits: x(" << x_min << ", " << x_max << ")  "
+       << "y(" << y_min << ", " << y_max << ")  z(" << z_min << ", " << z_max << ")\n";
+  }
   return ss.str();
 }
 
-inline void PrintOcTreeInfo(const OcTree& input_tree, std::string name) {
+inline void PrintOcTreeInfo(const OcTree& input_tree, const std::string& name) {
   std::cout << OcTreeInfoToString(input_tree, name);
 }
 
-inline void printOcTree(const OcTree& tree, std::string name) {
+inline void printOcTree(const OcTree& tree, const std::string& name) {
   PrintOcTreeInfo(tree, name);
   std::cout << "Leafs:\n";
   for (auto it = tree.begin_leafs(); it != tree.end_leafs(); ++it) {
@@ -117,16 +166,15 @@ inline void getMinMaxOctree(const OcTree& tree, Eigen::Vector3f& min, Eigen::Vec
 inline void filterOutPointsNotInRange(const PointCloud& cloudIn,
                                const Point& min, const Point& max,
                                PointCloud& cloudOut) {
-  auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax){
+  auto point_in_range = [](const Point& point, const Point& rMin, const Point& rMax){
     return (point.x < rMax.x && point.x > rMin.x) &&
         (point.y < rMax.y && point.y > rMin.y) &&
         (point.z < rMax.z && point.z > rMin.z);
   };
 
   cloudOut.clear();
-  for (const auto& point : cloudIn)
-  {
-    if (pointInRange(point, min, max))
+  for (const auto& point : cloudIn) {
+    if (point_in_range(point, min, max))
       cloudOut.push_back(point);
   }
 }
@@ -134,24 +182,26 @@ inline void filterOutPointsNotInRange(const PointCloud& cloudIn,
 inline void expandNodeOnlyEmptyChilds(OcTreeNode* node, OcTree& tree) {
   for (unsigned k = 0; k < 8; k++) {
     if (!tree.nodeChildExists(node, k)) {
-      OcTreeNode* newNode = tree.createNodeChild(node, k);
-      newNode->copyData(*node);
+      OcTreeNode* new_node = tree.createNodeChild(node, k);
+      new_node->copyData(*node);
     }
   }
 }
 
-inline void printPointsAndDistances(std::string title, std::vector<Point>& points,
+inline void printPointsAndDistances(const std::string& title, std::vector<Point>& points,
                              std::vector<float>& distances) {
   std::cout << title << ": Points and distances: \n";
-  for (unsigned i = 0; i < points.size(); ++i)
+  for (unsigned i = 0; i < points.size(); ++i) {
     std::cout << "(" << points[i].x << ", " << points[i].y << ", "
     << points[i].z << ") = " << distances[i] << "\n";
+  }
 }
 
 inline int getKeyDepth(const OcTree& tree, const octomap::point3d& point, const octomap::OcTreeKey& key) {
   for (int depth = tree.getTreeDepth(); depth > 1; --depth) {
-    if (tree.coordToKey(point, depth) == key)
+    if (tree.coordToKey(point, depth) == key) {
       return depth;
+    }
   }
   return -1;
 }
@@ -182,11 +232,10 @@ inline bool contains(OcTree& tree, const Point& query, float sqRadius,
 }
 
 // compute which child is closest to the query point
-inline int getClosestChild(const Point& q, const Point& p)
-{
-  return ((q.x - p.x) >= 0) |
-      (((q.y - p.y) >= 0) << 1) |
-      (((q.z - p.z) >= 0) << 2);
+inline int getClosestChild(const Point& q, const Point& p) {
+  return (static_cast<int>((q.x - p.x) >= 0.0) |
+         (static_cast<int>((q.y - p.y) >= 0.0) << 1) |
+         (static_cast<int>((q.z - p.z) >= 0.0) << 2));
 }
 
 inline double getVoxelSquaredSideLen(const OcTree& tree, unsigned tree_depth_arg)
@@ -225,15 +274,17 @@ inline void splitPointcloud(const Eigen::Vector4f& plane,
   out2.clear();
 
   for (const auto& p : in.points) {
-    if ((plane[0] * p.x + plane[1] * p.y + plane[2] * p.z + plane[3]) > 0)
+    if ((plane[0] * p.x + plane[1] * p.y + plane[2] * p.z + plane[3]) > 0) {
       out1.push_back(p);
-    else
+    }
+    else {
       out2.push_back(p);
+    }
   }
 }
 
 inline std::string PointCloudInfoToString(
-    const PointCloud& cloud, const std::string cloud_name) {
+    const PointCloud& cloud, const std::string& cloud_name) {
   std::stringstream ss;
   Point min, max;
   pcl::getMinMax3D(cloud, min, max);
@@ -253,6 +304,11 @@ inline void ExpandOccupiedNodesRecursive(octomap::OcTree& tree,
   if (depth >= tree.getTreeDepth()) {
     return;
   }
+
+  if (node == nullptr) {
+    return;
+  }
+
   // Do not expand if node is not occupied
   if (!tree.isNodeOccupied(node)) {
     return;
@@ -287,15 +343,15 @@ inline void FilterOutNaNs(PointCloud::Ptr& cloud_ptr, bool debug = false) {
   pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
 
   for (size_t i = 0; i < cloud_ptr->size(); ++i) {
-    if (!std::isfinite (cloud_ptr->points[i].x) ||
-        !std::isfinite (cloud_ptr->points[i].y) ||
-        !std::isfinite (cloud_ptr->points[i].z)) {
+    if (!std::isfinite(cloud_ptr->points[i].x) ||
+        !std::isfinite(cloud_ptr->points[i].y) ||
+        !std::isfinite(cloud_ptr->points[i].z)) {
       inliers->indices.push_back(i);
     }
   }
 
   // Filter out points with NANs
-  if (inliers->indices.size() > 0) {
+  if (!inliers->indices.empty()) {
     pcl::ExtractIndices<pcl::PointXYZ> extract;
     extract.setInputCloud(cloud_ptr);
     extract.setIndices(inliers);
@@ -307,4 +363,4 @@ inline void FilterOutNaNs(PointCloud::Ptr& cloud_ptr, bool debug = false) {
   }
 }
 
-}
+} // namespace octomap_tools

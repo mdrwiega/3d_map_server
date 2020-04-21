@@ -1,47 +1,53 @@
 @startuml
 
 class FeatureCloud {
-  FeatureCloud(cloud, config)
-  processInput()
   computeSufraceNormals()
   ExtractKeypoints()
   computeDescriptors()
 }
 
-class FeaturesMatching {
-  FeaturesMatching(config, scene, model)
+class FeatureMatching {
   initialAlignment()
   divideFullModelIntoBlocks()
   findBestAlignment()
 }
 
-class IcpMatching {
-  cropSceneToInflatedModel()
-  align()
+class ICP {
+  Align()
 }
 
-class OctomapsIntegrator {
-  MapsIntegrator(scene, model, config)
+class MapsIntegrator {
+  Merge()
   EstimateTransformation()
-  integrateOctrees()
   DumpConfigAndResultsToFile()
+  GetConfigurationFromRosParams()
 }
 
-class 3DMapsIntegratorVisualizer {
-	visualize()
-	visualizeICP()
-	visualizeClouds()
+class 3DMapsVisualizer {
+	Visualize()
+	VisualizeICP()
+	VisualizeFeatureMatching()
+	VisualizeFeatureMatchingWithDividedModel()
+	VisualizeClouds()
 }
 
-class OctomapsIntegratorRos {
-GetConfigurationFromRosParams()
-IntegrateMaps()
-}
+' Connections
+FeatureMatching o-- FeatureCloud
 
-FeaturesMatching o-- FeatureCloud
-OctomapsIntegrator o-- FeaturesMatching
-OctomapsIntegrator o-- IcpMatching
-OctomapsIntegrator o-- 3DMapsIntegratorVisualizer
-OctomapsIntegratorRos *-- OctomapsIntegrator
+MapsIntegrator o-- GlobalAlignment
+GlobalAlignment <|-- FeatureMatching
+
+MapsIntegrator o-- LocalAlignment
+LocalAlignment <|-- ICP
+LocalAlignment <|-- OICP
+
+MapsIntegrator o-- 3DMapsVisualizer
+
+MapsServer -.> MapsIntegrator
+MapsServer *-- Graph
+MapsServer o-- Map
+
+Map o-- Octomap
+Map o-- PointCloud
 
 @enduml

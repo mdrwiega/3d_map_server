@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2017-2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <chrono>
@@ -63,7 +56,7 @@ inline Eigen::Matrix3Xf OctreeToPoints(const octomap::OcTree& input_tree) {
 
 inline PointCloudPtr OcTreeToPointCloud(const octomap::OcTree& input_tree) {
   auto start = std::chrono::high_resolution_clock::now();
-
+  std::cout << "Size of octree : " << input_tree.size() << "\n";
   octomap::OcTree tree = input_tree;
   ExpandOccupiedNodesRecursive(tree, tree.getRoot(), 0);
   PointCloudPtr cloud(new PointCloud);
@@ -74,7 +67,7 @@ inline PointCloudPtr OcTreeToPointCloud(const octomap::OcTree& input_tree) {
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  std::cout << "Octree (" << cloud->size() << " occ nodes) converted to pointcloud in: "
+  std::cout << "OcTree (" << cloud->size() << " nodes) converted to PointCloud in "
             << diff.count() << " ms." << std::endl;
   return cloud;
 }
@@ -94,4 +87,4 @@ inline octomap::OcTree PointCloudToOctree(const PointCloud& cloud, double tree_r
   return tree;
 }
 
-}
+} // namespace octomap_tools

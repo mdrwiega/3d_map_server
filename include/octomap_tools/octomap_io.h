@@ -1,14 +1,9 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <memory>
 #include <stdexcept>
+
+#include <ros/console.h>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -20,7 +15,7 @@
 namespace octomap_tools {
 
 inline OcTreePtr LoadOcTreeFromFile(const std::string& filename) {
-  std::cout << "\nLoading octree from file: " << filename << std::endl;
+  ROS_INFO_STREAM("Loading octree from file: " << filename);
   std::ifstream file(filename.c_str(), std::ios_base::in | std::ios_base::binary);
   if (!file.is_open()) {
     throw std::runtime_error(std::string(__func__) + ": Unable to open " + filename);
@@ -38,10 +33,10 @@ inline OcTreePtr LoadOcTreeFromFile(const std::string& filename) {
       throw std::runtime_error(std::string(__func__) + ": Can't load octree from file " + filename);
     }
   } else { // Reading old format of octree (.bt)
-    std::unique_ptr<octomap::OcTree> bTree (new octomap::OcTree(0.1));
+    std::unique_ptr<octomap::OcTree> b_tree (new octomap::OcTree(0.1));
 
-    if (bTree->readBinary(file) && bTree->size() > 1) {
-      tree.reset(bTree.release());
+    if (b_tree->readBinary(file) && b_tree->size() > 1) {
+      tree.reset(b_tree.release());
     } else {
       throw std::runtime_error(std::string(__func__) + ": Can't detect binary OcTree format in file " + filename);
     }
@@ -50,13 +45,13 @@ inline OcTreePtr LoadOcTreeFromFile(const std::string& filename) {
 }
 
 inline void SaveOcTreeToFile(const OcTree& tree, const std::string& filename) {
-  std::cout  << "\nSaving octree to file: " << filename << std::endl;
+  ROS_INFO_STREAM("Saving octree to file: " << filename);
   if (!tree.write(filename)) {
     throw std::runtime_error(std::string(__func__) + ": Error during saving to " + filename);
   }
 }
 
-[[depracated("Lossy conversion from cloud to octree")]]
+// [[depracated("Lossy conversion from cloud to octree")]]
 inline void SavePointCloudAsOctreeToFile(
     PointCloud::Ptr& cloud, const std::string& fileName, float resolution) {
   octomap::Pointcloud scan;
@@ -66,28 +61,28 @@ inline void SavePointCloudAsOctreeToFile(
 
   std::unique_ptr<octomap::OcTree> tree(new octomap::OcTree(resolution));
 
-  octomap::point3d sensorPose{0,0,0};
-  tree->insertPointCloud(scan, sensorPose);
+  octomap::point3d sensor_pose{0,0,0};
+  tree->insertPointCloud(scan, sensor_pose);
   tree->updateInnerOccupancy();
   tree->prune();
 
   SaveOcTreeToFile(*tree, fileName);
 }
 
-inline PointCloudPtr LoadPointCloudFromFile(const std::string filename) {
+inline PointCloudPtr LoadPointCloudFromFile(const std::string& filename) {
   PointCloudPtr cloud (new PointCloud);
   if (pcl::io::loadPCDFile<Point> (filename, *cloud) == -1) {
     throw std::runtime_error(std::string(__func__) + ": Can't read cloud file " + filename);
   }
-  std::cout << "Loaded " << cloud->size() << " data points from " << filename << std::endl;
+  ROS_INFO_STREAM("Loaded " << cloud->size() << " data points from " << filename);
   return cloud;
 }
 
-inline void savePointCloudToFile(const std::string filename, const PointCloud& cloud, bool binary) {
+inline void savePointCloudToFile(const std::string& filename, const PointCloud& cloud, bool binary) {
   if (pcl::io::savePCDFile<Point>(filename, cloud, binary) == -1) {
     throw std::runtime_error(std::string(__func__) + ": Can't save cloud to file " + filename);
   }
-  std::cout << "Saved " << cloud.size() << " data points to " << filename << std::endl;
+  ROS_INFO_STREAM("Saved " << cloud.size() << " data points to " << filename);
 }
 
-}
+} // namespace octomap_tools

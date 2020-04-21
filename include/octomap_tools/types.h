@@ -24,4 +24,4 @@ struct Rectangle {
   Eigen::Vector2f max;
 };
 
-}
+} // namespace octomap_tools

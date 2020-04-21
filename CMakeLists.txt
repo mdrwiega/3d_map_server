@@ -6,7 +6,7 @@ set(CATKIN_ENABLE_TESTING 1)
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 
 add_compile_options(
   -Wall
@@ -59,21 +59,21 @@ add_library(${PROJECT_NAME}
 	src/features_matching.cpp
 	src/maps_integrator_visualizer.cpp
 	src/maps_integrator.cpp
-	src/thread_pool.cpp
 	src/transformations.cpp
 )
 
 #add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(octomap_tools_node src/octomap_tools_node.cpp)
-target_link_libraries(octomap_tools_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(maps_integrator src/maps_integrator_node.cpp)
+target_link_libraries(maps_integrator
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
 # Additional tools
-add_executable(octomap_box_filter
-	src/tools/octomap_box_filter.cpp
-)
-target_link_libraries(octomap_box_filter ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(map_box_filter src/tools/map_box_filter.cpp)
+target_link_libraries(map_box_filter
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(octomap_statistical_filter
 	src/tools/octomap_statistical_filter.cpp
@@ -90,20 +90,31 @@ add_executable(radius_outlier_removal
 )
 target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
+# Install
+catkin_install_python(PROGRAMS
+  scripts/tests.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 
 if (CATKIN_ENABLE_TESTING)
-    find_package(rostest REQUIRED)
-    add_rostest_gtest(octomaps_integrator_test test/octomaps_integrator.test test/octomaps_integrator_test.cpp test/test_octomap_tools.cpp)
-    target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
+    # find_package(rostest REQUIRED)
+    # add_rostest_gtest(octomaps_integrator_test test/octomaps_integrator.test test/octomaps_integrator_test.cpp test/test_octomap_tools.cpp)
+    # target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
 
     set(TESTS_SRC
-        test/conversions_test.cpp
-        test/feature_cloud_test.cpp
-        test/features_matching_test.cpp
-        test/octomaps_integrator_test.cpp
-        test/test_octomap_tools.cpp
-        test/transformations_test.cpp
-        test/icp_matching_test.cpp
+        # test/conversions_test.cpp
+        # test/feature_cloud_test.cpp
+        # test/features_matching_test.cpp
+        # test/octomaps_integrator_test.cpp
+        # test/test_octomap_tools.cpp
+        # test/transformations_test.cpp
+        # test/icp_matching_test.cpp
+        test/thread_pool_test.cpp
+        test/main.cpp
     )
     catkin_add_gtest(${PROJECT_NAME}_test ${TESTS_SRC})
     target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_LIBRARIES})

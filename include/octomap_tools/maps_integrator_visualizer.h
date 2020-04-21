@@ -11,12 +11,13 @@ namespace octomap_tools {
 class MapsIntegratorVisualizer {
  public:
   struct Config {
-    bool save_to_file {false};
+    bool screen_mode;
+    bool save_to_file;
     std::string filename;
   };
 
-  MapsIntegratorVisualizer(Config cfg = {false, ""}) :
-    cfg_(cfg) {
+  MapsIntegratorVisualizer(Config cfg = {true, false, ""}) :
+    cfg_(std::move(cfg)) {
   }
 
   /**
@@ -33,7 +34,7 @@ class MapsIntegratorVisualizer {
    * Visualize feature matching process
    */
   void VisualizeFeatureMatching(
-    const FeatureCloudPtr scene, const FeatureCloudPtr model,
+    const FeatureCloudPtr& scene, const FeatureCloudPtr& model,
     const Eigen::Matrix4f& transformation,
     const pcl::CorrespondencesPtr& correspondences);
 
@@ -43,7 +44,7 @@ class MapsIntegratorVisualizer {
   void VisualizeFeatureMatchingWithDividedModel(
     PointCloudPtr& scene,
     PointCloudPtr& model, PointCloudPtr& full_model,
-    const Eigen::Matrix4f& transformation, std::vector<Rectangle> blocks);
+    const Eigen::Matrix4f& transformation, const std::vector<Rectangle>& blocks);
 
   /**
    * General visualization
@@ -58,9 +59,9 @@ class MapsIntegratorVisualizer {
     const PointCloudPtr& keypoints1 = nullptr,
     const PointCloudPtr& keypoints2 = nullptr,
     const pcl::CorrespondencesPtr& correspondences = nullptr,
-    std::vector<Rectangle> blocks = {});
+    const std::vector<Rectangle>& blocks = {});
 
   Config cfg_;
 };
 
-}
+} // namespace octomap_tools

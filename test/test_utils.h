@@ -5,13 +5,12 @@
 #include <limits>
 #include <cmath>
 
-#include <ros/package.h>
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
 
 #include <octomap_tools/utils.h>
-#include <octomap_tools/octomap_io.h>
 #include <octomap_tools/transformations.h>
+#include <octomap_tools/math.h>
 
 using namespace Eigen;
 using namespace octomap;
@@ -34,16 +33,18 @@ using Vector3f = Eigen::Vector3f;
 
 namespace octomap_tools {
 
-template<typename T>
-typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
-near(T x, T y, int units_last_place = 5) {
-    return std::abs(x-y) <= std::numeric_limits<T>::epsilon() * std::abs(x+y) * units_last_place
-        || std::abs(x-y) < std::numeric_limits<T>::min();
+inline std::string MatchingTestResultToString(
+  const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
+  std::stringstream ss;
+  ss << "\nReal transformation:" << transfMatrixToXyzRpyString(t1);
+  ss << "\nEstimated transformation:" << transfMatrixToXyzRpyString(t2);
+  ss << "\nFitness score: " << fitness_score;
+  ss << "\nReal error: " << transformationsError(t1, t2) << "\n\n";
+  return ss.str();
 }
 
-template<typename T>
-bool near_abs(T x, T y, T abs_error) {
-    return std::abs(x-y) <= abs_error;
+inline void PrintMatchingResult(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
+  std::cout << MatchingTestResultToString(t1, t2, fitness_score);
 }
 
 inline void checkIfTransformedTreeBoundsAreCorrect(
@@ -64,28 +65,6 @@ inline void checkIfTransformedTreeBoundsAreCorrect(
   double max_err = tree.getResolution() * std::sqrt(3);
   EXPECT_VECTOR3F_NEAR(min1t, min2, max_err);
   EXPECT_VECTOR3F_NEAR(max1t, max2, max_err);
-}
-
-inline bool isFileExist(const std::string& file_name) {
-    std::ifstream infile(file_name.c_str());
-    return infile.good();
-}
-
-inline OcTreePtr unpackAndGetOctomap(
-    const std::string& map_name, const std::string ext = "ot") {
-  const std::string tmp_path = "tmp/";
-  const std::string ds_path = ros::package::getPath("octomap_tools") + "/octomaps_dataset/";
-  const std::string map_path = tmp_path + map_name + "." + ext;
-
-  std::system(("rm -rf " + tmp_path).c_str());
-  std::system(("mkdir -p " + tmp_path).c_str());
-  std::string map_packed_path = ds_path + map_name + "." + ext + ".gz";
-  std::system(("gzip -cd " + map_packed_path + " > " + map_path).c_str());
-  std::cout << "Unpacked file: " << map_packed_path
-            << " to " << map_path << std::endl;
-
-  auto tree = LoadOcTreeFromFile(map_path);
-  return tree;
 }
 
 }

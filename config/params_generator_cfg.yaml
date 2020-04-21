@@ -1,0 +1,40 @@
+global_alignment:
+  cell_size_x: [3, 2]
+  cell_size_y: [3]
+  min_model_size: [400]
+  min_keypoints_num: [40]
+
+  feature_matching:
+    normal_radius: [0.5, 1.0, 10.0]
+    downsampling_radius: [0.15]
+    descriptors_radius: [1.0]
+
+    sample_consensus:
+      iterations_num: [1000]
+      min_sample_distance: [0.1, 0.2, 0.5]
+      max_correspondence_distance: [100.0]
+      fitness_score_distance: [0.5]
+
+    keypoints_method: [iss3d]
+    iss3d:
+      salient_radius: [0.12] # 6 * resolution
+      non_max_radius: [0.08] # 4 * resolution
+      threshold21: [0.975]
+      threshold32: [0.975]
+      min_neighbours: [6]
+      num_of_threads: [2]
+
+    uniform_sampling:
+      downsampling_radius: [0.1]
+
+enable_local_alignment: [true]
+local_alignment:
+  enable: [true]
+  method: ["icp"]
+  scene_inflation_dist: [2.5]
+  icp:
+    max_iterations: [500]
+    max_nn_dist: [0.5]
+    fitness_eps: [0.0005]
+    fitness_score_dist: [0.5]
+    transformation_eps: [0.0001]

@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2017, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <iostream>
@@ -33,19 +26,16 @@ class MapsIntegrator {
 
  public:
   struct Config {
-    bool show_visualization_{false};
-    bool show_two_pointclouds{false};
-    bool dump_to_file_{true};
-    bool debug{true};
- 
+    bool show_visualizer{false};
+    bool output_to_file{true};
+
     float fitness_score_thresh{0.0001};
     bool icp_correction{true};
-    std::string files_path_and_pattern;
+    std::string output_dir;
     ICP::Config icp;
     FeaturesMatching::Config template_alignment;
 
     std::string toString();
-    std::string toTable();
     std::vector<std::string> getHeader();
   };
 
@@ -77,7 +67,7 @@ class MapsIntegrator {
    */
   OcTreePtr Merge(bool save_to_file = false);
 
-  void DumpConfigAndResultsToFile();
+  std::string DumpConfigAndResultsToFile();
 
  private:
   std::vector<Rectangle> spiral_blocks_;
@@ -89,4 +79,4 @@ class MapsIntegrator {
   Result result_;
 };
 
-}
+} // namespace octomap_tools

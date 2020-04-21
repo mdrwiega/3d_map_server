@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #include <cstdlib>
 #include <iostream>
 
@@ -12,7 +5,6 @@
 #include <octomap_tools/octomap_io.h>
 
 using namespace octomap_tools;
-using namespace Eigen;
 
 void printHelp(const char* progName) {
   std::cout << "Usage: " << progName
@@ -26,8 +18,8 @@ int main(int argc, char** argv) {
     printHelp(argv[0]);
   }
 
-  const std::string inFilename = argv[1];
-  auto tree = LoadOcTreeFromFile(inFilename);
+  const std::string in_filename = argv[1];
+  auto tree = LoadOcTreeFromFile(in_filename);
   PrintOcTreeInfo(*tree, "Octomap info");
   return 0;
 }

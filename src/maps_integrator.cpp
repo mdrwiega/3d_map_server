@@ -1,8 +1,13 @@
 #include "octomap_tools/maps_integrator.h"
 
+#include <ctime>
+#include <cstdlib>
+
 #include <iostream>
 #include <iomanip>
-#include <ctime>
+#include <stdexcept>
+
+#include <ros/console.h>
 
 #include <pcl/point_cloud.h>
 
@@ -12,6 +17,7 @@
 #include <octomap_tools/math.h>
 #include <octomap_tools/octomap_io.h>
 #include "utils/table_printer.h"
+
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -24,6 +30,13 @@ MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& mod
   cfg_(config) {
   model_ = OcTreeToPointCloud(*model_tree_);
   scene_ = OcTreeToPointCloud(*scene_tree_);
+
+  if (model_->size() < cfg_.template_alignment.model_size_thresh_) {
+    throw (std::runtime_error(std::string(__func__) + ": Model size is too small"));
+  }
+  if (scene_->size() < cfg_.template_alignment.model_size_thresh_) {
+    throw (std::runtime_error(std::string(__func__) + ": Scene size is too small"));
+  }
 }
 
 MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
@@ -32,31 +45,32 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   // Features based initial alignment
   PointCloud::Ptr best_model(new PointCloud);
   FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
-  FeaturesMatching::Result ia_result = features_matching.DivideModelAndAlign(*best_model);
 
-  if (cfg_.debug) {
-    std::cout << std::setprecision(6) << "\nIA fitness score: " << ia_result.fitness_score << "\n";
-    std::cout << std::setprecision(1) << "IA time: " << ia_result.processing_time_ms << " ms\n";
-    std::cout << "IA transformation:" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
+  FeaturesMatching::Result ia_result;
+
+  if (cfg_.template_alignment.divide_model) {
+    ia_result = features_matching.DivideModelAndAlign(*best_model);
   }
+
+  ROS_DEBUG_STREAM(std::setprecision(6) << "IA fitness score: " << ia_result.fitness_score);
+  ROS_DEBUG_STREAM(std::setprecision(1) << "IA time: " << ia_result.processing_time_ms << " ms");
+  ROS_DEBUG_STREAM("IA transformation:" << transfMatrixToXyzRpyString(ia_result.transformation));
 
   // ICP correction
   if (cfg_.icp_correction) {
-      PointCloud::Ptr icp_model(new PointCloud);
-      pcl::transformPointCloud(*best_model, *icp_model, ia_result.transformation);
-      ICP icp(scene_, icp_model, cfg_.icp);
-      ICP::Result icp_result = icp.Align();
+    PointCloud::Ptr icp_model(new PointCloud);
+    pcl::transformPointCloud(*best_model, *icp_model, ia_result.transformation);
+    ICP icp(scene_, icp_model, cfg_.icp);
+    ICP::Result icp_result = icp.Align();
 
-      if (icp_result.fitness_score < ia_result.fitness_score) {
-        ia_result.fitness_score = icp_result.fitness_score;
-        ia_result.transformation = icp_result.transformation * ia_result.transformation;
-      }
+    if (icp_result.fitness_score < ia_result.fitness_score) {
+      ia_result.fitness_score = icp_result.fitness_score;
+      ia_result.transformation = icp_result.transformation * ia_result.transformation;
+    }
 
-      if (cfg_.debug) {
-        std::cout << std::setprecision(6) << "ICP fitness score: " << icp_result.fitness_score << "\n";
-        std::cout << std::setprecision(1) << "ICP time: " << icp_result.processing_time_ms << " ms\n";
-        std::cout << "ICP transformation:" << transfMatrixToXyzRpyString(ia_result.transformation) << "\n";
-      }
+    ROS_DEBUG_STREAM(std::setprecision(6) << "ICP fitness score: " << icp_result.fitness_score);
+    ROS_DEBUG_STREAM(std::setprecision(1) << "ICP time: " << icp_result.processing_time_ms << " ms");
+    ROS_DEBUG_STREAM("ICP transformation:" << transfMatrixToXyzRpyString(ia_result.transformation));
   }
 
   // Create result
@@ -68,19 +82,23 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   result_.PrintResult();
 
-  if (cfg_.dump_to_file_) {
+  if (cfg_.output_to_file) {
     DumpConfigAndResultsToFile();
   }
-  if (cfg_.show_visualization_) {
-    MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching.png" });
-    visualizer.VisualizeFeatureMatchingWithDividedModel(
-      scene_, best_model, model_, ia_result.transformation, spiral_blocks_);
-  }
-  if (cfg_.show_two_pointclouds) {
-    PointCloudPtr transformed_model (new PointCloud);
-    pcl::transformPointCloud(*model_, *transformed_model, ia_result.transformation);
-    MapsIntegratorVisualizer visualizer({ true, cfg_.files_path_and_pattern + "matching_2clouds.png" });
-    visualizer.VisualizeClouds(scene_, transformed_model);
+  if (cfg_.show_visualizer || cfg_.output_to_file) {
+    {
+      MapsIntegratorVisualizer visualizer(
+        { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching.png" });
+      visualizer.VisualizeFeatureMatchingWithDividedModel(
+        scene_, best_model, model_, ia_result.transformation, spiral_blocks_);
+    }
+    {
+      PointCloudPtr transformed_model (new PointCloud);
+      pcl::transformPointCloud(*model_, *transformed_model, ia_result.transformation);
+      MapsIntegratorVisualizer visualizer(
+        { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching_2clouds.png" });
+      visualizer.VisualizeClouds(scene_, transformed_model);
+    }
   }
   return result_;
 }
@@ -91,23 +109,19 @@ OcTreePtr MapsIntegrator::Merge(const Eigen::Matrix4f& transformation, bool save
   // Transform map
   auto tree_model_transformed = FastOcTreeTransform(*model_tree_, transformation);
 
-  if (cfg_.debug) {
-    auto diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
-    std::cout << "Map transformed in " << diff.count() << " ms." << std::endl;
-  }
+  auto diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Map transformed in " << diff.count() << " ms.");
 
   start = high_resolution_clock::now();
 
   // Merge maps which are already in the same coordination system
   auto merged_tree = FastSumOctrees(*tree_model_transformed, *scene_tree_);
 
-  if (cfg_.debug) {
-    auto diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
-    std::cout << "Maps merged in " << diff.count() << " ms." << std::endl;
-  }
+  diff = std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Maps merged in " << diff.count() << " ms.");
 
   if (save_to_file) {
-    SaveOcTreeToFile(*merged_tree, cfg_.files_path_and_pattern + "merged_tree.ot");
+    SaveOcTreeToFile(*merged_tree, cfg_.output_dir + "merged_tree.ot");
   }
   return merged_tree;
 }
@@ -117,10 +131,14 @@ OcTreePtr MapsIntegrator::Merge(bool save_to_file) {
   return Merge(result_.transformation, save_to_file);
 }
 
-void MapsIntegrator::DumpConfigAndResultsToFile() {
-  std::ofstream file(cfg_.files_path_and_pattern + "cfg_results.txt");
-  file << cfg_.toTable();
+std::string MapsIntegrator::DumpConfigAndResultsToFile() {
+  std::string params_file = cfg_.output_dir + "params.yaml";
+  std::system(("rosparam dump " + params_file).c_str());
+
+  std::string result_file = cfg_.output_dir + "result.txt";
+  std::ofstream file(result_file, std::ios_base::app);
   file << result_.toString();
+  return result_file;
 }
 
 std::string MapsIntegrator::Result::toString() {
@@ -143,7 +161,7 @@ std::string MapsIntegrator::Result::toString() {
 
 void MapsIntegrator::Result::PrintResult() {
   std::cout << "Final result:" << std::fixed << std::setprecision(1) << std::endl;
-  std::cout << "Total processing time: " << time_ms / 1000.0 << " s." << std::endl;
+  std::cout << "Total time: " << time_ms / 1000.0 << " s." << std::endl;
   std::cout << "Fitness score: " << std::setprecision(6) << fitness_score << std::endl;
   std::cout << "Transformation: " << transfMatrixToXyzRpyString(transformation) << std::endl;
 }
@@ -171,28 +189,6 @@ std::vector<std::string> MapsIntegrator::Config::getHeader() {
             "icp.max_iter", "icp.max_nn_dist", "icp.fitness_eps", "icp.transf_eps", "icp.scene_infl_dist",
             "fc.normal_radius", "fc.downsampling_radius", "fc.descriptors_radius", "ta.min_sample_dist", "ta.max_corr_dist",
             "ta.nr_iter" };
-}
-
-std::string MapsIntegrator::Config::toTable() {
-  std::stringstream stream;
-  md::TablePrinter tp(&stream);
-
-  for (const auto& i : getHeader()) {
-    tp.addColumn(i);
-  }
-
-  tp.printTitle("Features matching parameters");
-  tp.printHeader();
-
-  tp
-      << template_alignment.model_size_thresh_ << fitness_score_thresh << template_alignment.keypoints_thresh_ << template_alignment.cell_size_x << template_alignment.cell_size_y
-      << icp.max_iter << icp.max_nn_dist << icp.fitness_eps << icp.transf_eps << icp.scene_inflation_dist
-      << template_alignment.feature_cloud.normal_radius << template_alignment.feature_cloud.downsampling_radius << template_alignment.feature_cloud.descriptors_radius
-      << template_alignment.min_sample_distance << template_alignment.max_correspondence_distance
-      << template_alignment.nr_iterations;
-
-  tp.printFooter();
-  return stream.str();
 }
 
 }

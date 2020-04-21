@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include <ros/console.h>
+
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/common/transforms.h>
@@ -11,12 +13,24 @@
 #include <pcl/features/board.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/recognition/cg/geometric_consistency.h>
+#include <pcl/registration/transformation_validation_euclidean.h>
+
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_distance.h>
+#include <pcl/registration/transformation_estimation_svd.h>
 
 #include <octomap_tools/thread_pool.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
 
+#include <octomap_tools/conversions.h>
+
+#include <pcl/conversions.h>
+
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::Normal NormalType;
+
+using namespace pcl;
+using namespace pcl::registration;
 
 namespace octomap_tools {
 
@@ -36,13 +50,13 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
   // Divide model into blocks
   std::vector<Rectangle> blocks = RectangularModelDecomposition(cfg_.cell_size_x, cfg_.cell_size_y);
 
-  std::cout << "\nStarting features matching alignment. There are " << blocks.size() << " blocks.\n";
+  ROS_DEBUG_STREAM("Starting features matching alignment. There are " << blocks.size() << " blocks.");
 
   // Initialize thread pool and start workers
-  std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool();
+  thread_pool::ThreadPool thread_pool;
   std::vector<std::future<FeaturesMatching::ThreadResult>> thread_futures;
   for (std::uint32_t i = 0; i < blocks.size(); ++i) {
-    thread_futures.emplace_back(thread_pool->submit(
+    thread_futures.emplace_back(thread_pool.Submit(
         AlignmentThread, i, std::ref(model_cloud_), std::ref(blocks[i]), std::ref(scene), std::ref(cfg_)));
   }
 
@@ -61,11 +75,11 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
   pcl::getMinMax3D(*model_cloud_, pmin, pmax);
   Eigen::Vector4f model_min = {blocks[ia_result.thread_num].min(0), blocks[ia_result.thread_num].min(1), pmin.z, 1};
   Eigen::Vector4f model_max = {blocks[ia_result.thread_num].max(0), blocks[ia_result.thread_num].max(1), pmax.z, 1};
-  pcl::CropBox<Point> boxFilter;
-  boxFilter.setInputCloud(model_cloud_);
-  boxFilter.setMin(model_min);
-  boxFilter.setMax(model_max);
-  boxFilter.filter(best_model);
+  pcl::CropBox<Point> box_filter;
+  box_filter.setInputCloud(model_cloud_);
+  box_filter.setMin(model_min);
+  box_filter.setMax(model_max);
+  box_filter.filter(best_model);
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
@@ -83,22 +97,22 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
   Eigen::Vector4f model_min = {block.min(0), block.min(1), pmin.z, 1};
   Eigen::Vector4f model_max = {block.max(0), block.max(1), pmax.z, 1};
 
-  pcl::CropBox<Point> boxFilter;
-  boxFilter.setInputCloud(full_model);
-  boxFilter.setMin(model_min);
-  boxFilter.setMax(model_max);
+  pcl::CropBox<Point> box_filter;
+  box_filter.setInputCloud(full_model);
+  box_filter.setMin(model_min);
+  box_filter.setMax(model_max);
   PointCloudPtr filtered_model (new PointCloud);
-  boxFilter.filter(*filtered_model);
+  box_filter.filter(*filtered_model);
 
   if (filtered_model->size() < cfg.model_size_thresh_) {
-    std::cout << "T" << nr << ": Model is too small (size: " << filtered_model->size() << ")\n";
+    ROS_WARN_STREAM("T" << nr << ": Model is too small (size: " << filtered_model->size() << ")");
     return FeaturesMatching::ThreadResult ();
   }
 
   auto model = std::make_shared<FeatureCloud>(filtered_model, cfg.feature_cloud);
   model->ExtractKeypoints();
   if (model->GetKeypoints()->size() < cfg.keypoints_thresh_) {
-    std::cout << "T" << nr << ": Not enough keypoints: " << model->GetKeypoints()->size() << "\n";
+    ROS_WARN_STREAM("T" << nr << ": Not enough keypoints: " << model->GetKeypoints()->size());
     return FeaturesMatching::ThreadResult ();
   }
   model->ComputeSurfaceNormals();
@@ -110,33 +124,53 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
 
 FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  FeaturesMatching::Config& cfg,
-                                                 const FeatureCloudPtr model,
-                                                 const FeatureCloudPtr scene) {
-  if (cfg.debug) {
-    Point ppmin, ppmax;
-    pcl::getMinMax3D(*(model->GetPointCloud()), ppmin, ppmax);
-    std::cout << "\nTask " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, ";
-    std::cout << std::setprecision(2) << std::fixed;
-    std::cout << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  ";
-    std::cout << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n";
-    std::cout << "  Scene size: " << scene->GetPointCloud()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetPointCloud())
-              << " keypoints: " << scene->GetKeypoints()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetKeypoints())
-              << " descriptors: " << scene->GetDescriptors()->size()
-              << "\n"
-              << "  Model size: " << model->GetPointCloud()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetPointCloud())
-              << " keypoints: " << model->GetKeypoints()->size() << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
-              << " descriptors: " << model->GetDescriptors()->size()
-              << "\n\n";
-  }
+                                                 const FeatureCloudPtr& model,
+                                                 const FeatureCloudPtr& scene) {
+  Point ppmin, ppmax;
+  pcl::getMinMax3D(*(model->GetPointCloud()), ppmin, ppmax);
+  ROS_DEBUG_STREAM("Task " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
+            << std::setprecision(2) << std::fixed
+            << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
+            << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
+            << "  Scene size: " << scene->GetPointCloud()->size()
+            // << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetPointCloud())
+            << " keypoints: " << scene->GetKeypoints()->size()
+            // << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetKeypoints())
+            << " descriptors: " << scene->GetDescriptors()->size()
+            << "\n"
+            << "  Model size: " << model->GetPointCloud()->size()
+            // << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetPointCloud())
+            << " keypoints: " << model->GetKeypoints()->size()
+            // << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
+            << " descriptors: " << model->GetDescriptors()->size()
+            << "\n");
 
   auto start = std::chrono::high_resolution_clock::now();
 
   FeaturesMatching::Result result;
-  pcl::CorrespondencesPtr correspondences;
+  pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
 
+  if (cfg.method == AlignmentMethod::NewMethod) {
+    // CorrespondenceEstimation<FeatureCloud::DescriptorType, FeatureCloud::DescriptorType> est;
+    // est.setInputSource (model->GetDescriptors());
+    // est.setInputTarget (scene->GetDescriptors());
+    // est.determineReciprocalCorrespondences (*correspondences);
+    // pcl::CorrespondencesPtr correspondences_all;
+    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+
+    // CorrespondenceRejectorDistance rej;
+    // rej.setInputCloud<PointXYZ> (model->GetKeypoints());
+    // rej.setInputTarget<PointXYZ> (scene->GetKeypoints());
+    // rej.setMaximumDistance (18);    // 10m
+    // rej.setInputCorrespondences (correspondences_all);
+    // rej.getCorrespondences (*correspondences);
+
+    // std::cout << "\nCorrespondences all: " << correspondences_all->size();
+    ROS_DEBUG_STREAM("\nCorrespondences : " << correspondences->size());
+  }
   if (cfg.method == AlignmentMethod::SampleConsensus) {
     // Align feature clouds with Sample Consensus Initial Alignment
-    pcl::SampleConsensusInitialAlignment<Point, Point, FeatureCloud::DescriptorType> sac_ia;
+    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac_ia;
     sac_ia.setMinSampleDistance(cfg.min_sample_distance);
     sac_ia.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
     sac_ia.setMaximumIterations(cfg.nr_iterations);
@@ -148,13 +182,32 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     sac_ia.setTargetFeatures(scene->GetDescriptors());
 
     PointCloud dummy_output;
-    sac_ia.align(dummy_output);
+    sac_ia.alignMod(dummy_output);
+
+    double fs = sac_ia.getFitnessScore(cfg.fitness_score_dist);
+    double new_fs = sac_ia.getFitnessScoreMod();
+
+    ROS_DEBUG_STREAM("Converged?: " << sac_ia.hasConverged()
+      << std::setprecision(6) << std::fixed
+      << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
+      << "Standard fitness score: " << fs << "\n"
+      << "New fitness score: " << new_fs << "\n");
+
+    pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
+    validator.setMaxRange(0.01);
+
+    double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
+                                          sac_ia.getFinalTransformation());
+
+    ROS_DEBUG_STREAM("Score: " << score);
+
     result.fitness_score = static_cast<float>(sac_ia.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac_ia.getFinalTransformation();
+    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
   }
   else if (cfg.method == AlignmentMethod::GeometryConsistencyClustering) {
-    float cg_size_ (0.01f);
-    float cg_thresh_ (5.0f);
+    float cg_size(0.01f);
+    float cg_thresh(5.0f);
 
     // Find correspondences with KdTree
     correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
@@ -164,8 +217,8 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     std::vector<pcl::Correspondences> clustered_corrs;
 
     pcl::GeometricConsistencyGrouping<Point, Point> gc_clusterer;
-    gc_clusterer.setGCSize(cg_size_);
-    gc_clusterer.setGCThreshold (cg_thresh_);
+    gc_clusterer.setGCSize(cg_size);
+    gc_clusterer.setGCThreshold (cg_thresh);
 
     gc_clusterer.setInputCloud(model->GetKeypoints());
     gc_clusterer.setSceneCloud(scene->GetKeypoints());
@@ -185,9 +238,9 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     }
   }
   else if (cfg.method == AlignmentMethod::Hough3DClustering) {
-    float rf_rad_ (0.015f);
-    float cg_size_ (0.01f);
-    float cg_thresh_ (5.0f);
+    float rf_rad(0.015f);
+    float cg_size(0.01f);
+    float cg_thresh(5.0f);
 
     // Find correspondences with KdTree
     correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
@@ -202,7 +255,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
     pcl::BOARDLocalReferenceFrameEstimation<Point, NormalType, RFType> rf_est;
     rf_est.setFindHoles(true);
-    rf_est.setRadiusSearch(rf_rad_);
+    rf_est.setRadiusSearch(rf_rad);
 
     rf_est.setInputCloud(model->GetKeypoints());
     rf_est.setInputNormals(model->GetSurfaceNormals());
@@ -216,8 +269,8 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
     //  Clustering
     pcl::Hough3DGrouping<Point, Point, RFType, RFType> clusterer;
-    clusterer.setHoughBinSize (cg_size_);
-    clusterer.setHoughThreshold (cg_thresh_);
+    clusterer.setHoughBinSize (cg_size);
+    clusterer.setHoughThreshold (cg_thresh);
     clusterer.setUseInterpolation (true);
     clusterer.setUseDistanceWeight (false);
 
@@ -230,33 +283,32 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     //clusterer.cluster(clustered_corrs);
     clusterer.recognize(rototranslations, clustered_corrs);
 
-    std::cout << "Model instances found: " << rototranslations.size () << std::endl;
+    ROS_DEBUG_STREAM("Model instances found: " << rototranslations.size());
     for (size_t i = 0; i < rototranslations.size (); ++i) {
-      std::cout << "\n    Instance " << i + 1 << ":" << std::endl;
-      std::cout << "        Correspondences belonging to this instance: " << clustered_corrs[i].size () << std::endl;
+      ROS_DEBUG_STREAM("    Instance " << i + 1 << ":");
+      ROS_DEBUG_STREAM("        Correspondences belonging to this instance: " << clustered_corrs[i].size());
     }
   }
 
-  if (cfg.debug) {
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Task " << nr <<  ": Clouds aligned with score: "
-              << result.fitness_score << " in " << diff.count() << " ms." << std::endl;
-  }
+  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::high_resolution_clock::now() - start);
+  ROS_DEBUG_STREAM("Task " << nr <<  ": Clouds aligned with score: "
+    << result.fitness_score << " in " << diff.count() << " ms." << std::endl);
 
   result.correspondences = correspondences;
 
-  if (cfg.visualize) {
-    MapsIntegratorVisualizer visualizer({ true, cfg.files_path_and_pattern + "feature_matching.png" });
-    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, correspondences);
+  if (cfg.show_visualizer || cfg.output_to_file) {
+    // MapsIntegratorVisualizer visualizer(
+    //   { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
+    // visualizer.VisualizeFeatureMatching(scene, model, result.transformation, correspondences);
   }
 
   return result;
 }
 
 pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
-    FeatureCloud::Descriptors::Ptr model_descriptors,
-    FeatureCloud::Descriptors::Ptr scene_descriptors) {
+    const FeatureCloud::Descriptors::Ptr& model_descriptors,
+    const FeatureCloud::Descriptors::Ptr& scene_descriptors) {
 
   pcl::CorrespondencesPtr correspondences(new pcl::Correspondences());
 
@@ -281,7 +333,7 @@ pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
       correspondences->push_back(corr);
     }
   }
-  std::cout << "Correspondences found: " << correspondences->size () << std::endl;
+  ROS_DEBUG_STREAM("Correspondences found: " << correspondences->size());
   return correspondences;
 }
 
@@ -297,11 +349,10 @@ std::vector<Rectangle> FeaturesMatching::RectangularModelDecomposition(float blo
   Eigen::Vector2f rectangle_max (map_max.x(), map_max.y());
   Eigen::Vector2f step_xy (block_size_x, block_size_y);
 
-  if (cfg_.debug) {
-   std::cout << "Generation of cells for rectangle "
-       << "min: (" << rectangle_min(0) << ", " << rectangle_min(1) << ")  "
-       << "max: (" << rectangle_max(0) << ", " << rectangle_max(1) << ")\n";
-  }
+  ROS_DEBUG_STREAM("Generation of cells for rectangle "
+      << "min: (" << rectangle_min(0) << ", " << rectangle_min(1) << ")  "
+      << "max: (" << rectangle_max(0) << ", " << rectangle_max(1) << ")");
+
   return generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
 }
 

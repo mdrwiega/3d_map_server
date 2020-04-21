@@ -27,11 +27,10 @@ class FeatureCloudTest : public ::testing::Test {
   }
 
   void Configure() {
-    cfg_.normal_radius = 15.0;
     cfg_.downsampling_radius = 0.15;
-    cfg_.descriptors_radius = 1.5;
+    cfg_.descriptors_radius = 0.5;
     cfg_.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
-    cfg_.iss_min_neighbours = 4;
+    cfg_.iss_min_neighbours = 10;
     cfg_.iss_model_resolution = 0.05;
     cfg_.iss_num_of_threads = 8;
     cfg_.iss_threshold21 = 0.975;

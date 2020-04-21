@@ -6,7 +6,6 @@
 #include <octomap_tools/transformations.h>
 #include <octomap_tools/utils.h>
 #include <octomap_tools/math.h>
-#include <octomap_tools/feature_cloud.h>
 #include <octomap_tools/icp.h>
 #include <octomap_tools/conversions.h>
 
@@ -15,8 +14,7 @@
 using namespace octomap_tools;
 using namespace octomap;
 
-class IcpMatchingTest : public ::testing::Test
-{
+class IcpMatchingTest : public ::testing::Test {
  public:
   IcpMatchingTest() {
     Configure();
@@ -33,48 +31,26 @@ class IcpMatchingTest : public ::testing::Test
     cfg_.crop_scene = false;
   }
 
-  void PrepareOcTree(std::string octomap_packed_file,
-                     Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
-    orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
-    PrintOcTreeInfo(*orig_tree_, "orig_tree");
-
-    if (octomap_min != Vector3f{0,0,0} && octomap_max != Vector3f{0,0,0}) {
-      cropped_tree_ = CropOcTree(*orig_tree_, octomap_min, octomap_max);
-      PrintOcTreeInfo(*cropped_tree_, "cropped_tree");
-    } else {
-      cropped_tree_ = orig_tree_;
-    }
-  }
-
-  OcTreePtr orig_tree_;
-  OcTreePtr cropped_tree_;
   ICP::Config cfg_;
-  Eigen::Matrix4f result_transf_;
 };
 
-TEST_F(IcpMatchingTest, Test_fr)
-{
-  std::string octomap_name = "fr_079";
-  auto map_min = Vector3f(-5, -5, 0.0);
-  auto map_max = Vector3f(5, 5, 2.0);
-  PrepareOcTree(octomap_name, map_min, map_max);
+TEST_F(IcpMatchingTest, Test_fr) {
+  auto original_tree = unpackAndGetOctomap("fr_079");
+  PrintOcTreeInfo(*original_tree, "original_tree");
 
+  auto scene = CropOcTree(*original_tree, Vector3f(-8, -8, 0.0), Vector3f(8, 8, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-5, -5, 0.0), Vector3f(5, 5, 2.0));
+
+  // Transform model
   auto T = createTransformationMatrix(0.5, 0.0, 0.0, ToRad(0), ToRad(0), ToRad(10.0));
-  auto tree_model = FastOcTreeTransform(*cropped_tree_, T);
+  auto model = FastOcTreeTransform(*init_model, T);
 
-  auto scene_cloud = OcTreeToPointCloud(*cropped_tree_);
-  auto model_cloud = OcTreeToPointCloud(*tree_model);
+  auto scene_cloud = OcTreeToPointCloud(*scene);
+  auto model_cloud = OcTreeToPointCloud(*model);
 
   ICP matcher(scene_cloud, model_cloud, cfg_);
   auto result = matcher.Align();
 
-  std::cout << "\nReal transformation between maps:\n" << transformationMatrixToString(T);
-  auto rpy_real = ToRad(rotMatrixToRPY(T.block<3,3>(0,0)));
-  std::cout << "RPY: (" << rpy_real[0] << ", " << rpy_real[1] << ", " << rpy_real[2] << ")\n";
-
-  result_transf_ = result.transformation;
-  std::cout << "\n\nEstimated transformation between maps:\n" << transformationMatrixToString(result_transf_);
-  auto rpy_est = ToRad(rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
-  std::cout << "RPY: (" << rpy_est[0] << ", " << rpy_est[1] << ", " << rpy_est[2] << ")\n";
+  PrintMatchingResult(T, result.transformation.inverse(), result.fitness_score);
 }
 

@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2017, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #pragma once
 
 #include <Eigen/Dense>
@@ -80,4 +73,4 @@ inline std::vector<Rectangle> generateBlocksInSpiralOrder(
   return cells;
 }
 
-}
+} // namespace octomap_tools

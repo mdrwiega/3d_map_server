@@ -1,6 +1,5 @@
 #include <octomap_tools/transformations.h>
 
-
 #include <limits>
 #include <iomanip>
 #include <stdexcept>
@@ -28,10 +27,11 @@ OcTreePtr FastOcTreeTransform(const OcTree& tree_in, const Eigen::Matrix4f& tran
     point3d point = i.getCoordinate();
     Eigen::Vector4f dest_vec = transf * Eigen::Vector4f(point.x(), point.y(), point.z(), 1);
     point3d dest_point(dest_vec.x(), dest_vec.y(), dest_vec.z());
-    auto key = i.getKey();
+    const auto& key = i.getKey();
     auto logodds = tree.search(key)->getLogOdds();
     tree_out->updateNode(dest_point, logodds, true);
   }
+
   return tree_out;
 }
 
@@ -43,10 +43,10 @@ OcTreePtr OcTreeTransform(const OcTree& tree_in, const Eigen::Matrix4f& transfor
   tree_in.getMetricMin(x_min, y_min, z_min);
   tree_in.getMetricMax(x_max, y_max, z_max);
   Cuboid box(x_min, x_max, y_min, y_max, z_min, z_max);
-  box.transform(transformation);
+  box.Transform(transformation);
 
   Eigen::Vector3f p_min, p_max;
-  box.getMinMax(p_min, p_max);
+  box.GetMinMax(p_min, p_max);
   double step = tree_in.getResolution();
 
   for (auto x = p_min(0) - step / 2; x < (p_max(0) + step); x += step) {
@@ -78,7 +78,7 @@ trilinearInterpolation(Vector3<T> p, Vector3<T> p0, Vector3<T> p1,
 
   if (p0(0) == p1(0) || p0(1) == p1(1) || p0(2) == p1(2)) {
     std::cerr << "p0:" << p0.transpose() << "  p1:" << p1.transpose();
-    std::runtime_error(std::string(__func__) + ": p0 == p1");
+    throw std::runtime_error(std::string(__func__) + ": p0 == p1");
   }
 
   T xd = (p.x() - p0.x()) / (p1.x() - p0.x());
@@ -201,7 +201,7 @@ OcTreePtr SumOctrees(const OcTree& tree1, const OcTree& tree2) {
 
 void FilterLeafsNotInRange(const OcTree& tree_in, const Point& min, const Point& max, OcTree& tree_out) {
 
-  auto pointInRange = [](const Point& point, const Point& rMin, const Point& rMax) {
+  auto point_in_range = [](const Point& point, const Point& rMin, const Point& rMax) {
     return (point.x < rMax.x && point.x > rMin.x) &&
         (point.y < rMax.y && point.y > rMin.y) &&
         (point.z < rMax.z && point.z > rMin.z);
@@ -212,9 +212,9 @@ void FilterLeafsNotInRange(const OcTree& tree_in, const Point& min, const Point&
   for (auto i = tree_in.begin_leafs(); i != tree_in.end_leafs(); ++i)
   {
     auto p = i.getCoordinate();
-    if (pointInRange(ToPcl(p), min, max))
+    if (point_in_range(ToPcl(p), min, max))
     {
-      auto key = i.getKey();
+      const auto& key = i.getKey();
       auto logodds = tree_in.search(key)->getLogOdds();
       tree_out.setNodeValue(p, logodds, true);
     }
@@ -226,14 +226,14 @@ void ExtractIntersectingOctrees(const OcTree& tree1, const OcTree& tree2, const 
   Point min_tree1, max_tree1;
   getMinMaxOctree(tree1, min_tree1, max_tree1);
 
-  auto addPoints = [](const Point& i, const Point& j){
+  auto add_points = [](const Point& i, const Point& j){
     return Point{i.x + j.x, i.y + j.y, i.z + j.z}; };
-  auto subPoints = [](const Point& i, const Point& j){
+  auto sub_points = [](const Point& i, const Point& j){
     return Point{i.x - j.x, i.y - j.y, i.z - j.z}; };
 
   // Filter out points from tree2 which are not in tree1 range (+ margin)
-  min_tree1 = subPoints(min_tree1, margin);
-  max_tree1 = addPoints(max_tree1, margin);
+  min_tree1 = sub_points(min_tree1, margin);
+  max_tree1 = add_points(max_tree1, margin);
   FilterLeafsNotInRange(tree2, min_tree1, max_tree1, out_tree2);
 
   // Filtered tree 2 range
@@ -241,32 +241,32 @@ void ExtractIntersectingOctrees(const OcTree& tree1, const OcTree& tree2, const 
   getMinMaxOctree(out_tree2, min_tree2, max_tree2);
 
   // Filter out points from tree1 which are not in tree2 filtered range (+ margin)
-  min_tree2 = subPoints(min_tree2, margin);
-  max_tree2 = addPoints(max_tree2, margin);
+  min_tree2 = sub_points(min_tree2, margin);
+  max_tree2 = add_points(max_tree2, margin);
   FilterLeafsNotInRange(tree1, min_tree2, max_tree2, out_tree1);
 }
 
 void ExtractIntersectingPointClouds(
     const PointCloud& cloud1, const PointCloud& cloud2,
-    float voxelSize, const Point& margin,
+    [[maybe_unused]] float voxel_size, const Point& margin,
     PointCloud& cloud1reduced, PointCloud& cloud2reduced) {
 
-  Point minCloud1, maxCloud1;
-  pcl::getMinMax3D(cloud1, minCloud1, maxCloud1);
-  filterOutPointsNotInRange(cloud2, minCloud1, maxCloud1, cloud2reduced);
+  Point min_cloud1, max_cloud1;
+  pcl::getMinMax3D(cloud1, min_cloud1, max_cloud1);
+  filterOutPointsNotInRange(cloud2, min_cloud1, max_cloud1, cloud2reduced);
 
-  Point minCloud2filtered, maxCloud2filtered;
-  pcl::getMinMax3D(cloud2reduced, minCloud2filtered, maxCloud2filtered);
+  Point min_cloud2_filtered, max_cloud2_filtered;
+  pcl::getMinMax3D(cloud2reduced, min_cloud2_filtered, max_cloud2_filtered);
 
-  auto addPoints = [](const Point& i, const Point& j){
+  auto add_points = [](const Point& i, const Point& j){
     return Point{i.x+j.x, i.y+j.y, i.z+j.z}; };
-  auto subPoints = [](const Point& i, const Point& j){
+  auto sub_points = [](const Point& i, const Point& j){
     return Point{i.x-j.x, i.y-j.y, i.z-j.z}; };
 
-  minCloud2filtered = subPoints(minCloud2filtered, margin);
-  maxCloud2filtered = addPoints(maxCloud2filtered, margin);
+  min_cloud2_filtered = sub_points(min_cloud2_filtered, margin);
+  max_cloud2_filtered = add_points(max_cloud2_filtered, margin);
 
-  filterOutPointsNotInRange(cloud1, minCloud2filtered, maxCloud2filtered, cloud1reduced);
+  filterOutPointsNotInRange(cloud1, min_cloud2_filtered, max_cloud2_filtered, cloud1reduced);
 }
 
-}
+} // namespace octomap_tools

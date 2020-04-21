@@ -3,6 +3,8 @@
 #include <chrono>
 #include <thread>
 
+#include <ros/console.h>
+
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
@@ -19,14 +21,14 @@ void MapsIntegratorVisualizer::VisualizeICP(PointCloudPtr& scene, PointCloudPtr&
   PointCloud::Ptr transformed_model(new PointCloud());
   pcl::transformPointCloud(*model, *transformed_model, transformation);
 
-  Visualize(scene, model, transformed_model, nullptr, nullptr, nullptr, nullptr);
+  Visualize(scene, model, nullptr, transformed_model, nullptr, nullptr, nullptr);
 }
 
 void MapsIntegratorVisualizer::VisualizeClouds(const PointCloudPtr& cloud1, const PointCloudPtr& cloud2) {
   Visualize(cloud1, cloud2);
 }
 
-void MapsIntegratorVisualizer::VisualizeFeatureMatching(const FeatureCloudPtr scene, const FeatureCloudPtr model,
+void MapsIntegratorVisualizer::VisualizeFeatureMatching(const FeatureCloudPtr& scene, const FeatureCloudPtr& model,
                                                         const Eigen::Matrix4f& transformation,
                                                         const pcl::CorrespondencesPtr& correspondences) {
   auto scene_cloud = scene->GetPointCloud();
@@ -38,14 +40,14 @@ void MapsIntegratorVisualizer::VisualizeFeatureMatching(const FeatureCloudPtr sc
   PointCloud::Ptr transformed_model(new PointCloud());
   pcl::transformPointCloud(*model_cloud, *transformed_model, transformation);
 
-  Visualize(scene_cloud, model_cloud, transformed_model, nullptr, scene_keypoints, model_keypoints, correspondences);
+  Visualize(scene_cloud, model_cloud, nullptr, transformed_model, scene_keypoints, model_keypoints, correspondences);
 }
 
 void MapsIntegratorVisualizer::VisualizeFeatureMatchingWithDividedModel(
                                          PointCloudPtr& scene, PointCloudPtr& model,
                                          PointCloudPtr& full_model,
                                          const Eigen::Matrix4f& transformation,
-                                         std::vector<Rectangle> blocks) {
+                                         const std::vector<Rectangle>& blocks) {
   // Transform model
   PointCloud::Ptr transformed_model(new PointCloud());
   pcl::transformPointCloud(*model, *transformed_model, transformation);
@@ -61,7 +63,7 @@ void MapsIntegratorVisualizer::Visualize(
   const PointCloudPtr& keypoints1,
   const PointCloudPtr& keypoints2,
   const pcl::CorrespondencesPtr& correspondences,
-  std::vector<Rectangle> blocks) {
+  const std::vector<Rectangle>& blocks) {
 
   pcl::visualization::PCLVisualizer viewer ("3D Viewer");
   viewer.setBackgroundColor(255, 255, 255);
@@ -97,14 +99,14 @@ void MapsIntegratorVisualizer::Visualize(
 
   // Keypoints1 / Scene --> BLACK
   if (keypoints1) {
-    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints1, 255, 255, 255);
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints1, 0, 0, 0);
     viewer.addPointCloud(keypoints1, color, "keypoints1");
     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints1");
   }
 
   // Keypoints2 / Model --> BLACK
   if (keypoints2) {
-    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints2, 255, 255, 255);
+    pcl::visualization::PointCloudColorHandlerCustom<Point> color(keypoints2, 0, 0, 0);
     viewer.addPointCloud(keypoints2, color, "keypoints2");
     viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 6, "keypoints2");
   }
@@ -131,14 +133,19 @@ void MapsIntegratorVisualizer::Visualize(
     ++i;
   }
 
+  if (cfg_.save_to_file && !cfg_.filename.empty()) {
+    viewer.spinOnce(100);
+    viewer.saveScreenshot(cfg_.filename);
+    ROS_INFO_STREAM("Screenshot has been saved to file: " << cfg_.filename << "\n");
+  }
+
+  if (!cfg_.screen_mode) {
+    viewer.close();
+  }
+
   while (!viewer.wasStopped()) {
     viewer.spinOnce(100);
   }
-
-  if (cfg_.save_to_file && !cfg_.filename.empty()) {
-    viewer.saveScreenshot(cfg_.filename);
-    std::cout << "Screenshot has been saved to file: " << cfg_.filename << "\n";
-  }
 }
 
-}
+} // namespace octomap_tools

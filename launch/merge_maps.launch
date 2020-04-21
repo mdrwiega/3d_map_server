@@ -1,0 +1,24 @@
+<launch>
+  <arg name="map1" default=""/>
+  <arg name="map2" default=""/>
+  <arg name="load_params" default="True"/>
+
+  <!-- ROS Logs configuration -->
+  <env name="ROSCONSOLE_CONFIG_FILE"
+       value="$(find octomap_tools)/config/logs.conf"/>
+  <env name="ROSCONSOLE_FORMAT"
+       value="[${severity}][${time}]: ${message}"/>
+
+  <group ns="maps_server">
+    <rosparam file="$(find octomap_tools)/config/params.yaml" if="$(arg load_params)"/>
+    <node name     = "maps_integrator"
+          type     = "maps_integrator"
+          pkg      = "octomap_tools"
+          args     = "$(arg map1) $(arg map2)"
+          output   = "screen"
+          required = "True"
+     <!--     launch-prefix = "valgrind --leak-check=full" -->
+     />
+  </group>
+
+</launch>

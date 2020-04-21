@@ -16,90 +16,73 @@
 using namespace octomap_tools;
 using namespace octomap;
 
-class FeaturesMatchingTest : public ::testing::Test
-{
+class FeatureMatchingTest : public ::testing::Test {
  public:
-  FeaturesMatchingTest() {
+  FeatureMatchingTest() {
     Configure();
   }
 
   void Configure() {
-    cfg_.feature_cloud.normal_radius = 15.0;
-    cfg_.feature_cloud.downsampling_radius = 0.15;
-    cfg_.feature_cloud.descriptors_radius = 1.5;
+    cfg_.feature_cloud.downsampling_radius = 0.2; // Only if uniform sampling
+    cfg_.feature_cloud.descriptors_radius = 1.0;
     cfg_.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
     cfg_.feature_cloud.debug = true;
+    cfg_.feature_cloud.iss_num_of_threads = 6;
+    cfg_.feature_cloud.iss_model_resolution = 0.02;
+    cfg_.feature_cloud.iss_min_neighbours = 6;
 
+    // Sample Consensus
     cfg_.nr_iterations = 1000;
-    cfg_.min_sample_distance = 0.2;
-    cfg_.max_correspondence_distance = 100.0;
+    cfg_.min_sample_distance = 0.3;
+    cfg_.max_correspondence_distance = 0.1;
     cfg_.fitness_score_dist = 0.5;
+
     cfg_.cell_size_x = 3;
     cfg_.cell_size_y = 3;
     cfg_.model_size_thresh_ = 400;
     cfg_.keypoints_thresh_ = 150;
 
-    cfg_.method = FeaturesMatching::AlignmentMethod::GeometryConsistencyClustering;
-    // cfg_.method = FeaturesMatching::AlignmentMethod::SampleConsensus;
+    // cfg_.method = FeaturesMatching::AlignmentMethod::GeometryConsistencyClustering;
+    cfg_.method = FeaturesMatching::AlignmentMethod::SampleConsensus;
+    // cfg_.method = FeaturesMatching::AlignmentMethod::NewMethod;
     cfg_.visualize = true;
     cfg_.debug = true;
   }
 
-  void PrepareOcTree(
-      std::string octomap_packed_file,
-      Vector3f octomap_min = {0,0,0}, Vector3f octomap_max = {0,0,0}) {
-    orig_tree_ = unpackAndGetOctomap(octomap_packed_file);
-    PrintOcTreeInfo(*orig_tree_, "orig_tree");
-
-    if (octomap_min != Vector3f{0,0,0} && octomap_max != Vector3f{0,0,0}) {
-      cropped_tree_ = CropOcTree(*orig_tree_, octomap_min, octomap_max);
-      PrintOcTreeInfo(*cropped_tree_, "cropped_tree");
-    } else {
-      cropped_tree_ = orig_tree_;
-    }
-  }
-
-  OcTreePtr orig_tree_;
-  OcTreePtr cropped_tree_;
   FeaturesMatching::Config cfg_;
-  FeatureCloudPtr scene_;
-  FeatureCloudPtr model_;
-  Eigen::Matrix4f result_transf_;
 };
 
-TEST_F(FeaturesMatchingTest, Test_fr)
-{
-  std::string octomap_name = "fr_079";
-  auto map_min = Vector3f(-5, -5, 0.0);
-  auto map_max = Vector3f(5, 5, 2.0);
-  PrepareOcTree(octomap_name, map_min, map_max);
+TEST_F(FeatureMatchingTest, Test_fr) {
+  auto original_tree = unpackAndGetOctomap("fr_079");
+  PrintOcTreeInfo(*original_tree, "original_tree");
 
-  auto T = createTransformationMatrix(15.0, 0.5, 0.0, ToRad(0), ToRad(0), ToRad(15));
-  auto tree_model = FastOcTreeTransform(*cropped_tree_, T);
+  auto scene = CropOcTree(*original_tree, Vector3f(-8, -8, 0.0), Vector3f(8, 8, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -2, 0.0), Vector3f(2, 2, 2.0));
 
-  auto scene_cloud = OcTreeToPointCloud(*cropped_tree_);
-  auto model_cloud = OcTreeToPointCloud(*tree_model);
+  // Transform model
+  auto T = createTransformationMatrix(20.0, 1.0, 0.0, ToRad(0), ToRad(0), ToRad(25.0));
+  auto model = FastOcTreeTransform(*init_model, T);
+
+  auto scene_cloud = OcTreeToPointCloud(*scene);
+  auto model_cloud = OcTreeToPointCloud(*model);
 
   // Prepare scene
-  scene_ = std::make_shared<FeatureCloud>(scene_cloud, cfg_.feature_cloud);
-  std::cout << "\nScene size: " << scene_->GetPointCloud()->size() << std::endl;
-  scene_->ComputeDescriptors();
+  auto fc_scene = std::make_shared<FeatureCloud>(scene_cloud, cfg_.feature_cloud);
+  std::cout << "\nScene size: " << fc_scene->GetPointCloud()->size() << std::endl;
+  fc_scene->ComputeDescriptors();
 
   // Prepare model
-  model_ = std::make_shared<FeatureCloud>(model_cloud, cfg_.feature_cloud);
-  std::cout << "\nModel size: " << model_->GetPointCloud()->size() << std::endl;
-  model_->ComputeDescriptors();
+  auto fc_model = std::make_shared<FeatureCloud>(model_cloud, cfg_.feature_cloud);
+  std::cout << "\nModel size: " << fc_model->GetPointCloud()->size() << std::endl;
+  fc_model->ComputeDescriptors();
 
   FeaturesMatching matcher(cfg_, scene_cloud, scene_cloud);
-  FeaturesMatching::Result result = matcher.Align(0, cfg_, model_, scene_);
+  FeaturesMatching::Result result = matcher.Align(0, cfg_, fc_model, fc_scene);
 
-  std::cout << "\nReal transformation between maps:\n" << transformationMatrixToString(T);
-  auto rpy_real = ToRad(rotMatrixToRPY(T.block<3,3>(0,0)));
-  std::cout << "RPY: (" << rpy_real[0] << ", " << rpy_real[1] << ", " << rpy_real[2] << ")\n";
+  PrintMatchingResult(T, result.transformation.inverse(), result.fitness_score);
 
-  result_transf_ = result.transformation;
-  std::cout << "\n\nEstimated transformation between maps:\n" << transformationMatrixToString(result_transf_);
-  auto rpy_est = ToRad(rotMatrixToRPY(result_transf_.block<3,3>(0,0)));
-  std::cout << "RPY: (" << rpy_est[0] << ", " << rpy_est[1] << ", " << rpy_est[2] << ")\n";
+  if (result.fitness_score < 0.1) {
+    std::cout << "\nOK!! \n";
+  }
 }
 
