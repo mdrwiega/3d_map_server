@@ -10,7 +10,7 @@ import argparse
 class TestsTool:
     def __init__(self):
         self.parameters_dir = '/home/mdrwiega/ros_ws/temp/params'
-        self.datasets_dir = '/home/mdrwiega/ros_ws/src/octomap_tools/octomaps_dataset'
+        self.datasets_dir = '/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset'
         self.output_dir = '/home/mdrwiega/ros_ws/temp/output'
 
         self.parse_input_parameters()
@@ -32,7 +32,7 @@ class TestsTool:
 
       os.system('roscore&')
       time.sleep(1.0)
-      os.system('rosparam load /home/mdrwiega/ros_ws/src/octomap_tools/config/params.yaml' + ' maps_server')
+      os.system('rosparam load /home/mdrwiega/ros_ws/src/3d_map_server/config/params.yaml' + ' maps_server')
 
       try:
 

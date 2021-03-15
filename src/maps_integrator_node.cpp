@@ -1,4 +1,5 @@
 #include <vector>
+#include <exception>
 
 #include <ros/init.h>
 #include <ros/param.h>
@@ -118,8 +119,12 @@ int main(int argc, char** argv) {
 
   ROS_INFO_STREAM("Maps Integrator node started");
 
-  MapsIntegratorNode maps_integrator;
-  maps_integrator.IntegrateMaps(map1_filepath, map2_filepath);
+  try {
+    MapsIntegratorNode maps_integrator;
+    maps_integrator.IntegrateMaps(map1_filepath, map2_filepath);
+  } catch (const std::exception& ex) {
+    ROS_ERROR_STREAM("Exception" << ex.what());
+  }
 
   return 0;
 }

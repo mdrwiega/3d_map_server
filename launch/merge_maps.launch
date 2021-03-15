@@ -17,7 +17,6 @@
           args     = "$(arg map1) $(arg map2)"
           output   = "screen"
           required = "True"
-     <!--     launch-prefix = "valgrind --leak-check=full" -->
      />
   </group>
 
