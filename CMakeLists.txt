@@ -106,7 +106,7 @@ if (CATKIN_ENABLE_TESTING)
     # target_link_libraries(octomaps_integrator_test ${PROJECT_NAME} ${catkin_LIBRARIES})
 
     set(TESTS_SRC
-        # test/conversions_test.cpp
+        test/conversions_test.cpp
         # test/feature_cloud_test.cpp
         # test/features_matching_test.cpp
         # test/octomaps_integrator_test.cpp
