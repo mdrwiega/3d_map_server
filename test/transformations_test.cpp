@@ -77,6 +77,22 @@ class OctreeTransformationsTest : public ::testing::Test {
     }
   }
 
+  OcTree CreateExampleOctree(float res, const Vector3f& min,
+      const Vector3f& max, unsigned inserted_nodes_num) {
+    OcTree tree(res);
+    unsigned cnt = 1;
+    for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
+      for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
+        for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
+          if (cnt++ > inserted_nodes_num)
+            break;
+          tree.setNodeValue(point3d(x, y, z), 0.5);
+        }
+      }
+    }
+    return tree;
+  }
+
   NodesList CreateListOfLeafs(const OcTree& tree) {
     NodesList list;
     for (auto i = tree.begin_leafs(); i != tree.end_leafs(); ++i) {
@@ -202,35 +218,19 @@ TEST_F(OctreeTransformationsTest, Transform_RealOcTreeTest)
   }
 }
 
-
-TEST_F(OctreeTransformationsTest, FastOctreeTransform_Performance) {
+TEST_F(OctreeTransformationsTest, OctreeSizeVsMemUsage) {
   const float res = 0.1;
-  const auto T = createTransformationMatrix(0.1, 0, 0, ToRad(1), ToRad(1.5), ToRad(180));
-
-  Vector3f min = {-1000, -1000, -100};
+  Vector3f min = {-1000, -1000, -1000};
   Vector3f max = {1000, 1000, 1000};
+  auto initMemUsage = GetVirtualMemoryUsedByProcessKB();
 
-  std::cout << "tree_size;time_s\n";
+  std::cout << "tree1_size;;virt_mem_usage_kb;time_s\n";
 
   for (unsigned i = 1; i <= 50000000; i *= 2) {
+    auto tree = CreateExampleOctree(res, min, max, i);
 
-    // Create a tree
-    OcTree tree(res);
-    unsigned cnt = 1;
-    for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
-      for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
-        for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
-          if (cnt++ > i)
-            break;
-          tree.setNodeValue(point3d(x, y, z), 0.5);
-        }
-      }
-    }
-
-    auto start = high_resolution_clock::now();
-    FastOcTreeTransform(tree, T);
-    auto diff = duration_cast<microseconds>(high_resolution_clock::now() - start);
-    std::cout << tree.size() << ";" << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
+    auto memUsage = (GetVirtualMemoryUsedByProcessKB() - initMemUsage);
+    std::cout << tree.size() << ";" << memUsage << "\n";
   }
 }
 
@@ -241,27 +241,37 @@ TEST_F(OctreeTransformationsTest, OctreeTransform_Performance) {
   Vector3f min = {-1000, -1000, -100};
   Vector3f max = {1000, 1000, 1000};
 
-  std::cout << "Tree size | time[s]\n";
+  std::cout << "tree_size;time_s\n";
 
-  for (unsigned i = 1; i <= 100000; i *= 1.5) {
-
-    // Create a tree
-    OcTree tree(res);
-    unsigned cnt = 1;
-    for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
-      for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
-        for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
-          if (cnt++ > i)
-            break;
-          tree.setNodeValue(point3d(x, y, z), 0.5);
-        }
-      }
-    }
+  for (unsigned i = 1; i <= 50000000; i *= 2) {
+    auto tree = CreateExampleOctree(res, min, max, i);
 
     auto start = high_resolution_clock::now();
-    OcTreeTransform(tree, T);
+    FastOcTreeTransform(tree, T); // Alternative OcTreeTransform(tree, T)
     auto diff = duration_cast<microseconds>(high_resolution_clock::now() - start);
-    std::cout << tree.size() << "; " << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
+    std::cout << tree.size() << ";" << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
+  }
+}
+
+TEST_F(OctreeTransformationsTest, OctreeMerge_Performance) {
+  const float res = 0.1;
+  std::cout << "tree1_size;tree2_size;out_tree_size;time_s\n";
+
+  for (unsigned i = 1; i <= 50000000; i *= 2) {
+    Vector3f min = {-1000, -1000, -1000};
+    Vector3f max = {1000, 1000, 1000};
+    auto tree = CreateExampleOctree(res, min, max, i);
+
+    Vector3f min2 = {2000, 2000, 2000};
+    Vector3f max2 = {3000, 3000, 3000};
+    auto tree2 = CreateExampleOctree(res, min2, max2, i);
+
+    auto start = high_resolution_clock::now();
+    auto out = FastSumOctrees(tree, tree2); // Alternative SumOctrees(tree, tree2)
+    auto diff = duration_cast<microseconds>(high_resolution_clock::now() - start);
+
+    std::cout << tree.size() << ";" << tree2.size() << ";" << out->size() << ";"
+              << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
   }
 }
 

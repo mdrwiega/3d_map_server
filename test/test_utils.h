@@ -5,6 +5,10 @@
 #include <limits>
 #include <cmath>
 
+#include "stdlib.h"
+#include "stdio.h"
+#include "string.h"
+
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
 
@@ -32,6 +36,30 @@ using Vector3f = Eigen::Vector3f;
     EXPECT_NEAR(n1[2], n2[2], val)
 
 namespace octomap_tools {
+
+inline int GetVirtualMemoryUsedByProcessKB() {
+  FILE* file = fopen("/proc/self/status", "r");
+  int result = -1;
+  char line[128];
+
+  auto parseLine = [](char* line) {
+    int i = strlen(line);
+    const char* p = line;
+    while (*p <'0' || *p > '9') p++;
+    line[i-3] = '\0';
+    i = atoi(p);
+    return i;
+  };
+
+  while (fgets(line, 128, file) != NULL) {
+    if (strncmp(line, "VmSize:", 7) == 0) {
+      result = parseLine(line);
+      break;
+    }
+  }
+  fclose(file);
+  return result;
+}
 
 inline std::string MatchingTestResultToString(
   const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
