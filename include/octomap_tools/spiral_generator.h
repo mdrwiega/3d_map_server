@@ -4,9 +4,6 @@
 
 namespace octomap_tools {
 
-
-
-
 /*  k - starting row index
     m - ending row index
     l - starting column index

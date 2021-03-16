@@ -21,6 +21,7 @@
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
+using std::chrono::duration_cast;
 
 namespace octomap_tools {
 
@@ -28,6 +29,7 @@ MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& mod
   model_tree_(model_tree),
   scene_tree_(scene_tree),
   cfg_(config) {
+
   model_ = OcTreeToPointCloud(*model_tree_);
   scene_ = OcTreeToPointCloud(*scene_tree_);
 
@@ -75,7 +77,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // Create result
   result_ = Result();
-  result_.time_ms = (std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
+  result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
   result_.fitness_score = ia_result.fitness_score;
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
   result_.transformation = ia_result.transformation;
@@ -142,26 +144,23 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile() {
 }
 
 std::string MapsIntegrator::Result::toString() {
-  std::stringstream stream;
-  md::TablePrinter tp(&stream);
-  const std::string columns[] = {
-      "time[ms]", "fitness_score", "model_min_x", "model_min_y", "model_max_x", "model_max_y"
-  };
-
-  for (const auto& i : columns) {
-    tp.addColumn(i);
-  }
-
-  tp.printTitle("Feature matching results");
-  tp.printHeader();
-  tp << time_ms << fitness_score << model_min.x << model_min.y << model_max.x << model_max.y;
-  tp.printFooter();
-  return stream.str();
+  std::stringstream ss;
+  ss << "model_min_x: " << model_min.x << "\n";
+  ss << "model_min_y: " << model_min.y << "\n";
+  ss << "model_max_x: " << model_max.x << "\n";
+  ss << "model_max_y: " << model_max.y << "\n";
+  ss << "fitness_score1: " << fitness_score << "\n";
+  ss << "fitness_score2: " << fitness_score2 << "\n";
+  ss << "fitness_score3: " << fitness_score3 << "\n";
+  ss << "transf_estimation_time_ms: " << transf_estimation_time_ms << "\n";
+  ss << "octree_transformation_time_ms: " << octree_transformation_time_ms << "\n";
+  ss << "octrees_merge_time_ms: " << octrees_merge_time_ms << "\n";
+  return ss.str();
 }
 
 void MapsIntegrator::Result::PrintResult() {
   std::cout << "Final result:" << std::fixed << std::setprecision(1) << std::endl;
-  std::cout << "Total time: " << time_ms / 1000.0 << " s." << std::endl;
+  std::cout << "Total time: " << (transf_estimation_time_ms + octree_transformation_time_ms + octrees_merge_time_ms) / 1000.0 << " s." << std::endl;
   std::cout << "Fitness score: " << std::setprecision(6) << fitness_score << std::endl;
   std::cout << "Transformation: " << transfMatrixToXyzRpyString(transformation) << std::endl;
 }

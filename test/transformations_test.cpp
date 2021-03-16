@@ -41,19 +41,6 @@ class OctreeTransformationsTest : public ::testing::Test {
     validate(tree, transformed_tree, tree_leafs, T);
   }
 
-  OcTreePtr transform(float resolution, const NodesList& tree_leafs, const Eigen::Matrix4f& T) {
-    OcTree tree(resolution);
-    for (auto i : tree_leafs) {
-      tree.setNodeValue(i.first, i.second);
-    }
-
-    auto start = high_resolution_clock::now();
-    auto transformed_tree = FastOcTreeTransform(tree, T);
-    auto diff = duration_cast<milliseconds>(high_resolution_clock::now() - start);
-    std::cout << "Transformation time: " << diff.count() << " ms." << std::endl;
-    return transformed_tree;
-  }
-
   void validate(const OcTree& tree, const OcTreePtr& transformed_tree,
                 const NodesList& tree_leafs, const Eigen::Matrix4f& T) {
 
@@ -215,28 +202,66 @@ TEST_F(OctreeTransformationsTest, Transform_RealOcTreeTest)
   }
 }
 
-TEST_F(OctreeTransformationsTest, Transform_Performance) {
-  visualize = false;
+
+TEST_F(OctreeTransformationsTest, FastOctreeTransform_Performance) {
   const float res = 0.1;
   const auto T = createTransformationMatrix(0.1, 0, 0, ToRad(1), ToRad(1.5), ToRad(180));
 
-  Vector3f min = {-100, -100, -100};
-  Vector3f max = {100, 1000, 1000};
+  Vector3f min = {-1000, -1000, -100};
+  Vector3f max = {1000, 1000, 1000};
 
-  for (unsigned i = 1; i <= 10000; i *= 10) {
-    NodesList tree_leafs;
+  std::cout << "tree_size;time_s\n";
+
+  for (unsigned i = 1; i <= 50000000; i *= 2) {
+
+    // Create a tree
+    OcTree tree(res);
     unsigned cnt = 1;
     for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
       for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
         for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
           if (cnt++ > i)
             break;
-          tree_leafs.push_back(std::make_pair(point3d(x, y, z), 0.5));
+          tree.setNodeValue(point3d(x, y, z), 0.5);
         }
       }
     }
-    std::cout << "\nSize: " << i << "\n";
-    transform(res, tree_leafs, T);
+
+    auto start = high_resolution_clock::now();
+    FastOcTreeTransform(tree, T);
+    auto diff = duration_cast<microseconds>(high_resolution_clock::now() - start);
+    std::cout << tree.size() << ";" << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
+  }
+}
+
+TEST_F(OctreeTransformationsTest, OctreeTransform_Performance) {
+  const float res = 0.1;
+  const auto T = createTransformationMatrix(0.1, 0, 0, ToRad(1), ToRad(1.5), ToRad(180));
+
+  Vector3f min = {-1000, -1000, -100};
+  Vector3f max = {1000, 1000, 1000};
+
+  std::cout << "Tree size | time[s]\n";
+
+  for (unsigned i = 1; i <= 100000; i *= 1.5) {
+
+    // Create a tree
+    OcTree tree(res);
+    unsigned cnt = 1;
+    for (float z = min.z() + res / 2; z < max.z() - res / 2; z += res) {
+      for (float y = min.y() + res / 2; y < max.y() - res / 2; y += res) {
+        for (float x = min.x() + res / 2; x < max.x() - res / 2; x += res) {
+          if (cnt++ > i)
+            break;
+          tree.setNodeValue(point3d(x, y, z), 0.5);
+        }
+      }
+    }
+
+    auto start = high_resolution_clock::now();
+    OcTreeTransform(tree, T);
+    auto diff = duration_cast<microseconds>(high_resolution_clock::now() - start);
+    std::cout << tree.size() << "; " << std::fixed << std::setprecision(6) << (diff.count() / 1000000.0) << "\n";
   }
 }
 

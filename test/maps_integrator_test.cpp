@@ -33,60 +33,60 @@ class MapsIntegratorTest : public ::testing::Test
 
   void Configure() {
     // Feature cloud
-    config_.template_alignment.feature_cloud.normal_radius = 10.0;
-    config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
-    config_.template_alignment.feature_cloud.descriptors_radius = 1.0;
-    config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
-    config_.template_alignment.feature_cloud.debug = true;
-    config_.template_alignment.feature_cloud.iss_num_of_threads = 2;
-    config_.template_alignment.feature_cloud.iss_model_resolution = 0.02;
-    config_.template_alignment.feature_cloud.iss_min_neighbours = 6;
+    // config_.template_alignment.feature_cloud.normal_radius = 10.0;
+    // config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
+    // config_.template_alignment.feature_cloud.descriptors_radius = 1.0;
+    // config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
+    // config_.template_alignment.feature_cloud.debug = true;
+    // config_.template_alignment.feature_cloud.iss_num_of_threads = 2;
+    // config_.template_alignment.feature_cloud.iss_model_resolution = 0.02;
+    // config_.template_alignment.feature_cloud.iss_min_neighbours = 6;
 
-    // Sample Consensus
-    config_.template_alignment.nr_iterations = 1000;
-    config_.template_alignment.min_sample_distance = 0.2;
-    config_.template_alignment.max_correspondence_distance = 100.0;
-    config_.template_alignment.fitness_score_dist = 0.5;
+    // // Sample Consensus
+    // config_.template_alignment.nr_iterations = 1000;
+    // config_.template_alignment.min_sample_distance = 0.2;
+    // config_.template_alignment.max_correspondence_distance = 100.0;
+    // config_.template_alignment.fitness_score_dist = 0.5;
 
-    // Other related feature matching
-    config_.template_alignment.cell_size_x = 3;
-    config_.template_alignment.cell_size_y = 3;
-    config_.template_alignment.model_size_thresh_ = 400;
-    config_.template_alignment.keypoints_thresh_ = 40;
+    // // Other related feature matching
+    // config_.template_alignment.cell_size_x = 3;
+    // config_.template_alignment.cell_size_y = 3;
+    // config_.template_alignment.model_size_thresh_ = 400;
+    // config_.template_alignment.keypoints_thresh_ = 40;
 
-    // ICP
-    config_.icp.max_iter = 500;
-    config_.icp.max_nn_dist = 0.5;
-    config_.icp.fitness_score_dist = 0.5;
-    config_.icp.fitness_eps = 0.0005;
-    config_.icp.transf_eps = 0.0001;
-    config_.icp.scene_inflation_dist = 2.5;
-    config_.icp.visualize = false;
-    config_.icp.output_dir = date_and_time_ + "_";
+    // // ICP
+    // config_.icp.max_iter = 500;
+    // config_.icp.max_nn_dist = 0.5;
+    // config_.icp.fitness_score_dist = 0.5;
+    // config_.icp.fitness_eps = 0.0005;
+    // config_.icp.transf_eps = 0.0001;
+    // config_.icp.scene_inflation_dist = 2.5;
+    // config_.icp.visualize = false;
+    // config_.icp.output_dir = date_and_time_ + "_";
 
-    // Other
-    config_.fitness_score_thresh = 0.002;
-    config_.show_visualization_ = true;
-    config_.show_two_pointclouds = true;
-    config_.files_path_and_pattern = date_and_time_ + "_";
+    // // Other
+    // config_.fitness_score_thresh = 0.002;
+    // config_.show_visualization_ = true;
+    // config_.show_two_pointclouds = true;
+    // config_.files_path_and_pattern = date_and_time_ + "_";
   }
 
-  void DumpTestInfoToFile(const OcTreePtr original_tree, const OcTreePtr scene, const OcTreePtr model,
-    const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
-    std::string file_path = config_.files_path_and_pattern + "info.txt";
-    std::ofstream file(file_path, std::ios_base::app);
+  // void DumpTestInfoToFile(const OcTreePtr original_tree, const OcTreePtr scene, const OcTreePtr model,
+  //   const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
+  //   std::string file_path = config_.files_path_and_pattern + "info.txt";
+  //   std::ofstream file(file_path, std::ios_base::app);
 
-    if (original_tree)
-      file << "\n" << OcTreeInfoToString(*original_tree, "original");
-    if (scene)
-      file << "\n" << OcTreeInfoToString(*scene, "scene");
-    if (model)
-      file << "\n" << OcTreeInfoToString(*model, "model");
+  //   if (original_tree)
+  //     file << "\n" << OcTreeInfoToString(*original_tree, "original");
+  //   if (scene)
+  //     file << "\n" << OcTreeInfoToString(*scene, "scene");
+  //   if (model)
+  //     file << "\n" << OcTreeInfoToString(*model, "model");
 
-    file << MatchingTestResultToString(t1, t2, fitness_score);
+  //   file << MatchingTestResultToString(t1, t2, fitness_score);
 
-    // TODO Add percentage of common area
-  }
+  //   // TODO Add percentage of common area
+  // }
 
   MapsIntegrator::Config config_;
   Eigen::Matrix4f transformation_;
@@ -95,117 +95,117 @@ class MapsIntegratorTest : public ::testing::Test
   float x_common_;
 };
 
-TEST_F(MapsIntegratorTest, Test_fr) {
-  auto original_tree = unpackAndGetOctomap("fr_079");
-  PrintOcTreeInfo(*original_tree, "original_tree");
+// TEST_F(MapsIntegratorTest, Test_fr) {
+//   auto original_tree = unpackAndGetOctomap("fr_079");
+//   PrintOcTreeInfo(*original_tree, "original_tree");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
 
-  // SaveOcTreeToFile(*scene, "fr_scene.ot");
-  // SaveOcTreeToFile(*model, "fr_model.ot");
+//   // SaveOcTreeToFile(*scene, "fr_scene.ot");
+//   // SaveOcTreeToFile(*model, "fr_model.ot");
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  auto res = maps_integrator.EstimateTransformation();
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   auto res = maps_integrator.EstimateTransformation();
 
-  maps_integrator.DumpConfigAndResultsToFile();
-  DumpTestInfoToFile(original_tree, scene, model, T, res.transformation, res.fitness_score);
-}
+//   maps_integrator.DumpConfigAndResultsToFile();
+//   DumpTestInfoToFile(original_tree, scene, model, T, res.transformation, res.fitness_score);
+// }
 
-TEST_F(MapsIntegratorTest, Test_fr_cascade_step2) {
-  auto original_tree = unpackAndGetOctomap("fr_079");
+// TEST_F(MapsIntegratorTest, Test_fr_cascade_step2) {
+//   auto original_tree = unpackAndGetOctomap("fr_079");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(11, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(7, -10, 0.0), Vector3f(25, 10, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(11, 10, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(7, -10, 0.0), Vector3f(25, 10, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  auto res = maps_integrator.EstimateTransformation();
-  result_transf_ = res.transformation;
-}
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   auto res = maps_integrator.EstimateTransformation();
+//   result_transf_ = res.transformation;
+// }
 
-TEST_F(MapsIntegratorTest, Test_fr_cascade_step3) {
-  auto original_tree = unpackAndGetOctomap("fr_079");
+// TEST_F(MapsIntegratorTest, Test_fr_cascade_step3) {
+//   auto original_tree = unpackAndGetOctomap("fr_079");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(25, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(21, -10, 0.0), Vector3f(40, 10, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(25, 10, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(21, -10, 0.0), Vector3f(40, 10, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  auto res = maps_integrator.EstimateTransformation();
-  result_transf_ = res.transformation;
-}
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   auto res = maps_integrator.EstimateTransformation();
+//   result_transf_ = res.transformation;
+// }
 
-TEST_F(MapsIntegratorTest, Test_fr_campus) {
-  auto original_tree = unpackAndGetOctomap("fr_campus");
-  PrintOcTreeInfo(*original_tree, "original_tree");
+// TEST_F(MapsIntegratorTest, Test_fr_campus) {
+//   auto original_tree = unpackAndGetOctomap("fr_campus");
+//   PrintOcTreeInfo(*original_tree, "original_tree");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(29, 10, 10.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(21, -10, 0.0), Vector3f(40, 10, 10.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(29, 10, 10.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(21, -10, 0.0), Vector3f(40, 10, 10.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(10, 5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(10.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(10, 5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(10.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  auto res = maps_integrator.EstimateTransformation();
-  result_transf_ = res.transformation;
- }
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   auto res = maps_integrator.EstimateTransformation();
+//   result_transf_ = res.transformation;
+//  }
 
-TEST_F(MapsIntegratorTest, Test_pwr_d20_m1) {
-  auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m1");
-  // Limits: x(-18.55, 3.8)  y(-15.3, 12.25)  z(0.05, 1.45)
+// TEST_F(MapsIntegratorTest, Test_pwr_d20_m1) {
+//   auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m1");
+//   // Limits: x(-18.55, 3.8)  y(-15.3, 12.25)  z(0.05, 1.45)
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(5.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(5.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  auto res = maps_integrator.EstimateTransformation();
-  result_transf_ = res.transformation;
-}
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   auto res = maps_integrator.EstimateTransformation();
+//   result_transf_ = res.transformation;
+// }
 
-TEST_F(MapsIntegratorTest, Test_pwr_d20_m3) {
-   auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m3");
+// TEST_F(MapsIntegratorTest, Test_pwr_d20_m3) {
+//    auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m3");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  maps_integrator.EstimateTransformation();
-}
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   maps_integrator.EstimateTransformation();
+// }
 
-TEST_F(MapsIntegratorTest, Test_pwr_d20_m4) {
-  auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m4");
+// TEST_F(MapsIntegratorTest, Test_pwr_d20_m4) {
+//   auto original_tree = unpackAndGetOctomap("pwr_d20_f5_m4");
 
-  auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
+//   auto scene = CropOcTree(*original_tree, Vector3f(-20, -16, 0.0), Vector3f(-6, 13, 2.0));
+//   auto init_model = CropOcTree(*original_tree, Vector3f(-10, -16, 0.0), Vector3f(4, 13, 2.0));
 
-  // Transform model
-  auto T = createTransformationMatrix(16.0, 6.0, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
-  auto model = FastOcTreeTransform(*init_model, T);
+//   // Transform model
+//   auto T = createTransformationMatrix(16.0, 6.0, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
+//   auto model = FastOcTreeTransform(*init_model, T);
 
-  MapsIntegrator maps_integrator(scene, model, config_);
-  maps_integrator.EstimateTransformation();
-}
+//   MapsIntegrator maps_integrator(scene, model, config_);
+//   maps_integrator.EstimateTransformation();
+// }
 
 // TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
 // {

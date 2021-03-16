@@ -40,11 +40,16 @@ class MapsIntegrator {
   };
 
   struct Result {
-    float time_ms{0};
     float fitness_score{0};
+    float fitness_score2{0};
+    float fitness_score3{0};
     Point model_min{};
     Point model_max{};
     Eigen::Matrix4f transformation{};
+
+    float transf_estimation_time_ms{0};
+    float octree_transformation_time_ms{0};
+    float octrees_merge_time_ms{0};
 
     std::string toString();
     void PrintResult();

@@ -18,6 +18,9 @@ Compile tests.
 Compile and run all tests
 `catkin_make run_tests octomap_tools`
 
+Run specific test
+`~/ros_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.TestName`
+
 Run merge octomaps test - fr079
 `~/ros_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.Test_fr`
 
