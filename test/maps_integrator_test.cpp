@@ -32,48 +32,56 @@ class MapsIntegratorTest : public ::testing::Test
   }
 
   void Configure() {
-    // Feature cloud
-    // config_.template_alignment.feature_cloud.normal_radius = 10.0;
-    // config_.template_alignment.feature_cloud.downsampling_radius = 0.15;
-    // config_.template_alignment.feature_cloud.descriptors_radius = 1.0;
-    // config_.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
-    // config_.template_alignment.feature_cloud.debug = true;
-    // config_.template_alignment.feature_cloud.iss_num_of_threads = 2;
-    // config_.template_alignment.feature_cloud.iss_model_resolution = 0.02;
-    // config_.template_alignment.feature_cloud.iss_min_neighbours = 6;
+    cfg.template_alignment.divide_model = true;
+    cfg.template_alignment.cell_size_x = 3;
+    cfg.template_alignment.cell_size_y = 3;
 
-    // // Sample Consensus
-    // config_.template_alignment.nr_iterations = 1000;
-    // config_.template_alignment.min_sample_distance = 0.2;
-    // config_.template_alignment.max_correspondence_distance = 100.0;
-    // config_.template_alignment.fitness_score_dist = 0.5;
+   // Feature matching
+    cfg.template_alignment.model_size_thresh_ = 400;
+    cfg.template_alignment.keypoints_thresh_ = 40;
+    cfg.template_alignment.feature_cloud.normal_radius = 10.0;
+    cfg.template_alignment.feature_cloud.downsampling_radius = 0.15;
+    cfg.template_alignment.feature_cloud.descriptors_radius = 1.0;
 
-    // // Other related feature matching
-    // config_.template_alignment.cell_size_x = 3;
-    // config_.template_alignment.cell_size_y = 3;
-    // config_.template_alignment.model_size_thresh_ = 400;
-    // config_.template_alignment.keypoints_thresh_ = 40;
+    cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
+    cfg.template_alignment.feature_cloud.debug = true;
 
-    // // ICP
-    // config_.icp.max_iter = 500;
-    // config_.icp.max_nn_dist = 0.5;
-    // config_.icp.fitness_score_dist = 0.5;
-    // config_.icp.fitness_eps = 0.0005;
-    // config_.icp.transf_eps = 0.0001;
-    // config_.icp.scene_inflation_dist = 2.5;
-    // config_.icp.visualize = false;
-    // config_.icp.output_dir = date_and_time_ + "_";
+    // Sample Consensus
+    cfg.template_alignment.nr_iterations = 1000;
+    cfg.template_alignment.min_sample_distance = 0.2;
+    cfg.template_alignment.max_correspondence_distance = 100.0;
+    cfg.template_alignment.fitness_score_dist = 0.5;
 
-    // // Other
-    // config_.fitness_score_thresh = 0.002;
-    // config_.show_visualization_ = true;
-    // config_.show_two_pointclouds = true;
-    // config_.files_path_and_pattern = date_and_time_ + "_";
+    // ISS 3D
+    cfg.template_alignment.feature_cloud.iss_salient_radius = 0.12;
+    cfg.template_alignment.feature_cloud.iss_non_max_radius = 0.08;
+    cfg.template_alignment.feature_cloud.iss_threshold21 = 0.975;
+    cfg.template_alignment.feature_cloud.iss_threshold32 = 0.975;
+    cfg.template_alignment.feature_cloud.iss_min_neighbours = 6;
+    cfg.template_alignment.feature_cloud.iss_num_of_threads = 2;
+
+
+    // ICP
+    cfg.icp_correction = false;
+    cfg.icp.max_iter = 500;
+    cfg.icp.max_nn_dist = 0.5;
+    cfg.icp.fitness_score_dist = 0.5;
+    cfg.icp.fitness_eps = 0.0005;
+    cfg.icp.transf_eps = 0.0001;
+    cfg.icp.scene_inflation_dist = 2.5;
+    cfg.icp.visualize = false;
+    cfg.icp.output_dir = date_and_time_ + "_";
+
+    // Other
+    // cfg.fitness_score_thresh = 0.002;
+    // cfg.show_visualization_ = true;
+    // cfg.show_two_pointclouds = true;
+    // cfg.files_path_and_pattern = date_and_time_ + "_";
   }
 
   // void DumpTestInfoToFile(const OcTreePtr original_tree, const OcTreePtr scene, const OcTreePtr model,
   //   const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
-  //   std::string file_path = config_.files_path_and_pattern + "info.txt";
+  //   std::string file_path = cfg.files_path_and_pattern + "info.txt";
   //   std::ofstream file(file_path, std::ios_base::app);
 
   //   if (original_tree)
@@ -88,34 +96,34 @@ class MapsIntegratorTest : public ::testing::Test
   //   // TODO Add percentage of common area
   // }
 
-  MapsIntegrator::Config config_;
+  MapsIntegrator::Config cfg;
   Eigen::Matrix4f transformation_;
   std::string date_and_time_;
   Eigen::Matrix4f result_transf_;
   float x_common_;
 };
 
-// TEST_F(MapsIntegratorTest, Test_fr) {
-//   auto original_tree = unpackAndGetOctomap("fr_079");
-//   PrintOcTreeInfo(*original_tree, "original_tree");
+TEST_F(MapsIntegratorTest, Test_fr) {
+  auto original_tree = unpackAndGetOctomap("fr_079");
+  PrintOcTreeInfo(*original_tree, "original_tree");
 
-//   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-//   auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
+  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
 
-//   // Transform model
-//   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
-//   auto model = FastOcTreeTransform(*init_model, T);
+  // Transform model
+  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+  auto model = FastOcTreeTransform(*init_model, T);
 
 
-//   // SaveOcTreeToFile(*scene, "fr_scene.ot");
-//   // SaveOcTreeToFile(*model, "fr_model.ot");
+  // SaveOcTreeToFile(*scene, "fr_scene.ot");
+  // SaveOcTreeToFile(*model, "fr_model.ot");
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
-//   auto res = maps_integrator.EstimateTransformation();
+  MapsIntegrator maps_integrator(scene, model, cfg);
+  auto res = maps_integrator.EstimateTransformation();
 
-//   maps_integrator.DumpConfigAndResultsToFile();
-//   DumpTestInfoToFile(original_tree, scene, model, T, res.transformation, res.fitness_score);
-// }
+  maps_integrator.DumpConfigAndResultsToFile();
+  // DumpTestInfoToFile(original_tree, scene, model, T, res.transformation, res.fitness_score);
+}
 
 // TEST_F(MapsIntegratorTest, Test_fr_cascade_step2) {
 //   auto original_tree = unpackAndGetOctomap("fr_079");
@@ -127,7 +135,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 // }
@@ -142,7 +150,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 // }
@@ -158,7 +166,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(10, 5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(10.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 //  }
@@ -174,7 +182,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(0.0), ToRad(0.0), ToRad(5.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 // }
@@ -189,7 +197,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(10.5, 5.5, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   maps_integrator.EstimateTransformation();
 // }
 
@@ -203,7 +211,7 @@ class MapsIntegratorTest : public ::testing::Test
 //   auto T = createTransformationMatrix(16.0, 6.0, 0.3, ToRad(5.0), ToRad(5.0), ToRad(40.0));
 //   auto model = FastOcTreeTransform(*init_model, T);
 
-//   MapsIntegrator maps_integrator(scene, model, config_);
+//   MapsIntegrator maps_integrator(scene, model, cfg);
 //   maps_integrator.EstimateTransformation();
 // }
 
@@ -227,10 +235,10 @@ class MapsIntegratorTest : public ::testing::Test
 //   PrintOcTreeInfo(*tree_l_, "tree_l");
 //   PrintOcTreeInfo(*tree_r_, "tree_r");
 
-//   config_.show_visualization_ = true;
-//   config_.show_two_pointclouds = true;
+//   cfg.show_visualization_ = true;
+//   cfg.show_two_pointclouds = true;
 
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, config_);
+//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 // }
@@ -261,12 +269,12 @@ class MapsIntegratorTest : public ::testing::Test
 //   PrintOcTreeInfo(*tree_l_, "tree_l");
 //   PrintOcTreeInfo(*tree_r_, "tree_r");
 
-//   config_.template_alignment.cell_size_x = 4.5;
-//   config_.template_alignment.cell_size_y = 4.5;
-//   config_.show_visualization_ = true;
-//   config_.show_two_pointclouds = true;
+//   cfg.template_alignment.cell_size_x = 4.5;
+//   cfg.template_alignment.cell_size_y = 4.5;
+//   cfg.show_visualization_ = true;
+//   cfg.show_two_pointclouds = true;
 
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, config_);
+//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
 //   auto res = maps_integrator.EstimateTransformation();
 //   result_transf_ = res.transformation;
 // }
@@ -279,10 +287,10 @@ class MapsIntegratorTest : public ::testing::Test
 //   x_common_ = 5;
 //   PrepareSceneAndModelWithXDivision(octomap_name);
 
-//   config_.show_visualization_ = true;
-//   config_.show_two_pointclouds = true;
+//   cfg.show_visualization_ = true;
+//   cfg.show_two_pointclouds = true;
 
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, config_);
+//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
 //   maps_integrator.EstimateTransformation();
 // }
 
@@ -304,71 +312,71 @@ class MapsIntegratorTest : public ::testing::Test
   std::vector<float> icp_max_nn_dist_vec = {0.1, 0.2, 0.5, 0.};
 
   for (auto icp_max_nn_dist : icp_max_nn_dist_vec) {
-    config_.icp.max_nn_dist = icp_max_nn_dist;
-    MapsIntegrator maps_integrator(config_);
+    cfg.icp.max_nn_dist = icp_max_nn_dist;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto cell_size : cell_size_vec) {
-    config_.cell_size_x_ = cell_size;
-    config_.cell_size_y_ = cell_size;
-    MapsIntegrator maps_integrator(config_);
+    cfg.cell_size_x_ = cell_size;
+    cfg.cell_size_y_ = cell_size;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto normal_radius : normal_radius_vec) {
-    config_.feature_cloud.normal_radius = normal_radius;
-    MapsIntegrator maps_integrator(config_);
+    cfg.feature_cloud.normal_radius = normal_radius;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto downsampling_radius : downsampling_radius_vec) {
-    config_.feature_cloud.downsampling_radius = downsampling_radius;
-    MapsIntegrator maps_integrator(config_);
+    cfg.feature_cloud.downsampling_radius = downsampling_radius;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto descriptors_radius : descriptors_radius_vec) {
-    config_.feature_cloud.descriptors_radius = descriptors_radius;
-    MapsIntegrator maps_integrator(config_);
+    cfg.feature_cloud.descriptors_radius = descriptors_radius;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto min_sample_distance : min_sample_distance_vec) {
-    config_.template_alignment.min_sample_distance = min_sample_distance;
-    MapsIntegrator maps_integrator(config_);
+    cfg.template_alignment.min_sample_distance = min_sample_distance;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
   configure();
   for (auto max_correspondence_distance : max_correspondence_distance_vec) {
-    config_.template_alignment.max_correspondence_distance = max_correspondence_distance;
-    MapsIntegrator maps_integrator(config_);
+    cfg.template_alignment.max_correspondence_distance = max_correspondence_distance;
+    MapsIntegrator maps_integrator(cfg);
     maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
   }
 
 //  for (auto max_correspondence_distance : max_correspondence_distance_vec) {
-//    config_.template_alignment.max_correspondence_distance = max_correspondence_distance;
+//    cfg.template_alignment.max_correspondence_distance = max_correspondence_distance;
 //    for (auto min_sample_distance : min_sample_distance_vec) {
-//      config_.template_alignment.min_sample_distance = min_sample_distance;
+//      cfg.template_alignment.min_sample_distance = min_sample_distance;
 //      for (auto descriptors_radius : descriptors_radius_vec) {
-//        config_.feature_cloud.descriptors_radius = descriptors_radius;
+//        cfg.feature_cloud.descriptors_radius = descriptors_radius;
 //        for (auto downsampling_radius : downsampling_radius_vec) {
-//          config_.feature_cloud.downsampling_radius = downsampling_radius;
+//          cfg.feature_cloud.downsampling_radius = downsampling_radius;
 //          for (auto normal_radius : normal_radius_vec) {
-//            config_.feature_cloud.normal_radius = normal_radius;
+//            cfg.feature_cloud.normal_radius = normal_radius;
 //            for (auto cell_size : cell_size_vec) {
-//              config_.cell_size_x_ = cell_size;
-//              config_.cell_size_y_ = cell_size;
+//              cfg.cell_size_x_ = cell_size;
+//              cfg.cell_size_y_ = cell_size;
 //              for (auto icp_max_nn_dist : icp_max_nn_dist_vec) {
-//                config_.icp.max_nn_dist = icp_max_nn_dist_vec;
+//                cfg.icp.max_nn_dist = icp_max_nn_dist_vec;
 //
-//                MapsIntegrator maps_integrator(config_);
+//                MapsIntegrator maps_integrator(cfg);
 //                maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
 //              }
 //            }

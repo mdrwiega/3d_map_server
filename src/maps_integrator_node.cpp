@@ -106,8 +106,6 @@ int main(int argc, char** argv) {
   const std::string map1_filepath = argv[1];
   const std::string map2_filepath = argv[2];
 
-  // std::string pkg_path = ros::package::getPath("octomap_tools");
-
   if (!exists(map1_filepath)) {
     ROS_ERROR_STREAM("File doesn't exist in path: " << map1_filepath << std::endl);
     exit(1);
