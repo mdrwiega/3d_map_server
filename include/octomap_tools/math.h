@@ -104,18 +104,14 @@ inline Eigen::Vector3f rotMatrixToRPY(const Eigen::Matrix3f& rot) {
   return rot.eulerAngles(0, 1, 2).transpose();
 }
 
-inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& Mat) {
-  Eigen::Matrix3f rot_mat = Mat.block<3,3>(0, 0);
+inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& transf, const std::string line_prefix = {}) {
+  Eigen::Matrix3f rot_mat = transf.block<3,3>(0, 0);
   Eigen::Vector3f rot = rotMatrixToRPY(rot_mat);
-  Eigen::Vector3f transl = Mat.block<3,1>(0, 3);
+  Eigen::Vector3f transl = transf.block<3,1>(0, 3);
   std::stringstream ss;
-  ss << "\n" << std::setprecision(2) << std::fixed;
-  ss << "XYZ =" << std::setw(7) << transl(0)
-                << std::setw(7) << transl(1)
-                << std::setw(7) << transl(2) << "   ";
-  ss << "RPY =" << std::setw(7) << rot(0)
-                << std::setw(7) << rot(1)
-                << std::setw(7) << rot(2) << "\n";
+  ss << std::setprecision(3) << std::fixed;
+  ss << line_prefix << "xyz: [" << transl(0) << ", " << transl(1) << ", " <<  transl(2) << "]\n";
+  ss << line_prefix << "rpy: [" <<  rot(0) << ", " <<  rot(1) << ", " <<  rot(2) << "]\n";
   return ss.str();
 }
 

@@ -51,6 +51,9 @@ class MapsIntegrator {
     float octree_transformation_time_ms{0};
     float octrees_merge_time_ms{0};
 
+    FeaturesMatching::Result ia;
+    ICP::Result icp;
+
     std::string toString();
     void PrintResult();
   };
@@ -72,7 +75,10 @@ class MapsIntegrator {
    */
   OcTreePtr Merge(bool save_to_file = false);
 
-  std::string DumpConfigAndResultsToFile();
+  /**
+   * Saves parameters/results to file. If filename not specified then path from configuration is used.
+   */
+  std::string DumpConfigAndResultsToFile(const std::string& filename = {});
 
  private:
   std::vector<Rectangle> spiral_blocks_;
