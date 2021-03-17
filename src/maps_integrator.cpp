@@ -16,6 +16,7 @@
 #include <octomap_tools/conversions.h>
 #include <octomap_tools/math.h>
 #include <octomap_tools/octomap_io.h>
+#include <octomap_tools/utils.h>
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
@@ -139,6 +140,8 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filena
 
   std::string result_file = basename + "_result.txt";
   std::ofstream file(result_file, std::ios_base::app);
+  file << OcTreeInfoToString(*scene_tree_, "map1_scene");
+  file << OcTreeInfoToString(*model_tree_, "map2_model");
   file << result_.toString();
   return basename;
 }
@@ -146,10 +149,9 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filena
 std::string MapsIntegrator::Result::toString() {
   std::stringstream ss;
   // Add octrees size
-  ss << "model_min_x: " << model_min.x << "\n";
-  ss << "model_min_y: " << model_min.y << "\n";
-  ss << "model_max_x: " << model_max.x << "\n";
-  ss << "model_max_y: " << model_max.y << "\n";
+  ss << "best_model_limits:\n";
+  ss << "  x: [" << model_min.x << ", " << model_max.x << "]\n";
+  ss << "  y: [" << model_min.y << ", " << model_max.y << "]\n";
   ss << "fitness_score1: " << fitness_score << "\n";
   ss << "fitness_score2: " << fitness_score2 << "\n";
   ss << "fitness_score3: " << fitness_score3 << "\n";

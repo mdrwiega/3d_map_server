@@ -72,7 +72,6 @@ inline PointCloud createUniformPointCloud(Point min, Point max, Point step) {
       }
     }
   }
-
   return cloud;
 }
 
@@ -104,21 +103,25 @@ inline int getNumberOfOccupiedNodes(const OcTree& input_tree) {
   return num_occupied;
 }
 
-inline std::string OcTreeInfoToString(const OcTree& tree, const std::string& name) {
+inline std::string OcTreeInfoToString(const OcTree& tree, const std::string& name,
+                                      const std::string& line_prefix = {}) {
   std::stringstream ss;
-  ss << "OcTree: " << name << "\n";
-  ss << "Size: " << tree.size();
-  ss << "  Resolution: " << tree.getResolution();
+  ss << line_prefix << "octree:\n";
+  ss << line_prefix << "  name: " << name << "\n";
+  ss << line_prefix << "  size: " << tree.size() << "\n";
+  ss << line_prefix << "  resolution: " << tree.getResolution() << "\n";
 
   if (tree.size() > 0) {
-    ss << "  Leafs: " << tree.getNumLeafNodes();
-    ss << "  Occupied nodes: " << getNumberOfOccupiedNodes(tree) << "\n";
+    ss << "  leafs: " << tree.getNumLeafNodes() << "\n";
+    ss << "  occupied_nodes: " << getNumberOfOccupiedNodes(tree) << "\n";
 
     double x_min, x_max, y_min, y_max, z_min, z_max;
     tree.getMetricMin(x_min, y_min, z_min);
     tree.getMetricMax(x_max, y_max, z_max);
-    ss << "Limits: x(" << x_min << ", " << x_max << ")  "
-       << "y(" << y_min << ", " << y_max << ")  z(" << z_min << ", " << z_max << ")\n";
+    ss << "  limits:\n";
+    ss << "    x: [" << x_min << ", " << x_max << "]\n";
+    ss << "    y: [" << y_min << ", " << y_max << "]\n";
+    ss << "    z: [" << z_min << ", " << z_max << "]\n";
   }
   return ss.str();
 }
