@@ -224,12 +224,12 @@ TEST_F(OctreeTransformationsTest, OctreeSizeVsMemUsage) {
   Vector3f max = {1000, 1000, 1000};
   auto initMemUsage = GetVirtualMemoryUsedByProcessKB();
 
-  std::cout << "tree1_size;;virt_mem_usage_kb;time_s\n";
+  std::cout << "tree_size;virt_mem_usage_kb\n";
 
-  for (unsigned i = 1; i <= 50000000; i *= 2) {
+  for (unsigned i = 1; i <= 100000000; i *= 2) {
     auto tree = CreateExampleOctree(res, min, max, i);
 
-    auto memUsage = (GetVirtualMemoryUsedByProcessKB() - initMemUsage);
+    auto memUsage = GetVirtualMemoryUsedByProcessKB() - initMemUsage;
     std::cout << tree.size() << ";" << memUsage << "\n";
   }
 }
@@ -346,26 +346,6 @@ TEST_F(OctreeTransformationsTest, FastMethod_fr) {
 //    EXPECT_TRUE(p.y() >= minRange.y && p.y() <= maxRange.y);
 //    EXPECT_TRUE(p.z() >= minRange.z && p.z() <= maxRange.z);
 //  }
-//}
-//
-//TEST(OctreeTransformationsTest, ExtractIntersectingOctrees_CommonPartNotExist)
-//{
-//  // Cloud with ranges from -10 to 10
-//  auto cloud1 = createUniformPointCloud(
-//      Point{-10,-10,-10}, Point{10,10,10}, Point{1,1,1});
-//
-//  // Cloud with ranges from 20 to 30
-//  auto cloud2 = createUniformPointCloud(
-//      Point{20,20,20}, Point{30,30,30}, Point{1,1,1});
-//
-//  auto tree1 = PointCloudToOctree(cloud1, 0.5);
-//  auto tree2 = PointCloudToOctree(cloud2, 0.5);
-//  OcTree filtered_tree1(1), filtered_tree2(1);
-//  Point margin {1,1,1};
-//  extractIntersectingOctrees(tree1, tree2, margin, filtered_tree1, filtered_tree2);
-//
-//  EXPECT_EQ(filtered_tree1.getNumLeafNodes(), 0U);
-//  EXPECT_EQ(filtered_tree2.getNumLeafNodes(), 0U);
 //}
 
 }
