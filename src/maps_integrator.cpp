@@ -16,8 +16,6 @@
 #include <octomap_tools/conversions.h>
 #include <octomap_tools/math.h>
 #include <octomap_tools/octomap_io.h>
-#include "utils/table_printer.h"
-
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
