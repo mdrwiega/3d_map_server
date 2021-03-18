@@ -74,21 +74,15 @@ class MapsIntegratorTest : public ::testing::Test
     // Other
   }
 
-  void DumpTestInfoToFile(const OcTreePtr original_tree, const OcTreePtr scene, const OcTreePtr model,
+  void DumpTestInfoToFile(const OcTreePtr original_tree,
     const Eigen::Matrix4f& real_transf, const Eigen::Matrix4f& est_transf) {
 
     std::string file_path = cfg.output_dir + "_result.txt";
     std::ofstream file(file_path, std::ios_base::app);
 
-    // if (original_tree)
-    //   file << "\n" << OcTreeInfoToString(*original_tree, "original");
-
-    std::stringstream ss;
-    ss << "real_transformation:\n" << transfMatrixToXyzRpyString(t1, "  ");
-    ss << "real_error: " << transformationsError(real_transf, est_transf) << "\n\n";
-
-    file << ss.str();
-    // file << MatchingTestResultToString(t1, t2, fitness_score);
+    file << "real_transformation:\n" << transfMatrixToXyzRpyString(real_transf, "  ");
+    file << "real_error: " << transformationsError(real_transf, est_transf) << "\n\n";
+    file << OcTreeInfoToString(*original_tree, "original_map");
   }
 
   MapsIntegrator::Config cfg;
@@ -116,7 +110,7 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, scene, model, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.transformation);
 }
 
 // TEST_F(MapsIntegratorTest, CheckOverlap) {
