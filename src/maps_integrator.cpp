@@ -152,16 +152,24 @@ std::string MapsIntegrator::Result::toString() {
   ss << "best_model_limits:\n";
   ss << "  x: [" << model_min.x << ", " << model_max.x << "]\n";
   ss << "  y: [" << model_min.y << ", " << model_max.y << "]\n";
-  ss << "fitness_score1: " << fitness_score << "\n";
-  ss << "fitness_score2: " << fitness_score2 << "\n";
-  ss << "fitness_score3: " << fitness_score3 << "\n";
   ss << "processing_time_ms:\n";
   ss << "  transf_estimation: " << transf_estimation_time_ms << "\n";
   ss << "  octree_transformation: " << octree_transformation_time_ms << "\n";
   ss << "  octrees_merge: " << octrees_merge_time_ms << "\n";
-  ss << "ia_transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "  ");
-  ss << "icp_transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "  ");
-  ss << "est_transformation:\n" << transfMatrixToXyzRpyString(transformation, "  ");
+  ss << "  icp: " << icp.processing_time_ms << "\n";
+  ss << "  ia: " << ia.processing_time_ms << "\n";
+  ss << "initial_alignment:\n";
+  ss << "  transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "    ");
+  ss << "  fitness_score: " << ia.fitness_score << "\n";
+  // ss << "  correspondences_num: " << ia.correspondences.size() << "\n";
+  ss << "icp:\n";
+  ss << "  transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "    ");
+  ss << "  fitness_score: " << icp.fitness_score << "\n";
+  ss << "final:\n";
+  ss << "  transformation:\n" << transfMatrixToXyzRpyString(transformation, "    ");
+  ss << "  fitness_score1: " << fitness_score << "\n";
+  ss << "  fitness_score2: " << fitness_score2 << "\n";
+  ss << "  fitness_score3: " << fitness_score3 << "\n";
   return ss.str();
 }
 

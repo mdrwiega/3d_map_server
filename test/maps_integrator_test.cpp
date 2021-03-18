@@ -64,8 +64,8 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.icp_correction = true;
     cfg.icp.max_iter = 500;
     cfg.icp.max_nn_dist = 0.5;
-    cfg.icp.fitness_score_dist = 0.5;
     cfg.icp.fitness_eps = 0.0005;
+    cfg.icp.fitness_score_dist = 0.5;
     cfg.icp.transf_eps = 0.0001;
     cfg.icp.scene_inflation_dist = 2.5;
     cfg.icp.visualize = false;
