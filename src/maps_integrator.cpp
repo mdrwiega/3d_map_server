@@ -155,9 +155,10 @@ std::string MapsIntegrator::Result::toString() {
   ss << "fitness_score1: " << fitness_score << "\n";
   ss << "fitness_score2: " << fitness_score2 << "\n";
   ss << "fitness_score3: " << fitness_score3 << "\n";
-  ss << "transf_estimation_time_ms: " << transf_estimation_time_ms << "\n";
-  ss << "octree_transformation_time_ms: " << octree_transformation_time_ms << "\n";
-  ss << "octrees_merge_time_ms: " << octrees_merge_time_ms << "\n";
+  ss << "processing_time_ms:\n";
+  ss << "  transf_estimation: " << transf_estimation_time_ms << "\n";
+  ss << "  octree_transformation: " << octree_transformation_time_ms << "\n";
+  ss << "  octrees_merge: " << octrees_merge_time_ms << "\n";
   ss << "ia_transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "  ");
   ss << "icp_transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "  ");
   ss << "est_transformation:\n" << transfMatrixToXyzRpyString(transformation, "  ");

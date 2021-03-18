@@ -97,7 +97,7 @@ inline std::string transformationMatrixToString(const Eigen::Matrix4f& Mat) {
 }
 
 inline double transformationsError(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
-  return (t1.inverse() * t2 - Eigen::Matrix4f::Identity()).norm();
+  return (t1 * t2 - Eigen::Matrix4f::Identity()).norm();
 }
 
 inline Eigen::Vector3f rotMatrixToRPY(const Eigen::Matrix3f& rot) {

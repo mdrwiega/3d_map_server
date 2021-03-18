@@ -75,21 +75,17 @@ class MapsIntegratorTest : public ::testing::Test
   }
 
   void DumpTestInfoToFile(const OcTreePtr original_tree, const OcTreePtr scene, const OcTreePtr model,
-    const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
+    const Eigen::Matrix4f& real_transf, const Eigen::Matrix4f& est_transf) {
 
     std::string file_path = cfg.output_dir + "_result.txt";
     std::ofstream file(file_path, std::ios_base::app);
 
     // if (original_tree)
     //   file << "\n" << OcTreeInfoToString(*original_tree, "original");
-    // if (scene)
-    //   file << "\n" << OcTreeInfoToString(*scene, "scene");
-    // if (model)
-    //   file << "\n" << OcTreeInfoToString(*model, "model");
 
     std::stringstream ss;
     ss << "real_transformation:\n" << transfMatrixToXyzRpyString(t1, "  ");
-    ss << "real_error: " << transformationsError(t1, t2) << "\n\n";
+    ss << "real_error: " << transformationsError(real_transf, est_transf) << "\n\n";
 
     file << ss.str();
     // file << MatchingTestResultToString(t1, t2, fitness_score);
