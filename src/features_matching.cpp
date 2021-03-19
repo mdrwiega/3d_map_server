@@ -122,6 +122,30 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
   return FeaturesMatching::ThreadResult {true, nr, result.fitness_score, result.transformation};
 }
 
+double getFitnessScore1(const pcl::CorrespondencesPtr& corr) {
+  double max_range = 0.25;
+  double fitness_score = 0.0;
+
+  // For each point in the source dataset
+  int nr = 0;
+  for (size_t i = 0; i < corr->size(); ++i)
+  {
+    auto dist = (*corr)[i].distance;
+    if (dist <= max_range)
+    {
+      // Add to the fitness score
+      fitness_score += dist;
+      nr++;
+    }
+  }
+
+  std::cout << "\nNumber of nn: " << nr << "\n";
+
+  if (nr > 0)
+    return (fitness_score / nr);
+  return (std::numeric_limits<double>::max ());
+}
+
 FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  FeaturesMatching::Config& cfg,
                                                  const FeatureCloudPtr& model,
@@ -185,13 +209,11 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     sac_ia.alignMod(dummy_output);
 
     double fs = sac_ia.getFitnessScore(cfg.fitness_score_dist);
-    double new_fs = sac_ia.getFitnessScoreMod();
 
     std::cout << "Converged?: " << sac_ia.hasConverged()
       << std::setprecision(6) << std::fixed
       << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
-      << "Standard fitness score: " << fs << "\n"
-      << "New fitness score: " << new_fs << "\n";
+      << "Standard fitness score: " << fs << "\n";
 
     pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
     validator.setMaxRange(0.01);
@@ -203,7 +225,28 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
     result.fitness_score = static_cast<float>(sac_ia.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac_ia.getFinalTransformation();
+
+    auto start = std::chrono::high_resolution_clock::now();
     correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+
+    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "Corresp1 in: " << diff.count() << " ms" << std::endl;
+    start = std::chrono::high_resolution_clock::now();
+
+    pcl::CorrespondencesPtr correspondences2 = sac_ia.getCorrespondences();
+
+    diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "Corresp2 in: " << diff.count() << " ms" << std::endl;
+
+    std::cout << "\nCorrespondences n=" << correspondences->size() << "\n";
+    std::cout << "\nCorrespondences2 n=" << correspondences2->size() << "\n";
+    std::cout << "\nFitnessScore1 corr1: " << getFitnessScore1(correspondences) << "\n";
+    std::cout << "\nFitnessScore1 corr2: " << getFitnessScore1(correspondences2) << "\n";
+
+
+
   }
   else if (cfg.method == AlignmentMethod::GeometryConsistencyClustering) {
     float cg_size(0.01f);
@@ -298,9 +341,9 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   result.correspondences = correspondences;
 
   if (cfg.show_visualizer || cfg.output_to_file) {
-    // MapsIntegratorVisualizer visualizer(
-    //   { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
-    // visualizer.VisualizeFeatureMatching(scene, model, result.transformation, correspondences);
+    MapsIntegratorVisualizer visualizer(
+      { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
+    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, correspondences);
   }
 
   return result;

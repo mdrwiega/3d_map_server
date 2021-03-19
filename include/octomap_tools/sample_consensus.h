@@ -234,43 +234,28 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
     this->deinitCompute ();
   }
 
-
-  double getFitnessScoreMod() {
-    std::cout << "\nNew fitness score calculations ------";
-    std::cout << "\nmin_sample_distance: " << this->min_sample_distance_ << "\n";
-
-    double max_range = 0.1;
-    double fitness_score = 0.0;
+  pcl::CorrespondencesPtr getCorrespondences() {
+    pcl::CorrespondencesPtr correspondences(new pcl::Correspondences());
 
     // Transform the input dataset using the final transformation
     PointCloudSource input_transformed;
     transformPointCloud (*(this->input_), input_transformed, this->final_transformation_);
 
-    std::vector<int> nn_indices (1);
-    std::vector<float> nn_dists (1);
-
-    // For each point in the source dataset
-    int nr = 0;
-    for (size_t i = 0; i < input_transformed.points.size (); ++i)
+    for (size_t i = 0; i < input_transformed.points.size(); ++i)
     {
+      std::vector<int> nn_indices(1);
+      std::vector<float> nn_dists(1);
+
       // Find its nearest neighbor in the target
-      this->tree_->nearestKSearch(input_transformed.points[i], 1, nn_indices, nn_dists);
-      // Deal with occlusions (incomplete targets)
-      if (nn_dists[0] <= max_range)
-      {
-        // Add to the fitness score
-        fitness_score += nn_dists[0];
-        nr++;
+      int k = this->tree_->nearestKSearch(input_transformed.points[i], 1, nn_indices, nn_dists);
+      if(k >= 1 && nn_dists[0] <= 0.25) {
+        pcl::Correspondence corr(nn_indices[0], static_cast<int>(i), nn_dists[0]);
+        correspondences->push_back(corr);
       }
     }
-
-    std::cout << "\nNumber of nn: " << nr;
-
-    std::cout << "\nEnd of new fitness score calculations ------";
-    if (nr > 0)
-      return (fitness_score / nr);
-    return (std::numeric_limits<double>::max ());
+    return correspondences;
   }
+
 };
 
 } // namespace octomap_tools
