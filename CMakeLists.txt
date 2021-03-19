@@ -59,6 +59,7 @@ add_library(${PROJECT_NAME}
 	src/features_matching.cpp
 	src/maps_integrator_visualizer.cpp
 	src/maps_integrator.cpp
+	src/maps_integrator_node.cpp
 	src/transformations.cpp
 )
 
@@ -66,7 +67,7 @@ add_library(${PROJECT_NAME}
 target_link_libraries(
   ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(maps_integrator src/maps_integrator_node.cpp)
+add_executable(maps_integrator src/main.cpp)
 target_link_libraries(maps_integrator
   ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 

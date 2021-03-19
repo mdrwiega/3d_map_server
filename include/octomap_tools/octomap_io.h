@@ -10,7 +10,7 @@
 #include <pcl/common/common.h>
 #include <octomap/octomap.h>
 
-#include <octomap_tools/utils.h>
+#include <octomap_tools/types.h>
 
 namespace octomap_tools {
 

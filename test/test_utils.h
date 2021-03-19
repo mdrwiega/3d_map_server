@@ -64,10 +64,10 @@ inline int GetVirtualMemoryUsedByProcessKB() {
 inline std::string MatchingTestResultToString(
   const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2, float fitness_score) {
   std::stringstream ss;
-  ss << "\nReal transformation:" << transfMatrixToXyzRpyString(t1);
-  ss << "\nEstimated transformation:" << transfMatrixToXyzRpyString(t2);
-  ss << "\nFitness score: " << fitness_score;
-  ss << "\nReal error: " << transformationsError(t1, t2) << "\n\n";
+  ss << "\nReal transformation:\n" << transfMatrixToXyzRpyString(t1);
+  ss << "Estimated transformation:\n" << transfMatrixToXyzRpyString(t2);
+  ss << "Fitness score: " << fitness_score << "\n";
+  ss << "Real error: " << transformationsError(t1, t2) << "\n";
   return ss.str();
 }
 

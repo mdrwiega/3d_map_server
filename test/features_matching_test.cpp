@@ -52,6 +52,8 @@ class FeatureMatchingTest : public ::testing::Test {
     // cfg.method = FeaturesMatching::AlignmentMethod::GeometryConsistencyClustering;
     cfg.method = FeaturesMatching::AlignmentMethod::SampleConsensus;
     // cfg.method = FeaturesMatching::AlignmentMethod::NewMethod;
+
+    cfg.show_visualizer = true;
   }
 
   FeaturesMatching::Config cfg;
@@ -81,10 +83,10 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   std::cout << "\nModel size: " << fc_model->GetPointCloud()->size() << std::endl;
   fc_model->ComputeDescriptors();
 
-  FeaturesMatching matcher(cfg, scene_cloud, scene_cloud);
+  FeaturesMatching matcher(cfg, scene_cloud, model_cloud);
   FeaturesMatching::Result result = matcher.Align(0, cfg, fc_model, fc_scene);
 
-  PrintMatchingResult(T, result.transformation.inverse(), result.fitness_score);
+  PrintMatchingResult(T, result.transformation, result.fitness_score);
 
   if (result.fitness_score < 0.1) {
     std::cout << "\nOK!! \n";

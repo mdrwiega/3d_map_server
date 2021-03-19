@@ -128,7 +128,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  const FeatureCloudPtr& scene) {
   Point ppmin, ppmax;
   pcl::getMinMax3D(*(model->GetPointCloud()), ppmin, ppmax);
-  ROS_DEBUG_STREAM("Task " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
+  std::cout << "Task " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
             << std::setprecision(2) << std::fixed
             << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
             << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
@@ -143,7 +143,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
             << " keypoints: " << model->GetKeypoints()->size()
             // << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
             << " descriptors: " << model->GetDescriptors()->size()
-            << "\n");
+            << "\n";
 
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -187,11 +187,11 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     double fs = sac_ia.getFitnessScore(cfg.fitness_score_dist);
     double new_fs = sac_ia.getFitnessScoreMod();
 
-    ROS_DEBUG_STREAM("Converged?: " << sac_ia.hasConverged()
+    std::cout << "Converged?: " << sac_ia.hasConverged()
       << std::setprecision(6) << std::fixed
       << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
       << "Standard fitness score: " << fs << "\n"
-      << "New fitness score: " << new_fs << "\n");
+      << "New fitness score: " << new_fs << "\n";
 
     pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
     validator.setMaxRange(0.01);
