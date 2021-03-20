@@ -37,6 +37,9 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.feature_cloud.iss_min_neighbours = 6;
     cfg.feature_cloud.iss_num_of_threads = 2;
 
+    // KDTS
+    cfg.kdts.desc_dist_thresh = 0.15;
+
     // Sample Consensus
     cfg.nr_iterations = 2000;
     cfg.min_sample_distance = 0.2;
@@ -49,9 +52,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.keypoints_thresh_ = 150;
     cfg.divide_model = true;
 
-    // cfg.method = FeaturesMatching::AlignmentMethod::GeometryConsistencyClustering;
-    cfg.method = FeaturesMatching::AlignmentMethod::SampleConsensus;
-    // cfg.method = FeaturesMatching::AlignmentMethod::NewMethod;
+    cfg.method = FeaturesMatching::AlignmentMethod::KdTreeSearch;
 
     cfg.show_visualizer = true;
   }

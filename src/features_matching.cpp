@@ -147,47 +147,56 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
             << "\n";
 
   auto start = std::chrono::high_resolution_clock::now();
-
   FeaturesMatching::Result result;
   pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
 
-  if (cfg.method == AlignmentMethod::NewMethod) {
-    // CorrespondenceEstimation<FeatureCloud::DescriptorType, FeatureCloud::DescriptorType> est;
-    // est.setInputSource (model->GetDescriptors());
-    // est.setInputTarget (scene->GetDescriptors());
-    // est.determineReciprocalCorrespondences (*correspondences);
-    // pcl::CorrespondencesPtr correspondences_all;
-    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+  if (cfg.method == AlignmentMethod::KdTreeSearch) {
 
-    // CorrespondenceRejectorDistance rej;
-    // rej.setInputCloud<PointXYZ> (model->GetKeypoints());
-    // rej.setInputTarget<PointXYZ> (scene->GetKeypoints());
-    // rej.setMaximumDistance (18);    // 10m
-    // rej.setInputCorrespondences (correspondences_all);
-    // rej.getCorrespondences (*correspondences);
+    // Find corresponding features in the target cloud
+    correspondences = FindCorrespondencesWithKdTree(
+      model->GetDescriptors(), scene->GetDescriptors(), cfg.kdts.desc_dist_thresh);
+
+    // Get sample indices from correspondences
+    std::vector<int> sample_indices(correspondences->size());
+    std::vector<int> corresponding_indices(correspondences->size());
+    for (const auto& corr : *correspondences) {
+      sample_indices.push_back(corr.index_query);
+      corresponding_indices.push_back(corr.index_match);
+    }
+
+    // Estimate transformation with LS method
+    pcl::registration::TransformationEstimationSVD<Point, Point> transformation_estimator;
+    Eigen::Matrix4f transformation_matrix;
+    transformation_estimator.estimateRigidTransformation(
+      *model->GetKeypoints(), sample_indices, *scene->GetKeypoints(),
+      corresponding_indices, transformation_matrix);
+
+    result.fitness_score = calcFitnessScore1(correspondences);
+    result.transformation = transformation_matrix;
 
     // std::cout << "\nCorrespondences all: " << correspondences_all->size();
     ROS_DEBUG_STREAM("\nCorrespondences : " << correspondences->size());
+    std::cout << "\nFitnessScore1 corr1: " << result.fitness_score << "\n";
   }
-  if (cfg.method == AlignmentMethod::SampleConsensus) {
+  else if (cfg.method == AlignmentMethod::SampleConsensus) {
     // Align feature clouds with Sample Consensus Initial Alignment
-    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac_ia;
-    sac_ia.setMinSampleDistance(cfg.min_sample_distance);
-    sac_ia.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
-    sac_ia.setMaximumIterations(cfg.nr_iterations);
-    sac_ia.setNumberOfSamples(3);
+    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac;
+    sac.setMinSampleDistance(cfg.min_sample_distance);
+    sac.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
+    sac.setMaximumIterations(cfg.nr_iterations);
+    sac.setNumberOfSamples(3);
 
-    sac_ia.setInputSource(model->GetKeypoints());
-    sac_ia.setSourceFeatures(model->GetDescriptors());
-    sac_ia.setInputTarget(scene->GetKeypoints());
-    sac_ia.setTargetFeatures(scene->GetDescriptors());
+    sac.setInputSource(model->GetKeypoints());
+    sac.setSourceFeatures(model->GetDescriptors());
+    sac.setInputTarget(scene->GetKeypoints());
+    sac.setTargetFeatures(scene->GetDescriptors());
 
     PointCloud dummy_output;
-    sac_ia.alignMod(dummy_output);
+    sac.alignMod(dummy_output);
 
-    double fs = sac_ia.getFitnessScore(cfg.fitness_score_dist);
+    double fs = sac.getFitnessScore(cfg.fitness_score_dist);
 
-    std::cout << "Converged?: " << sac_ia.hasConverged()
+    std::cout << "Converged?: " << sac.hasConverged()
       << std::setprecision(6) << std::fixed
       << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
       << "Standard fitness score: " << fs << "\n";
@@ -196,15 +205,15 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     validator.setMaxRange(0.10);
 
     double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
-                                          sac_ia.getFinalTransformation());
+                                          sac.getFinalTransformation());
 
     ROS_DEBUG_STREAM("Score: " << score);
 
-    result.fitness_score = static_cast<float>(sac_ia.getFitnessScore(cfg.fitness_score_dist));
-    result.transformation = sac_ia.getFinalTransformation();
+    result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
+    result.transformation = sac.getFinalTransformation();
 
     correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-    pcl::CorrespondencesPtr correspondences2 = sac_ia.getCorrespondences();
+    pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
 
     std::cout << "\nCorrespondences n=" << correspondences->size() << "\n";
     std::cout << "\nCorrespondences2 n=" << correspondences2->size() << "\n";
@@ -319,7 +328,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
 pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
     const FeatureCloud::Descriptors::Ptr& model_descriptors,
-    const FeatureCloud::Descriptors::Ptr& scene_descriptors) {
+    const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh) {
 
   pcl::CorrespondencesPtr correspondences(new pcl::Correspondences());
 
@@ -339,7 +348,7 @@ pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
 
     // add match only if the squared descriptor distance is
     // less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
-    if(found_neighs == 1 && neigh_sqr_dists[0] < 0.25f) {
+    if(found_neighs == 1 && neigh_sqr_dists[0] < desc_dist_thresh) {
       pcl::Correspondence corr(neigh_indices[0], static_cast<int>(i), neigh_sqr_dists[0]);
       correspondences->push_back(corr);
     }

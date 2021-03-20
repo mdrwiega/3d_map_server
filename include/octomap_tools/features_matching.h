@@ -17,15 +17,22 @@ namespace octomap_tools {
 class FeaturesMatching {
  public:
   enum class AlignmentMethod {
-    SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, NewMethod };
+    SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, KdTreeSearch };
 
-  struct Config{
+  struct KdTreeSearchConfig {
+    float desc_dist_thresh;
+  };
+
+  struct Config {
     FeatureCloud::Config feature_cloud;
     AlignmentMethod method = AlignmentMethod::SampleConsensus;
 
     bool divide_model{true};
 
-    // Sample Consensus Initial Alignment
+    // Kd Tree search
+    KdTreeSearchConfig kdts;
+
+    // Sample Consensus
     float min_sample_distance;
     float max_correspondence_distance;
     int nr_iterations;
@@ -81,7 +88,8 @@ class FeaturesMatching {
    */
   static pcl::CorrespondencesPtr FindCorrespondencesWithKdTree(
     const FeatureCloud::Descriptors::Ptr& model_descriptors,
-    const FeatureCloud::Descriptors::Ptr& scene_descriptors);
+    const FeatureCloud::Descriptors::Ptr& scene_descriptors,
+    float desc_dist_thresh = 0.25);
 
  /**
   * Model decomposition into rectangular blocks.
