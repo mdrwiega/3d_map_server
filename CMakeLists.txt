@@ -33,7 +33,7 @@ find_package(PCL REQUIRED)
 add_definitions(-DOCTOMAP_NODEBUGOUT)
 
 catkin_package(
-  INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+  INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS ${CATKIN_PACKAGE_DEPENDENCIES}
   DEPENDS OCTOMAP EIGEN3 PCL
@@ -49,6 +49,7 @@ include_directories(
 	${OCTOMAP_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
 	${PCL_INCLUDE_DIRS}
+  src
 )
 
 add_definitions(${EIGEN3_DEFINITIONS})
