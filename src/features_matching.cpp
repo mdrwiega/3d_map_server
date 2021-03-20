@@ -23,6 +23,7 @@
 #include <octomap_tools/maps_integrator_visualizer.h>
 
 #include <octomap_tools/conversions.h>
+#include <octomap_tools/validation.h>
 
 #include <pcl/conversions.h>
 
@@ -122,30 +123,6 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
   return FeaturesMatching::ThreadResult {true, nr, result.fitness_score, result.transformation};
 }
 
-double getFitnessScore1(const pcl::CorrespondencesPtr& corr) {
-  double max_range = 0.25;
-  double fitness_score = 0.0;
-
-  // For each point in the source dataset
-  int nr = 0;
-  for (size_t i = 0; i < corr->size(); ++i)
-  {
-    auto dist = (*corr)[i].distance;
-    if (dist <= max_range)
-    {
-      // Add to the fitness score
-      fitness_score += dist;
-      nr++;
-    }
-  }
-
-  std::cout << "\nNumber of nn: " << nr << "\n";
-
-  if (nr > 0)
-    return (fitness_score / nr);
-  return (std::numeric_limits<double>::max ());
-}
-
 FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  FeaturesMatching::Config& cfg,
                                                  const FeatureCloudPtr& model,
@@ -242,10 +219,12 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
     std::cout << "\nCorrespondences n=" << correspondences->size() << "\n";
     std::cout << "\nCorrespondences2 n=" << correspondences2->size() << "\n";
-    std::cout << "\nFitnessScore1 corr1: " << getFitnessScore1(correspondences) << "\n";
-    std::cout << "\nFitnessScore1 corr2: " << getFitnessScore1(correspondences2) << "\n";
-
-
+    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(correspondences) << "\n";
+    std::cout << "\nFitnessScore1 corr2: " << calcFitnessScore1(correspondences2) << "\n";
+    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(correspondences) << "\n";
+    std::cout << "\nFitnessScore2 corr2: " << calcFitnessScore2(correspondences2) << "\n";
+    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(correspondences) << "\n";
+    std::cout << "\nFitnessScore3 corr2: " << calcFitnessScore3(correspondences2) << "\n";
 
   }
   else if (cfg.method == AlignmentMethod::GeometryConsistencyClustering) {
