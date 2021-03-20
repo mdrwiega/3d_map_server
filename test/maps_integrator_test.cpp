@@ -7,13 +7,13 @@
 #include <iostream>
 #include <fstream>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/utils.h>
-#include <octomap_tools/math.h>
+#include <transformations.h>
+#include <utils.h>
+#include <math.h>
 #include "test_utils.h"
 
-#include "../include/octomap_tools/conversions.h"
-#include "../include/octomap_tools/maps_integrator.h"
+#include <conversions.h>
+#include <octomap_tools/maps_integrator.h>
 
 using namespace Eigen;
 using namespace octomap_tools;
@@ -39,10 +39,10 @@ class MapsIntegratorTest : public ::testing::Test
    // Feature matching
     cfg.template_alignment.model_size_thresh_ = 400;
     cfg.template_alignment.keypoints_thresh_ = 40;
+
     cfg.template_alignment.feature_cloud.normal_radius = 10.0;
     cfg.template_alignment.feature_cloud.downsampling_radius = 0.15;
     cfg.template_alignment.feature_cloud.descriptors_radius = 1.0;
-
     cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
     cfg.template_alignment.feature_cloud.debug = true;
 

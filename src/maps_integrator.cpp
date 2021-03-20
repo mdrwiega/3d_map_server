@@ -11,12 +11,12 @@
 
 #include <pcl/point_cloud.h>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/features_matching.h>
-#include <octomap_tools/conversions.h>
-#include <octomap_tools/math.h>
+#include <transformations.h>
+#include <features_matching.h>
+#include <conversions.h>
+#include <math.h>
 #include <octomap_tools/octomap_io.h>
-#include <octomap_tools/utils.h>
+#include <utils.h>
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;

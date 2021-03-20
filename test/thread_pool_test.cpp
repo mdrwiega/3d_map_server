@@ -1,7 +1,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <octomap_tools/thread_pool.h>
+#include <thread_pool.h>
 #include "gtest/gtest.h"
 
 TEST(ThreadPoolTest_, CreateThreadPoolError) {

@@ -1,4 +1,4 @@
-#include <octomap_tools/features_matching.h>
+#include <features_matching.h>
 
 #include <chrono>
 
@@ -18,12 +18,12 @@
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 
-#include <octomap_tools/thread_pool.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
 
-#include <octomap_tools/conversions.h>
-#include <octomap_tools/validation.h>
-#include <octomap_tools/model_decomposition.h>
+#include <thread_pool.h>
+#include <conversions.h>
+#include <validation.h>
+#include <model_decomposition.h>
 
 #include <pcl/conversions.h>
 
@@ -137,32 +137,28 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
             << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
             << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
             << "  Scene size: " << scene->GetPointCloud()->size()
-            << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetPointCloud())
             << " keypoints: " << scene->GetKeypoints()->size()
-            << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetKeypoints())
             << " descriptors: " << scene->GetDescriptors()->size()
             << "\n"
             << "  Model size: " << model->GetPointCloud()->size()
-            << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetPointCloud())
             << " keypoints: " << model->GetKeypoints()->size()
-            << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
             << " descriptors: " << model->GetDescriptors()->size()
             << "\n";
 
   auto start = std::chrono::high_resolution_clock::now();
   FeaturesMatching::Result result;
-  pcl::CorrespondencesPtr correspondences (new pcl::Correspondences);
+  pcl::CorrespondencesPtr features_correspondences (new pcl::Correspondences);
 
   if (cfg.method == AlignmentMethod::KdTreeSearch) {
 
     // Find corresponding features in the target cloud
-    correspondences = FindCorrespondencesWithKdTree(
+    features_correspondences = FindFeaturesCorrespondencesWithKdTree(
       model->GetDescriptors(), scene->GetDescriptors(), cfg.kdts.desc_dist_thresh);
 
     // Get sample indices from correspondences
-    std::vector<int> sample_indices(correspondences->size());
-    std::vector<int> corresponding_indices(correspondences->size());
-    for (const auto& corr : *correspondences) {
+    std::vector<int> sample_indices(features_correspondences->size());
+    std::vector<int> corresponding_indices(features_correspondences->size());
+    for (const auto& corr : *features_correspondences) {
       sample_indices.push_back(corr.index_query);
       corresponding_indices.push_back(corr.index_match);
     }
@@ -174,11 +170,11 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       *model->GetKeypoints(), sample_indices, *scene->GetKeypoints(),
       corresponding_indices, transformation_matrix);
 
-    result.fitness_score = calcFitnessScore1(correspondences);
+    result.fitness_score = calcFitnessScore1(features_correspondences);
     result.transformation = transformation_matrix;
 
     // std::cout << "\nCorrespondences all: " << correspondences_all->size();
-    ROS_DEBUG_STREAM("\nCorrespondences : " << correspondences->size());
+    ROS_DEBUG_STREAM("\nCorrespondences : " << features_correspondences->size());
     std::cout << "\nFitnessScore1 corr1: " << result.fitness_score << "\n";
   }
   else if (cfg.method == AlignmentMethod::SampleConsensus) {
@@ -215,16 +211,16 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac.getFinalTransformation();
 
-    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
     pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
 
-    std::cout << "\nCorrespondences n=" << correspondences->size() << "\n";
-    std::cout << "\nCorrespondences2 n=" << correspondences2->size() << "\n";
-    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(correspondences) << "\n";
+    std::cout << "\nCorrespondences n=" << features_correspondences->size() << "\n";
+    std::cout << "\nCorrespondences2 n=" << features_correspondences->size() << "\n";
+    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(features_correspondences) << "\n";
     std::cout << "\nFitnessScore1 corr2: " << calcFitnessScore1(correspondences2) << "\n";
-    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(correspondences) << "\n";
+    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(features_correspondences) << "\n";
     std::cout << "\nFitnessScore2 corr2: " << calcFitnessScore2(correspondences2) << "\n";
-    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(correspondences) << "\n";
+    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(features_correspondences) << "\n";
     std::cout << "\nFitnessScore3 corr2: " << calcFitnessScore3(correspondences2) << "\n";
 
   }
@@ -233,7 +229,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     float cg_thresh(5.0f);
 
     // Find correspondences with KdTree
-    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
 
     // Clustering
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
@@ -245,7 +241,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
     gc_clusterer.setInputCloud(model->GetKeypoints());
     gc_clusterer.setSceneCloud(scene->GetKeypoints());
-    gc_clusterer.setModelSceneCorrespondences (correspondences);
+    gc_clusterer.setModelSceneCorrespondences (features_correspondences);
 
     //gc_clusterer.cluster (clustered_corrs);
     gc_clusterer.recognize(rototranslations, clustered_corrs);
@@ -266,7 +262,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     float cg_thresh(5.0f);
 
     // Find correspondences with KdTree
-    correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
 
     // Clustering
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
@@ -301,7 +297,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     clusterer.setInputRf(model_rf);
     clusterer.setSceneCloud (scene->GetKeypoints());
     clusterer.setSceneRf(scene_rf);
-    clusterer.setModelSceneCorrespondences(correspondences);
+    clusterer.setModelSceneCorrespondences(features_correspondences);
 
     //clusterer.cluster(clustered_corrs);
     clusterer.recognize(rototranslations, clustered_corrs);
@@ -318,18 +314,18 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   ROS_DEBUG_STREAM("Task " << nr <<  ": Clouds aligned with score: "
     << result.fitness_score << " in " << diff.count() << " ms." << std::endl);
 
-  result.correspondences = correspondences;
+  result.correspondences = features_correspondences;
 
   if (cfg.show_visualizer || cfg.output_to_file) {
     MapsIntegratorVisualizer visualizer(
       { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
-    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, correspondences);
+    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, result.correspondences);
   }
 
   return result;
 }
 
-pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
+pcl::CorrespondencesPtr FeaturesMatching::FindFeaturesCorrespondencesWithKdTree(
     const FeatureCloud::Descriptors::Ptr& model_descriptors,
     const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh) {
 

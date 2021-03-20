@@ -8,8 +8,8 @@
 #include <pcl/correspondence.h>
 #include <pcl/registration/ia_ransac.h>
 
-#include <octomap_tools/feature_cloud.h>
-#include <octomap_tools/sample_consensus.h>
+#include <feature_cloud.h>
+#include <sample_consensus.h>
 #include <octomap_tools/types.h>
 
 namespace octomap_tools {
@@ -82,6 +82,8 @@ class FeaturesMatching {
   static ThreadResult AlignmentThread(
     int nr, PointCloudPtr& full_model, Rectangle block,
     const FeatureCloudPtr& scene, FeaturesMatching::Config& cfg);
+
+
 
   /**
    * Finds correspondences between two sets of descriptors

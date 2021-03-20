@@ -8,7 +8,7 @@
 #include <octomap/octomap.h>
 #include <Eigen/Dense>
 
-#include <octomap_tools/utils.h>
+#include <utils.h>
 
 namespace octomap_tools {
 

@@ -8,10 +8,10 @@
 #include <chrono>
 #include <thread>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/utils.h>
-#include <octomap_tools/math.h>
-#include <octomap_tools/conversions.h>
+#include <transformations.h>
+#include <utils.h>
+#include <math.h>
+#include <conversions.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 

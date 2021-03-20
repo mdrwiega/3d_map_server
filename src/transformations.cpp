@@ -1,13 +1,13 @@
-#include <octomap_tools/transformations.h>
+#include <transformations.h>
 
 #include <limits>
 #include <iomanip>
 #include <stdexcept>
 #include <algorithm>
 
-#include <octomap_tools/utils.h>
-#include <octomap_tools/math.h>
-#include <octomap_tools/conversions.h>
+#include <utils.h>
+#include <math.h>
+#include <conversions.h>
 
 #include <pcl/filters/voxel_grid.h>
 

@@ -4,7 +4,7 @@
 #include <pcl/features/shot_omp.h>
 #include <pcl/features/normal_3d_omp.h>
 
-#include <octomap_tools/utils.h>
+#include <utils.h>
 
 namespace octomap_tools {
 

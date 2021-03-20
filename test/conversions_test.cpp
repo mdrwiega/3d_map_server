@@ -1,9 +1,4 @@
-/******************************************************************************
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
-#include <octomap_tools/conversions.h>
+#include <conversions.h>
 
 #include <gtest/gtest.h>
 

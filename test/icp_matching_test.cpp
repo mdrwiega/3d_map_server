@@ -3,11 +3,11 @@
 
 #include <pcl/point_cloud.h>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/utils.h>
-#include <octomap_tools/math.h>
-#include <octomap_tools/icp.h>
-#include <octomap_tools/conversions.h>
+#include <transformations.h>
+#include <utils.h>
+#include <math.h>
+#include <icp.h>
+#include <conversions.h>
 
 #include "test_utils.h"
 

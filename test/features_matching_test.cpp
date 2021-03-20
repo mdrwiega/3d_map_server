@@ -4,12 +4,12 @@
 
 #include <pcl/point_cloud.h>
 
-#include <octomap_tools/transformations.h>
-#include <octomap_tools/utils.h>
-#include <octomap_tools/math.h>
-#include <octomap_tools/feature_cloud.h>
-#include <octomap_tools/features_matching.h>
-#include <octomap_tools/conversions.h>
+#include <transformations.h>
+#include <utils.h>
+#include <math.h>
+#include <feature_cloud.h>
+#include <features_matching.h>
+#include <conversions.h>
 
 #include "test_utils.h"
 
