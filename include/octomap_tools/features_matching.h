@@ -9,8 +9,8 @@
 #include <pcl/registration/ia_ransac.h>
 
 #include <octomap_tools/feature_cloud.h>
-#include <octomap_tools/spiral_generator.h>
 #include <octomap_tools/sample_consensus.h>
+#include <octomap_tools/types.h>
 
 namespace octomap_tools {
 
@@ -86,16 +86,9 @@ class FeaturesMatching {
   /**
    * Finds correspondences between two sets of descriptors
    */
-  static pcl::CorrespondencesPtr FindCorrespondencesWithKdTree(
+  static pcl::CorrespondencesPtr FindFeaturesCorrespondencesWithKdTree(
     const FeatureCloud::Descriptors::Ptr& model_descriptors,
-    const FeatureCloud::Descriptors::Ptr& scene_descriptors,
-    float desc_dist_thresh = 0.25);
-
- /**
-  * Model decomposition into rectangular blocks.
-  * Returns vector of rectangles which defines submodels coordinations.
-  */
-  std::vector<Rectangle> RectangularModelDecomposition(float block_size_x, float block_size_y);
+    const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh);
 
   ThreadResult FindBestAlignment(const std::vector<FeaturesMatching::ThreadResult>& results);
 

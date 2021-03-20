@@ -16,7 +16,6 @@
 #include <pcl/registration/transformation_validation_euclidean.h>
 
 #include <pcl/registration/correspondence_estimation.h>
-#include <pcl/registration/correspondence_rejection_distance.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 
 #include <octomap_tools/thread_pool.h>
@@ -24,6 +23,7 @@
 
 #include <octomap_tools/conversions.h>
 #include <octomap_tools/validation.h>
+#include <octomap_tools/model_decomposition.h>
 
 #include <pcl/conversions.h>
 
@@ -49,7 +49,10 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
   scene->ProcessInput();
 
   // Divide model into blocks
-  std::vector<Rectangle> blocks = RectangularModelDecomposition(cfg_.cell_size_x, cfg_.cell_size_y);
+  Eigen::Vector4f map_min, map_max;
+  pcl::getMinMax3D (*model_cloud_, map_min, map_max);
+  std::vector<Rectangle> blocks = RectangularModelDecomposition(
+    map_min, map_max, cfg_.cell_size_x, cfg_.cell_size_y);
 
   ROS_DEBUG_STREAM("Starting features matching alignment. There are " << blocks.size() << " blocks.");
 
@@ -164,7 +167,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       corresponding_indices.push_back(corr.index_match);
     }
 
-    // Estimate transformation with LS method
+    // Estimate transformation with LS SVD method
     pcl::registration::TransformationEstimationSVD<Point, Point> transformation_estimator;
     Eigen::Matrix4f transformation_matrix;
     transformation_estimator.estimateRigidTransformation(
@@ -355,25 +358,6 @@ pcl::CorrespondencesPtr FeaturesMatching::FindCorrespondencesWithKdTree(
   }
   ROS_DEBUG_STREAM("Correspondences found: " << correspondences->size());
   return correspondences;
-}
-
-std::vector<Rectangle> FeaturesMatching::RectangularModelDecomposition(float block_size_x,
-                                                                       float block_size_y) {
-  if (model_cloud_->size() <= 0) {
-    throw std::runtime_error(std::string("Full model is not set!"));
-  }
-
-  Eigen::Vector4f map_min, map_max;
-  pcl::getMinMax3D (*model_cloud_, map_min, map_max);
-  Eigen::Vector2f rectangle_min (map_min.x(), map_min.y());
-  Eigen::Vector2f rectangle_max (map_max.x(), map_max.y());
-  Eigen::Vector2f step_xy (block_size_x, block_size_y);
-
-  ROS_DEBUG_STREAM("Generation of cells for rectangle "
-      << "min: (" << rectangle_min(0) << ", " << rectangle_min(1) << ")  "
-      << "max: (" << rectangle_max(0) << ", " << rectangle_max(1) << ")");
-
-  return generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
 }
 
 FeaturesMatching::ThreadResult FeaturesMatching::FindBestAlignment(const std::vector<FeaturesMatching::ThreadResult>& results) {

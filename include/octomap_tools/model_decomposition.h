@@ -4,17 +4,36 @@
 
 namespace octomap_tools {
 
-/*  k - starting row index
-    m - ending row index
-    l - starting column index
-    n - ending column index
-    i - iterator
+inline std::vector<Eigen::Vector2f> generateSpiralCoordinatesSequence(int size_x, int size_y);
+inline std::vector<Rectangle> generateBlocksInSpiralOrder(
+    Eigen::Vector2f& min, Eigen::Vector2f& max, Eigen::Vector2f& step_xy);
+
+/**
+* Model decomposition into rectangular blocks.
+* Returns vector of rectangles which defines submodels coordinations.
 */
-inline std::vector<Eigen::Vector2f> generateSpiralCoordinatesSequence(int size_x, int size_y) {
+std::vector<Rectangle> RectangularModelDecomposition(
+  const Eigen::Vector4f& map_min, const Eigen::Vector4f& map_max,
+  float block_size_x, float block_size_y) {
+
+  Eigen::Vector2f rectangle_min(map_min.x(), map_min.y());
+  Eigen::Vector2f rectangle_max(map_max.x(), map_max.y());
+  Eigen::Vector2f step_xy(block_size_x, block_size_y);
+
+  std::cout << "Generation of cells for rectangle "
+      << "min: (" << rectangle_min(0) << ", " << rectangle_min(1) << ")  "
+      << "max: (" << rectangle_max(0) << ", " << rectangle_max(1) << ")";
+
+  return generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
+}
+
+std::vector<Eigen::Vector2f> generateSpiralCoordinatesSequence(int size_x, int size_y) {
   std::vector<Eigen::Vector2f> seq;
-  int m = size_x;
-  int n = size_y;
-  int i, k = 0, l = 0;
+  int i;
+  int k = 0; // start row
+  int l = 0; // start column
+  int m = size_x; // end row
+  int n = size_y; // end column
 
   while (k < m && l < n) {
       // First row from the remaining rows
@@ -48,7 +67,7 @@ inline std::vector<Eigen::Vector2f> generateSpiralCoordinatesSequence(int size_x
   return seq;
 }
 
-inline std::vector<Rectangle> generateBlocksInSpiralOrder(
+std::vector<Rectangle> generateBlocksInSpiralOrder(
     Eigen::Vector2f& min, Eigen::Vector2f& max, Eigen::Vector2f& step_xy) {
   std::vector<Rectangle> cells;
   int size_x = ceil((max(0) - min(0)) / step_xy(0)) ;
