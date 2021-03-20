@@ -16,8 +16,8 @@ namespace octomap_tools {
 
 class FeaturesMatching {
  public:
-  enum class AlignmentMethod { SampleConsensus, Hough3DClustering, GeometryConsistencyClustering,
-                               NewMethod };
+  enum class AlignmentMethod {
+    SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, NewMethod };
 
   struct Config{
     FeatureCloud::Config feature_cloud;

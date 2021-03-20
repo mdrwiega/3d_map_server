@@ -134,15 +134,15 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
             << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
             << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
             << "  Scene size: " << scene->GetPointCloud()->size()
-            // << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetPointCloud())
+            << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetPointCloud())
             << " keypoints: " << scene->GetKeypoints()->size()
-            // << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetKeypoints())
+            << " NaNs: " << GetNumberOfNaNInPointCloud(*scene->GetKeypoints())
             << " descriptors: " << scene->GetDescriptors()->size()
             << "\n"
             << "  Model size: " << model->GetPointCloud()->size()
-            // << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetPointCloud())
+            << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetPointCloud())
             << " keypoints: " << model->GetKeypoints()->size()
-            // << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
+            << " NaNs: " << GetNumberOfNaNInPointCloud(*model->GetKeypoints())
             << " descriptors: " << model->GetDescriptors()->size()
             << "\n";
 
@@ -193,7 +193,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       << "Standard fitness score: " << fs << "\n";
 
     pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
-    validator.setMaxRange(0.01);
+    validator.setMaxRange(0.10);
 
     double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
                                           sac_ia.getFinalTransformation());
@@ -203,19 +203,8 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     result.fitness_score = static_cast<float>(sac_ia.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac_ia.getFinalTransformation();
 
-    auto start = std::chrono::high_resolution_clock::now();
     correspondences = FindCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Corresp1 in: " << diff.count() << " ms" << std::endl;
-    start = std::chrono::high_resolution_clock::now();
-
     pcl::CorrespondencesPtr correspondences2 = sac_ia.getCorrespondences();
-
-    diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "Corresp2 in: " << diff.count() << " ms" << std::endl;
 
     std::cout << "\nCorrespondences n=" << correspondences->size() << "\n";
     std::cout << "\nCorrespondences2 n=" << correspondences2->size() << "\n";

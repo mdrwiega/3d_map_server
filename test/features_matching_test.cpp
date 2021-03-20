@@ -38,7 +38,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.feature_cloud.iss_num_of_threads = 2;
 
     // Sample Consensus
-    cfg.nr_iterations = 1000;
+    cfg.nr_iterations = 2000;
     cfg.min_sample_distance = 0.2;
     cfg.max_correspondence_distance = 100.0;
     cfg.fitness_score_dist = 0.5;
