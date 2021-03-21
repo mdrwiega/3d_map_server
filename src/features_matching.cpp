@@ -150,8 +150,12 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   pcl::CorrespondencesPtr features_correspondences (new pcl::Correspondences);
 
   if (cfg.method == AlignmentMethod::KdTreeSearch) {
-    // KdTreeBasedAlignment aligner(cfg.)
-
+    KdTreeBasedAlignment aligner(cfg.kdts);
+    auto res = aligner.align(model, scene);
+    result.transformation = res.transformation;
+    result.processing_time_ms = res.processing_time_ms;
+    result.fitness_score = res.fitness_score;
+    result.features_correspondences = res.features_correspondences;
 
   }
   else if (cfg.method == AlignmentMethod::SampleConsensus) {
