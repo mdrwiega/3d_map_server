@@ -321,14 +321,13 @@ class SampleConsensusAlignment : public AlignmentMethod {
     // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
     pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
 
-    std::cout << "\nCorrespondences n=" << features_correspondences->size() << "\n";
-    std::cout << "\nCorrespondences2 n=" << features_correspondences->size() << "\n";
-    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore1 corr2: " << calcFitnessScore1(correspondences2) << "\n";
-    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore2 corr2: " << calcFitnessScore2(correspondences2) << "\n";
-    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore3 corr2: " << calcFitnessScore3(correspondences2) << "\n";
+    AlignmentValidator<Point> validator;
+    validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+
+    std::cout << "\nFitnessScore  : " << result.fitness_score << "\n";
+    std::cout << "\nFitnessScore1 : " << validator.calcFitnessScore1() << "\n";
+    std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
+    std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
 
     return result;
   }

@@ -261,7 +261,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   if (cfg.show_visualizer || cfg.output_to_file) {
     MapsIntegratorVisualizer visualizer(
       { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
-    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, result.correspondences);
+    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, result.features_correspondences);
   }
 
   return result;
