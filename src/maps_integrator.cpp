@@ -51,7 +51,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
     result_.ia = features_matching.DivideModelAndAlign(*best_model);
   }
 
-  ROS_DEBUG_STREAM(std::setprecision(6) << "IA fitness score: " << result_.ia.fitness_score);
+  ROS_DEBUG_STREAM(std::setprecision(6) << "IA fitness score: " << result_.ia.fitness_score1);
   ROS_DEBUG_STREAM(std::setprecision(1) << "IA time: " << result_.ia.processing_time_ms << " ms");
   ROS_DEBUG_STREAM("IA transformation:" << transfMatrixToXyzRpyString(result_.ia.transformation));
 
@@ -62,8 +62,8 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
     ICP icp(scene_, icp_model, cfg_.icp);
     result_.icp = icp.Align();
 
-    if (result_.icp.fitness_score < result_.ia.fitness_score) {
-      result_.ia.fitness_score = result_.icp.fitness_score;
+    if (result_.icp.fitness_score < result_.ia.fitness_score1) {
+      result_.ia.fitness_score1 = result_.icp.fitness_score;
       result_.ia.transformation = result_.icp.transformation * result_.ia.transformation;
     }
 
@@ -74,7 +74,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // Create result
   result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
-  result_.fitness_score = result_.ia.fitness_score;
+  result_.fitness_score = result_.ia.fitness_score1;
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
   result_.transformation = result_.ia.transformation;
 
@@ -160,7 +160,7 @@ std::string MapsIntegrator::Result::toString() {
   ss << "  ia: " << ia.processing_time_ms << "\n";
   ss << "initial_alignment:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "    ");
-  ss << "  fitness_score: " << ia.fitness_score << "\n";
+  ss << "  fitness_score: " << ia.fitness_score1 << "\n";
   // ss << "  correspondences_num: " << ia.correspondences.size() << "\n";
   ss << "icp:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "    ");

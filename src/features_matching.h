@@ -45,7 +45,9 @@ class FeaturesMatching {
   };
 
   struct Result {
-    float fitness_score {std::numeric_limits<float>::max()};
+    float fitness_score1{std::numeric_limits<float>::max()};
+    float fitness_score2{std::numeric_limits<float>::max()};
+    float fitness_score3{std::numeric_limits<float>::max()};
     Eigen::Matrix4f transformation;
     float processing_time_ms;
     pcl::CorrespondencesPtr correspondences;
@@ -56,9 +58,7 @@ class FeaturesMatching {
   struct ThreadResult {
     bool valid{false};
     int thread_num{0};
-    float fitness_score {std::numeric_limits<float>::max()};
-    Eigen::Matrix4f transformation;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    Result result;
   };
 
   FeaturesMatching(const Config& config, PointCloudPtr& scene, PointCloudPtr& model);

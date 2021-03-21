@@ -98,13 +98,10 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   FeaturesMatching matcher2(cfg, scene_cloud, model_cloud);
   FeaturesMatching::Result result1 = matcher2.Align(0, cfg, fc_model, fc_scene);
 
-  PrintMatchingResult(T, result.transformation, result.fitness_score);
+  PrintMatchingResult(T, result.transformation, result.fitness_score1);
 
-  PrintMatchingResult(T, result1.transformation, result1.fitness_score);
+  PrintMatchingResult(T, result1.transformation, result1.fitness_score1);
 
-
-  if (result.fitness_score < 0.1) {
-    std::cout << "\nOK!! \n";
-  }
+  EXPECT_LE(result.fitness_score1, 0.3);
 }
 
