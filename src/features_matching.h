@@ -9,33 +9,30 @@
 #include <pcl/registration/ia_ransac.h>
 
 #include <feature_matching/feature_cloud.h>
-#include <feature_matching/sample_consensus.h>
 #include <octomap_tools/types.h>
 
 #include <feature_matching/alignment_method.h>
 #include <feature_matching/kdtree_svd_alignment.h>
+#include <feature_matching/sample_consensus_alignment.h>
 
 namespace octomap_tools {
 
 class FeaturesMatching {
  public:
-  enum class AlignmentMethod {
+  enum class AlignmentMethodType {
     SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, KdTreeSearch };
 
   struct Config {
     FeatureCloud::Config feature_cloud;
-    AlignmentMethod method = AlignmentMethod::SampleConsensus;
+    AlignmentMethodType method = AlignmentMethodType::SampleConsensus;
 
     bool divide_model{true};
 
-    // Kd Tree search
+    // Kd Tree + SVD method
     KdTreeBasedAlignment::Config kdts;
 
-    // Sample Consensus
-    float min_sample_distance;
-    float max_correspondence_distance;
-    int nr_iterations;
-    float fitness_score_dist;
+    // Sample Consensus method
+    SampleConsensusAlignment::Config sac;
 
     float cell_size_x;
     float cell_size_y;

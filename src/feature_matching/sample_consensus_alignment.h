@@ -1,3 +1,13 @@
+#pragma once
+
+#include <Eigen/Dense>
+#include <pcl/correspondence.h>
+#include <pcl/registration/ia_ransac.h>
+#include <pcl/registration/transformation_validation_euclidean.h>
+
+#include <feature_matching/alignment_method.h>
+#include <validation.h>
+
 namespace octomap_tools {
 
 template <typename PointSource, typename PointTarget, typename FeatureT>
@@ -256,6 +266,75 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
     return correspondences;
   }
 
+};
+
+class SampleConsensusAlignment : public AlignmentMethod {
+ public:
+
+  struct Config {
+    float min_sample_distance;
+    float max_correspondence_distance;
+    int nr_iterations;
+    float fitness_score_dist;
+  };
+
+  SampleConsensusAlignment(const Config& cfg)
+    : cfg(cfg) {
+  }
+
+  AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+    pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
+
+    // Align feature clouds with Sample Consensus Initial Alignment
+    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac;
+    sac.setMinSampleDistance(cfg.min_sample_distance);
+    sac.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
+    sac.setMaximumIterations(cfg.nr_iterations);
+    sac.setNumberOfSamples(3);
+
+    sac.setInputSource(model->GetKeypoints());
+    sac.setSourceFeatures(model->GetDescriptors());
+    sac.setInputTarget(scene->GetKeypoints());
+    sac.setTargetFeatures(scene->GetDescriptors());
+
+    PointCloud dummy_output;
+    sac.alignMod(dummy_output);
+
+    double fs = sac.getFitnessScore(cfg.fitness_score_dist);
+
+    std::cout << "Converged?: " << sac.hasConverged()
+      << std::setprecision(6) << std::fixed
+      << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
+      << "Standard fitness score: " << fs << "\n";
+
+    pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
+    validator.setMaxRange(0.10);
+
+    double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
+                                          sac.getFinalTransformation());
+
+    ROS_DEBUG_STREAM("Score: " << score);
+    AlignmentMethod::Result result;
+    result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
+    result.transformation = sac.getFinalTransformation();
+
+    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+    pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
+
+    std::cout << "\nCorrespondences n=" << features_correspondences->size() << "\n";
+    std::cout << "\nCorrespondences2 n=" << features_correspondences->size() << "\n";
+    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(features_correspondences) << "\n";
+    std::cout << "\nFitnessScore1 corr2: " << calcFitnessScore1(correspondences2) << "\n";
+    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(features_correspondences) << "\n";
+    std::cout << "\nFitnessScore2 corr2: " << calcFitnessScore2(correspondences2) << "\n";
+    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(features_correspondences) << "\n";
+    std::cout << "\nFitnessScore3 corr2: " << calcFitnessScore3(correspondences2) << "\n";
+
+    return result;
+  }
+
+ private:
+  Config cfg;
 };
 
 } // namespace octomap_tools

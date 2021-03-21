@@ -17,6 +17,8 @@ class AlignmentMethod {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   };
 
+  virtual ~AlignmentMethod() = default;
+
   virtual Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) = 0;
 };
 

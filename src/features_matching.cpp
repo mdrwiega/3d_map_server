@@ -1,6 +1,7 @@
 #include <features_matching.h>
 
 #include <chrono>
+#include <memory>
 
 #include <ros/console.h>
 
@@ -149,63 +150,15 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   FeaturesMatching::Result result;
   pcl::CorrespondencesPtr features_correspondences (new pcl::Correspondences);
 
-  if (cfg.method == AlignmentMethod::KdTreeSearch) {
-    KdTreeBasedAlignment aligner(cfg.kdts);
-    auto res = aligner.align(model, scene);
-    result.transformation = res.transformation;
-    result.processing_time_ms = res.processing_time_ms;
-    result.fitness_score = res.fitness_score;
-    result.features_correspondences = res.features_correspondences;
+  std::shared_ptr<AlignmentMethod> aligner;
 
+  if (cfg.method == AlignmentMethodType::KdTreeSearch) {
+    aligner.reset(new KdTreeBasedAlignment(cfg.kdts));
   }
-  else if (cfg.method == AlignmentMethod::SampleConsensus) {
-    // Align feature clouds with Sample Consensus Initial Alignment
-    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac;
-    sac.setMinSampleDistance(cfg.min_sample_distance);
-    sac.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
-    sac.setMaximumIterations(cfg.nr_iterations);
-    sac.setNumberOfSamples(3);
-
-    sac.setInputSource(model->GetKeypoints());
-    sac.setSourceFeatures(model->GetDescriptors());
-    sac.setInputTarget(scene->GetKeypoints());
-    sac.setTargetFeatures(scene->GetDescriptors());
-
-    PointCloud dummy_output;
-    sac.alignMod(dummy_output);
-
-    double fs = sac.getFitnessScore(cfg.fitness_score_dist);
-
-    std::cout << "Converged?: " << sac.hasConverged()
-      << std::setprecision(6) << std::fixed
-      << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
-      << "Standard fitness score: " << fs << "\n";
-
-    pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
-    validator.setMaxRange(0.10);
-
-    double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
-                                          sac.getFinalTransformation());
-
-    ROS_DEBUG_STREAM("Score: " << score);
-
-    result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
-    result.transformation = sac.getFinalTransformation();
-
-    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-    pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
-
-    std::cout << "\nCorrespondences n=" << features_correspondences->size() << "\n";
-    std::cout << "\nCorrespondences2 n=" << features_correspondences->size() << "\n";
-    std::cout << "\nFitnessScore1 corr1: " << calcFitnessScore1(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore1 corr2: " << calcFitnessScore1(correspondences2) << "\n";
-    std::cout << "\nFitnessScore2 corr1: " << calcFitnessScore2(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore2 corr2: " << calcFitnessScore2(correspondences2) << "\n";
-    std::cout << "\nFitnessScore3 corr1: " << calcFitnessScore3(features_correspondences) << "\n";
-    std::cout << "\nFitnessScore3 corr2: " << calcFitnessScore3(correspondences2) << "\n";
-
+  else if (cfg.method == AlignmentMethodType::SampleConsensus) {
+    aligner.reset(new SampleConsensusAlignment(cfg.sac));
   }
-  else if (cfg.method == AlignmentMethod::GeometryConsistencyClustering) {
+  else if (cfg.method == AlignmentMethodType::GeometryConsistencyClustering) {
     float cg_size(0.01f);
     float cg_thresh(5.0f);
 
@@ -237,7 +190,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       std::cout << "        Correspondences belonging to this instance: " << clustered_corrs[i].size () << std::endl;
     }
   }
-  else if (cfg.method == AlignmentMethod::Hough3DClustering) {
+  else if (cfg.method == AlignmentMethodType::Hough3DClustering) {
     float rf_rad(0.015f);
     float cg_size(0.01f);
     float cg_thresh(5.0f);
@@ -288,6 +241,14 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       ROS_DEBUG_STREAM("    Instance " << i + 1 << ":");
       ROS_DEBUG_STREAM("        Correspondences belonging to this instance: " << clustered_corrs[i].size());
     }
+  }
+
+  if (aligner) {
+    auto res = aligner->align(model, scene);
+    result.transformation = res.transformation;
+    result.processing_time_ms = res.processing_time_ms;
+    result.fitness_score = res.fitness_score;
+    result.features_correspondences = res.features_correspondences;
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(

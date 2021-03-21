@@ -190,11 +190,17 @@ std::string MapsIntegrator::Config::toString() {
       stream << i << std::endl;
   }
 
-  stream << template_alignment.model_size_thresh_ << "; " << fitness_score_thresh << "; " << template_alignment.keypoints_thresh_ << "; " << template_alignment.cell_size_x << "; " << template_alignment.cell_size_y << "; "
-      << icp.max_iter << "; " << icp.max_nn_dist << "; " << icp.fitness_eps << "; " << icp.transf_eps << "; " << icp.scene_inflation_dist
-      << "; " << template_alignment.feature_cloud.normal_radius << "; " << template_alignment.feature_cloud.downsampling_radius << "; " << template_alignment.feature_cloud.descriptors_radius
-      << "; " << template_alignment.min_sample_distance << "; " << template_alignment.max_correspondence_distance
-      << "; " << template_alignment.nr_iterations << std::endl;
+  stream << template_alignment.model_size_thresh_ << "; "
+         << fitness_score_thresh << "; "
+         << template_alignment.keypoints_thresh_ << "; " << template_alignment.cell_size_x << "; " << template_alignment.cell_size_y << "; "
+      << icp.max_iter << "; " << icp.max_nn_dist << "; " << icp.fitness_eps << "; "
+      << icp.transf_eps << "; " << icp.scene_inflation_dist << "; "
+      << template_alignment.feature_cloud.normal_radius << "; "
+      << template_alignment.feature_cloud.downsampling_radius << "; "
+      << template_alignment.feature_cloud.descriptors_radius << "; "
+      << template_alignment.sac.min_sample_distance << "; "
+      << template_alignment.sac.max_correspondence_distance << "; "
+      << template_alignment.sac.nr_iterations << std::endl;
   return stream.str();
 }
 

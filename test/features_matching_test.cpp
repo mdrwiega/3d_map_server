@@ -40,10 +40,10 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.kdts.desc_dist_thresh = 0.15;
 
     // Sample Consensus
-    cfg.nr_iterations = 2000;
-    cfg.min_sample_distance = 0.2;
-    cfg.max_correspondence_distance = 100.0;
-    cfg.fitness_score_dist = 0.5;
+    cfg.sac.nr_iterations = 2000;
+    cfg.sac.min_sample_distance = 0.2;
+    cfg.sac.max_correspondence_distance = 100.0;
+    cfg.sac.fitness_score_dist = 0.5;
 
     cfg.cell_size_x = 3;
     cfg.cell_size_y = 3;
@@ -51,7 +51,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.keypoints_thresh_ = 150;
     cfg.divide_model = true;
 
-    cfg.method = FeaturesMatching::AlignmentMethod::KdTreeSearch;
+    cfg.method = FeaturesMatching::AlignmentMethodType::KdTreeSearch;
 
     cfg.show_visualizer = true;
   }

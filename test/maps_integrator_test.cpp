@@ -47,10 +47,10 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.feature_cloud.debug = true;
 
     // Sample Consensus
-    cfg.template_alignment.nr_iterations = 1000;
-    cfg.template_alignment.min_sample_distance = 0.2;
-    cfg.template_alignment.max_correspondence_distance = 100.0;
-    cfg.template_alignment.fitness_score_dist = 0.5;
+    cfg.template_alignment.sac.nr_iterations = 1000;
+    cfg.template_alignment.sac.min_sample_distance = 0.2;
+    cfg.template_alignment.sac.max_correspondence_distance = 100.0;
+    cfg.template_alignment.sac.fitness_score_dist = 0.5;
 
     // ISS 3D
     cfg.template_alignment.feature_cloud.iss_salient_radius = 0.12;

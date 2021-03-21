@@ -47,10 +47,10 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   std::string sac_ns = "global_alignment/feature_matching/sample_consensus/";
   // nh_.param<std::string>("global_alignment/feature_matching/method",
   //   cfg.template_alignment.method, "sample_consensus");
-  nh_.param<int>(sac_ns + "iterations_num", cfg.template_alignment.nr_iterations, 1000);
-  nh_.param<float>(sac_ns + "min_sample_distance", cfg.template_alignment.min_sample_distance, 0.2);
-  nh_.param<float>(sac_ns + "max_correspondence_distance", cfg.template_alignment.max_correspondence_distance, 100.0);
-  nh_.param<float>(sac_ns + "fitness_score_distance", cfg.template_alignment.fitness_score_dist, 0.5);
+  nh_.param<int>(sac_ns + "iterations_num", cfg.template_alignment.sac.nr_iterations, 1000);
+  nh_.param<float>(sac_ns + "min_sample_distance", cfg.template_alignment.sac.min_sample_distance, 0.2);
+  nh_.param<float>(sac_ns + "max_correspondence_distance", cfg.template_alignment.sac.max_correspondence_distance, 100.0);
+  nh_.param<float>(sac_ns + "fitness_score_distance", cfg.template_alignment.sac.fitness_score_dist, 0.5);
 
   // ISS 3D
   std::string iss3d_ns = "global_alignment/feature_matching/iss3d/";
