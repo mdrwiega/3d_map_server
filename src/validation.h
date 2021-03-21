@@ -10,14 +10,14 @@ class AlignmentValidator {
  public:
 
   void setCorrespondences(const pcl::CorrespondencesPtr& points_correspondences) {
-    correspondences = points_correspondences;
+    distances.resize(points_correspondences->size());
+    for (size_t i = 0; i < distances.size(); ++i) {
+      distances[i] = std::sqrt((*points_correspondences)[i].distance);
+    }
   }
 
   void calculateCorrespondences(const PointCloudPtr& model, const PointCloudPtr& scene,
       const Eigen::Matrix4f& transformation) {
-
-    auto start = std::chrono::high_resolution_clock::now();
-    correspondences.reset(new pcl::Correspondences);
 
     // Transform the model
     PointCloud model_transformed;
@@ -27,49 +27,35 @@ class AlignmentValidator {
 
     for (size_t i = 0; i < model_transformed.points.size(); ++i) {
       std::vector<int> nn_indices(1);
-      std::vector<float> nn_dists(1);
+      std::vector<float> nn_sqr_dists(1);
 
       // Find its nearest neighbor in the target
-      int k = kd_tree.nearestKSearch(model_transformed.points[i], 1, nn_indices, nn_dists);
+      int k = kd_tree.nearestKSearch(model_transformed.points[i], 1, nn_indices, nn_sqr_dists);
       if(k == 1) {
-        pcl::Correspondence corr(nn_indices[0], static_cast<int>(i), nn_dists[0]);
-        correspondences->push_back(corr);
+        distances.push_back(std::sqrt(nn_sqr_dists[0]));
       }
     }
-    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now() - start);
-    std::cout << "\nCorrespondences calculated in " << diff.count() << " ms" << std::endl;
   }
 
-  pcl::CorrespondencesPtr getCorrespondences() { return correspondences; }
-
   double calcFitnessScore1() {
-    if (!correspondences) {
-      throw std::runtime_error("calcFitnessScore1: No correspondences");
-    }
-
-    if (correspondences->size() == 0) {
+    if (distances.size() == 0) {
       return std::numeric_limits<double>::max();
     }
 
     double fitness_score = 0.0;
-    for (const auto& corr : *correspondences) {
-      fitness_score += corr.distance;
+    for (const auto& dist : distances) {
+      fitness_score += dist;
     }
-    return fitness_score / correspondences->size();
+    return fitness_score / distances.size();
   }
 
-  double calcFitnessScore2(double max_dist = 10, unsigned min_pairs_num = 10) {
-    if (!correspondences) {
-      throw std::runtime_error("calcFitnessScore2: No correspondences");
-    }
-
+  double calcFitnessScore2(double max_dist = 1.0, unsigned min_pairs_num = 20) {
     double fitness_score = 0.0;
     int cnt = 0;
 
-    for (const auto& corr : *correspondences) {
-      if (corr.distance <= max_dist) {
-        fitness_score += corr.distance;
+    for (const auto& dist : distances) {
+      if (dist <= max_dist) {
+        fitness_score += dist;
         cnt++;
       }
     }
@@ -80,22 +66,18 @@ class AlignmentValidator {
     return std::numeric_limits<double>::max();
   }
 
-  double calcFitnessScore3(double dist_threshold = 0.1, unsigned min_pairs_num = 10) {
-    if (!correspondences) {
-      throw std::runtime_error("calcFitnessScore3: No correspondences");
-    }
-
+  double calcFitnessScore3(double dist_threshold = 0.2, unsigned min_pairs_num = 20) {
     double fitness_score = 0.0;
     int cnt = 0;
     double mean_dist = 0;
-    for (const auto& corr : *correspondences) {
-      mean_dist += corr.distance;
+    for (const auto& dist : distances) {
+      mean_dist += dist;
     }
-    mean_dist /= correspondences->size();
+    mean_dist /= distances.size();
 
-    for (const auto& corr : *correspondences) {
-      if (std::abs(corr.distance - mean_dist) <= dist_threshold) {
-        fitness_score += corr.distance;
+    for (const auto& dist : distances) {
+      if (std::abs(dist - mean_dist) <= dist_threshold) {
+        fitness_score += dist;
         cnt++;
       }
     }
@@ -107,7 +89,7 @@ class AlignmentValidator {
   }
 
  private:
-  pcl::CorrespondencesPtr correspondences;
+  std::vector<float> distances;
   pcl::search::KdTree<PointType> kd_tree;
 
 };
