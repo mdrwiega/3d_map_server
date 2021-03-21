@@ -6,16 +6,12 @@
 #include <ros/console.h>
 
 #include <pcl/conversions.h>
-#include <pcl/registration/ia_ransac.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/common/transforms.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
-#include <pcl/recognition/cg/hough_3d.h>
-#include <pcl/features/board.h>
+
 #include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/recognition/cg/geometric_consistency.h>
-#include <pcl/registration/transformation_validation_euclidean.h>
 
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/transformation_estimation_svd.h>
@@ -28,8 +24,6 @@
 #include <model_decomposition.h>
 
 
-typedef pcl::ReferenceFrame RFType;
-typedef pcl::Normal NormalType;
 
 using namespace pcl;
 using namespace pcl::registration;
@@ -167,56 +161,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     aligner.reset(new GeometryClusteringAlignment(cfg.gc));
   }
   else if (cfg.method == AlignmentMethodType::Hough3DClustering) {
-    float rf_rad(0.015f);
-    float cg_size(0.01f);
-    float cg_thresh(5.0f);
-
-    // Find correspondences with KdTree
-    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-
-    // Clustering
-    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
-    std::vector<pcl::Correspondences> clustered_corrs;
-
-    //  Compute (Keypoints) Reference Frames only for Hough
-    pcl::PointCloud<RFType>::Ptr model_rf (new pcl::PointCloud<RFType> ());
-    pcl::PointCloud<RFType>::Ptr scene_rf (new pcl::PointCloud<RFType> ());
-
-    pcl::BOARDLocalReferenceFrameEstimation<Point, NormalType, RFType> rf_est;
-    rf_est.setFindHoles(true);
-    rf_est.setRadiusSearch(rf_rad);
-
-    rf_est.setInputCloud(model->GetKeypoints());
-    rf_est.setInputNormals(model->GetSurfaceNormals());
-    rf_est.setSearchSurface(model->GetPointCloud());
-    rf_est.compute(*model_rf);
-
-    rf_est.setInputCloud(scene->GetKeypoints());
-    rf_est.setInputNormals(scene->GetSurfaceNormals());
-    rf_est.setSearchSurface(scene->GetPointCloud());
-    rf_est.compute (*scene_rf);
-
-    //  Clustering
-    pcl::Hough3DGrouping<Point, Point, RFType, RFType> clusterer;
-    clusterer.setHoughBinSize (cg_size);
-    clusterer.setHoughThreshold (cg_thresh);
-    clusterer.setUseInterpolation (true);
-    clusterer.setUseDistanceWeight (false);
-
-    clusterer.setInputCloud (model->GetKeypoints());
-    clusterer.setInputRf(model_rf);
-    clusterer.setSceneCloud (scene->GetKeypoints());
-    clusterer.setSceneRf(scene_rf);
-    clusterer.setModelSceneCorrespondences(features_correspondences);
-
-    //clusterer.cluster(clustered_corrs);
-    clusterer.recognize(rototranslations, clustered_corrs);
-
-    ROS_DEBUG_STREAM("Model instances found: " << rototranslations.size());
-    for (size_t i = 0; i < rototranslations.size (); ++i) {
-      ROS_DEBUG_STREAM("    Instance " << i + 1 << ":");
-      ROS_DEBUG_STREAM("        Correspondences belonging to this instance: " << clustered_corrs[i].size());
-    }
+    aligner.reset(new Hough3dClusteringAlignment(cfg.hough));
   }
 
   if (aligner) {

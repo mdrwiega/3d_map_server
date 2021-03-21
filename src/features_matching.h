@@ -6,7 +6,6 @@
 #include <Eigen/Dense>
 #include <pcl/point_types.h>
 #include <pcl/correspondence.h>
-#include <pcl/registration/ia_ransac.h>
 
 #include <feature_matching/feature_cloud.h>
 #include <octomap_tools/types.h>
@@ -15,6 +14,7 @@
 #include <feature_matching/kdtree_svd_alignment.h>
 #include <feature_matching/sample_consensus_alignment.h>
 #include <feature_matching/geometry_clustering_alignment.h>
+#include <feature_matching/hough_3d_clustering_alignment.h>
 
 namespace octomap_tools {
 
@@ -29,10 +29,10 @@ class FeaturesMatching {
 
     bool divide_model{true};
 
-
-    KdTreeBasedAlignment::Config kdts;        // Kd Tree + SVD method
-    SampleConsensusAlignment::Config sac;     // Sample Consensus method
-    GeometryClusteringAlignment::Config gc;  // Geometry Clustering method
+    KdTreeBasedAlignment::Config kdts;        // Kd Tree + SVD
+    SampleConsensusAlignment::Config sac;     // Sample Consensus
+    GeometryClusteringAlignment::Config gc;   // Geometry Clustering
+    Hough3dClusteringAlignment::Config hough; // Hough 3D Clustering
 
     float cell_size_x;
     float cell_size_y;

@@ -2,30 +2,39 @@
 
 #include <Eigen/Dense>
 #include <pcl/correspondence.h>
-#include <pcl/recognition/cg/geometric_consistency.h>
+#include <pcl/recognition/cg/hough_3d.h>
+#include <pcl/features/board.h>
+#include <pcl/point_types.h>
 
 #include <feature_matching/alignment_method.h>
 #include <feature_matching/feature_cloud.h>
 #include <feature_matching/kdtree_svd_alignment.h>
 #include <validation.h>
+#include <octomap_tools/types.h>
 
 namespace octomap_tools {
 
-class GeometryClusteringAlignment : public AlignmentMethod {
+class Hough3dClusteringAlignment : public AlignmentMethod {
  public:
+
+  typedef pcl::ReferenceFrame RFType;
+  typedef pcl::Normal NormalType;
+
 
   struct Config {
   };
 
-  GeometryClusteringAlignment(const Config& cfg) {
+  Hough3dClusteringAlignment(const Config& cfg) {
   }
 
   AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+
+    float rf_rad(0.015f);
     float cg_size(0.01f);
     float cg_thresh(5.0f);
-    pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
 
     // Find correspondences with KdTree
+    pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
     features_correspondences = FindFeaturesCorrespondencesWithKdTree(
       model->GetDescriptors(), scene->GetDescriptors(), 1.0);
 
@@ -33,18 +42,41 @@ class GeometryClusteringAlignment : public AlignmentMethod {
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transformations;
     std::vector<pcl::Correspondences> clustered_corrs;
 
-    pcl::GeometricConsistencyGrouping<Point, Point> gc_clusterer;
-    gc_clusterer.setGCSize(cg_size);
-    gc_clusterer.setGCThreshold (cg_thresh);
+    //  Compute (Keypoints) Reference Frames only for Hough
+    pcl::PointCloud<RFType>::Ptr model_rf (new pcl::PointCloud<RFType> ());
+    pcl::PointCloud<RFType>::Ptr scene_rf (new pcl::PointCloud<RFType> ());
 
-    gc_clusterer.setInputCloud(model->GetKeypoints());
-    gc_clusterer.setSceneCloud(scene->GetKeypoints());
-    gc_clusterer.setModelSceneCorrespondences(features_correspondences);
+    pcl::BOARDLocalReferenceFrameEstimation<Point, NormalType, RFType> rf_est;
+    rf_est.setFindHoles(true);
+    rf_est.setRadiusSearch(rf_rad);
 
-    gc_clusterer.cluster(clustered_corrs);
-    gc_clusterer.recognize(transformations, clustered_corrs);
+    rf_est.setInputCloud(model->GetKeypoints());
+    rf_est.setInputNormals(model->GetSurfaceNormals());
+    rf_est.setSearchSurface(model->GetPointCloud());
+    rf_est.compute(*model_rf);
 
-    // Find best model - TODO it's common for Hough 3D clustering also
+    rf_est.setInputCloud(scene->GetKeypoints());
+    rf_est.setInputNormals(scene->GetSurfaceNormals());
+    rf_est.setSearchSurface(scene->GetPointCloud());
+    rf_est.compute (*scene_rf);
+
+    //  Clustering
+    pcl::Hough3DGrouping<Point, Point, RFType, RFType> clusterer;
+    clusterer.setHoughBinSize (cg_size);
+    clusterer.setHoughThreshold (cg_thresh);
+    clusterer.setUseInterpolation (true);
+    clusterer.setUseDistanceWeight (false);
+
+    clusterer.setInputCloud (model->GetKeypoints());
+    clusterer.setInputRf(model_rf);
+    clusterer.setSceneCloud (scene->GetKeypoints());
+    clusterer.setSceneRf(scene_rf);
+    clusterer.setModelSceneCorrespondences(features_correspondences);
+
+    //clusterer.cluster(clustered_corrs);
+    clusterer.recognize(transformations, clustered_corrs);
+
+    // Find best model
     float lowest_score = std::numeric_limits<float>::infinity();
     size_t best_result_index = 0;
 
