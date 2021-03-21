@@ -45,6 +45,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.sac.min_sample_distance = 0.2;
     cfg.sac.max_correspondence_distance = 100.0;
     cfg.sac.fitness_score_dist = 1.0;
+    cfg.sac.modified_version = true;
 
     cfg.cell_size_x = 3;
     cfg.cell_size_y = 3;
@@ -65,7 +66,7 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   PrintOcTreeInfo(*original_tree, "original_tree");
 
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(2, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(4, 10, 2.0));
 
   // Transform model
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));

@@ -11,8 +11,7 @@
 namespace octomap_tools {
 
 template <typename PointSource, typename PointTarget, typename FeatureT>
-class SampleConsensusInitialAlignmentMod : public
-  pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT> {
+class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT> {
  public:
   using PointCloudSource = pcl::PointCloud<PointSource>;
   using Matrix4 = Eigen::Matrix<float, 4, 4>;
@@ -23,26 +22,24 @@ bool findSimilarFeaturesMod (
     const pcl::PointCloud<FeatureT> &input_features, const std::vector<int> &sample_indices,
     std::vector<int> &corresponding_indices)
 {
-  this->k_correspondences_ = 10;
+  std::vector<int> nn_indices(this->k_correspondences_);
+  std::vector<float> nn_distances(this->k_correspondences_);
+  std::vector<float> distances(sample_indices.size(), 0);
+  corresponding_indices.resize(sample_indices.size());
 
-  std::vector<int> nn_indices (this->k_correspondences_);
-  std::vector<float> nn_distances (this->k_correspondences_);
+  for (size_t i = 0; i < sample_indices.size(); ++i) {
 
-  std::vector<float> distances (sample_indices.size(), 0);
-
-  corresponding_indices.resize (sample_indices.size ());
-  for (size_t i = 0; i < sample_indices.size (); ++i)
-  {
-    // Find the k features nearest to input_features.points[sample_indices[i]]
-    this->feature_tree_->nearestKSearch (input_features, sample_indices[i], this->k_correspondences_, nn_indices, nn_distances);
+    // Find the k features nearest to input point
+    this->feature_tree_->nearestKSearch(
+      input_features, sample_indices[i], this->k_correspondences_, nn_indices, nn_distances);
 
     if (nn_distances[0] > 0.8)
       return false;
 
-  // std::cout << "\n";
-    // for (int x = 0; x < nn_distances.size(); x++) {
-    //   std::cout << nn_distances[x] << " ";
-    // }
+  std::cout << "\n";
+    for (int x = 0; x < nn_distances.size(); x++) {
+      std::cout << nn_distances[x] << " ";
+    }
     int random_correspondence = 0;
     if (nn_distances[1] - nn_distances[0] > 0.03) {
       random_correspondence = 0;
@@ -54,10 +51,10 @@ bool findSimilarFeaturesMod (
     distances[i] = nn_distances[random_correspondence];
   }
 
-  // std::cout << "\n";
-  // for (int x = 0; x < distances.size(); x++)
-  //   std::cout << distances[x] << " ";
-  // std::cout << "\n";
+  std::cout << "\n";
+  for (int x = 0; x < distances.size(); x++)
+    std::cout << distances[x] << " ";
+  std::cout << "\n";
   return true;
 }
 
@@ -264,6 +261,10 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
     return correspondences;
   }
 
+  private:
+
+
+
 };
 
 class SampleConsensusAlignment : public AlignmentMethod {
@@ -274,6 +275,7 @@ class SampleConsensusAlignment : public AlignmentMethod {
     float max_correspondence_distance;
     int nr_iterations;
     float fitness_score_dist;
+    bool modified_version;
   };
 
   SampleConsensusAlignment(const Config& cfg)
@@ -284,11 +286,13 @@ class SampleConsensusAlignment : public AlignmentMethod {
     pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
 
     // Align feature clouds with Sample Consensus Initial Alignment
-    SampleConsensusInitialAlignmentMod<Point, Point, FeatureCloud::DescriptorType> sac;
+    SampleConsensusMod<Point, Point, FeatureCloud::DescriptorType> sac;
     sac.setMinSampleDistance(cfg.min_sample_distance);
     sac.setMaxCorrespondenceDistance(cfg.max_correspondence_distance);
     sac.setMaximumIterations(cfg.nr_iterations);
     sac.setNumberOfSamples(3);
+    sac.setCorrespondenceRandomness(10);
+
 
     sac.setInputSource(model->GetKeypoints());
     sac.setSourceFeatures(model->GetDescriptors());
@@ -296,7 +300,8 @@ class SampleConsensusAlignment : public AlignmentMethod {
     sac.setTargetFeatures(scene->GetDescriptors());
 
     PointCloud dummy_output;
-    sac.alignMod(dummy_output);
+    // sac.alignMod(dummy_output);
+    sac.align(dummy_output);
 
     // std::cout << "Converged?: " << sac.hasConverged();
 
