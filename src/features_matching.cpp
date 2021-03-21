@@ -247,8 +247,12 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     auto res = aligner->align(model, scene);
     result.transformation = res.transformation;
     result.processing_time_ms = res.processing_time_ms;
-    result.fitness_score = res.fitness_score;
+    result.fitness_score = res.fitness_score1;
     result.features_correspondences = res.features_correspondences;
+
+    std::cout << "\nFitnessScore1 : " << res.fitness_score1 << "\n";
+    std::cout << "\nFitnessScore2 : " << res.fitness_score2 << "\n";
+    std::cout << "\nFitnessScore3 : " << res.fitness_score3 << "\n";
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -261,6 +265,8 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   if (cfg.show_visualizer || cfg.output_to_file) {
     MapsIntegratorVisualizer visualizer(
       { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
+    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
+
     visualizer.VisualizeFeatureMatching(scene, model, result.transformation, result.features_correspondences);
   }
 

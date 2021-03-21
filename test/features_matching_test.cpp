@@ -19,6 +19,7 @@ class FeatureMatchingTest : public ::testing::Test {
  public:
   FeatureMatchingTest() {
     Configure();
+    pcl::console::setVerbosityLevel(pcl::console::L_DEBUG);
   }
 
   void Configure() {

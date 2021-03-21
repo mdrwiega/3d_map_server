@@ -251,8 +251,7 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
     PointCloudSource input_transformed;
     transformPointCloud (*(this->input_), input_transformed, this->final_transformation_);
 
-    for (size_t i = 0; i < input_transformed.points.size(); ++i)
-    {
+    for (size_t i = 0; i < input_transformed.points.size(); ++i) {
       std::vector<int> nn_indices(1);
       std::vector<float> nn_dists(1);
 
@@ -300,32 +299,22 @@ class SampleConsensusAlignment : public AlignmentMethod {
     PointCloud dummy_output;
     sac.alignMod(dummy_output);
 
-    double fs = sac.getFitnessScore(cfg.fitness_score_dist);
+    std::cout << "Converged?: " << sac.hasConverged();
 
-    std::cout << "Converged?: " << sac.hasConverged()
-      << std::setprecision(6) << std::fixed
-      << "\nStandard fitness score: " << fs << "\n";
-
-    pcl::registration::TransformationValidationEuclidean<Point, Point> validator1;
-    validator1.setMaxRange(0.10);
-
-    double score = validator1.validateTransformation(model->GetPointCloud(), scene->GetPointCloud(),
-                                          sac.getFinalTransformation());
-
-    std::cout << "Score: " << score;
     AlignmentMethod::Result result;
     result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac.getFinalTransformation();
 
-    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-
     AlignmentValidator<Point> validator;
     validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+    result.fitness_score1 = validator.calcFitnessScore1();
+    result.fitness_score2 = validator.calcFitnessScore2();
+    result.fitness_score3 = validator.calcFitnessScore3();
 
-    std::cout << "\nFitnessScore  : " << result.fitness_score << "\n";
-    std::cout << "\nFitnessScore1 : " << validator.calcFitnessScore1() << "\n";
-    std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
-    std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
+    // std::cout << "\nFitnessScore  : " << result.fitness_score << "\n";
+    // std::cout << "\nFitnessScore1 : " << validator.calcFitnessScore1() << "\n";
+    // std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
+    // std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
 
     return result;
   }
