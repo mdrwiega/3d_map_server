@@ -1,8 +1,10 @@
-#include <pcl/registration/correspondence_estimation.h>
+#pragma once
+
+#include <pcl/correspondence.h>
 
 namespace octomap_tools {
 
-double calcFitnessScore1(const pcl::CorrespondencesPtr& correspondences) {
+inline double calcFitnessScore1(const pcl::CorrespondencesPtr& correspondences) {
   if (correspondences->size() == 0) {
     return std::numeric_limits<double>::max();
   }
@@ -14,7 +16,7 @@ double calcFitnessScore1(const pcl::CorrespondencesPtr& correspondences) {
   return fitness_score / correspondences->size();
 }
 
-double calcFitnessScore2(const pcl::CorrespondencesPtr& correspondences,
+inline double calcFitnessScore2(const pcl::CorrespondencesPtr& correspondences,
                          double max_dist = 10, unsigned min_pairs_num = 10) {
   double fitness_score = 0.0;
   int cnt = 0;
@@ -32,7 +34,7 @@ double calcFitnessScore2(const pcl::CorrespondencesPtr& correspondences,
   return std::numeric_limits<double>::max();
 }
 
-double calcFitnessScore3(const pcl::CorrespondencesPtr& correspondences,
+inline double calcFitnessScore3(const pcl::CorrespondencesPtr& correspondences,
                          double dist_threshold = 0.1, unsigned min_pairs_num = 10) {
   double fitness_score = 0.0;
   int cnt = 0;

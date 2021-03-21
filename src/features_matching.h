@@ -8,9 +8,12 @@
 #include <pcl/correspondence.h>
 #include <pcl/registration/ia_ransac.h>
 
-#include <feature_cloud.h>
-#include <sample_consensus.h>
+#include <feature_matching/feature_cloud.h>
+#include <feature_matching/sample_consensus.h>
 #include <octomap_tools/types.h>
+
+#include <feature_matching/alignment_method.h>
+#include <feature_matching/kdtree_svd_alignment.h>
 
 namespace octomap_tools {
 
@@ -19,10 +22,6 @@ class FeaturesMatching {
   enum class AlignmentMethod {
     SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, KdTreeSearch };
 
-  struct KdTreeSearchConfig {
-    float desc_dist_thresh;
-  };
-
   struct Config {
     FeatureCloud::Config feature_cloud;
     AlignmentMethod method = AlignmentMethod::SampleConsensus;
@@ -30,7 +29,7 @@ class FeaturesMatching {
     bool divide_model{true};
 
     // Kd Tree search
-    KdTreeSearchConfig kdts;
+    KdTreeBasedAlignment::Config kdts;
 
     // Sample Consensus
     float min_sample_distance;
@@ -53,6 +52,7 @@ class FeaturesMatching {
     Eigen::Matrix4f transformation;
     float processing_time_ms;
     pcl::CorrespondencesPtr correspondences;
+    pcl::CorrespondencesPtr features_correspondences;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   };
 
@@ -83,14 +83,6 @@ class FeaturesMatching {
     int nr, PointCloudPtr& full_model, Rectangle block,
     const FeatureCloudPtr& scene, FeaturesMatching::Config& cfg);
 
-
-
-  /**
-   * Finds correspondences between two sets of descriptors
-   */
-  static pcl::CorrespondencesPtr FindFeaturesCorrespondencesWithKdTree(
-    const FeatureCloud::Descriptors::Ptr& model_descriptors,
-    const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh);
 
   ThreadResult FindBestAlignment(const std::vector<FeaturesMatching::ThreadResult>& results);
 

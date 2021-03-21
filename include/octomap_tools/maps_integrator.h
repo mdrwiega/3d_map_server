@@ -10,7 +10,7 @@
 
 #include <utils.h>
 #include <conversions.h>
-#include <feature_cloud.h>
+#include <feature_matching/feature_cloud.h>
 #include <features_matching.h>
 #include <icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>

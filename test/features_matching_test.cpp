@@ -7,7 +7,6 @@
 #include <transformations.h>
 #include <utils.h>
 #include <math.h>
-#include <feature_cloud.h>
 #include <features_matching.h>
 #include <conversions.h>
 

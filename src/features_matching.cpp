@@ -4,6 +4,7 @@
 
 #include <ros/console.h>
 
+#include <pcl/conversions.h>
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/common/transforms.h>
@@ -25,7 +26,6 @@
 #include <validation.h>
 #include <model_decomposition.h>
 
-#include <pcl/conversions.h>
 
 typedef pcl::ReferenceFrame RFType;
 typedef pcl::Normal NormalType;
@@ -150,32 +150,9 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   pcl::CorrespondencesPtr features_correspondences (new pcl::Correspondences);
 
   if (cfg.method == AlignmentMethod::KdTreeSearch) {
+    // KdTreeBasedAlignment aligner(cfg.)
 
-    // Find corresponding features in the target cloud
-    features_correspondences = FindFeaturesCorrespondencesWithKdTree(
-      model->GetDescriptors(), scene->GetDescriptors(), cfg.kdts.desc_dist_thresh);
 
-    // Get sample indices from correspondences
-    std::vector<int> sample_indices(features_correspondences->size());
-    std::vector<int> corresponding_indices(features_correspondences->size());
-    for (const auto& corr : *features_correspondences) {
-      sample_indices.push_back(corr.index_query);
-      corresponding_indices.push_back(corr.index_match);
-    }
-
-    // Estimate transformation with LS SVD method
-    pcl::registration::TransformationEstimationSVD<Point, Point> transformation_estimator;
-    Eigen::Matrix4f transformation_matrix;
-    transformation_estimator.estimateRigidTransformation(
-      *model->GetKeypoints(), sample_indices, *scene->GetKeypoints(),
-      corresponding_indices, transformation_matrix);
-
-    result.fitness_score = calcFitnessScore1(features_correspondences);
-    result.transformation = transformation_matrix;
-
-    // std::cout << "\nCorrespondences all: " << correspondences_all->size();
-    ROS_DEBUG_STREAM("\nCorrespondences : " << features_correspondences->size());
-    std::cout << "\nFitnessScore1 corr1: " << result.fitness_score << "\n";
   }
   else if (cfg.method == AlignmentMethod::SampleConsensus) {
     // Align feature clouds with Sample Consensus Initial Alignment
@@ -325,36 +302,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   return result;
 }
 
-pcl::CorrespondencesPtr FeaturesMatching::FindFeaturesCorrespondencesWithKdTree(
-    const FeatureCloud::Descriptors::Ptr& model_descriptors,
-    const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh) {
 
-  pcl::CorrespondencesPtr correspondences(new pcl::Correspondences());
-
-  pcl::KdTreeFLANN<FeatureCloud::DescriptorType> match_search;
-  match_search.setInputCloud(model_descriptors);
-
-  //  For each scene keypoint descriptor, find nearest neighbor
-  //  into the model keypoints descriptor cloud and add it to the correspondences vector.
-  for (size_t i = 0; i < scene_descriptors->size (); ++i) {
-    std::vector<int> neigh_indices(1);
-    std::vector<float> neigh_sqr_dists(1);
-    if (!std::isfinite (scene_descriptors->at (i).descriptor[0])) { //skipping NaNs
-      continue;
-    }
-
-    int found_neighs = match_search.nearestKSearch(scene_descriptors->at (i), 1, neigh_indices, neigh_sqr_dists);
-
-    // add match only if the squared descriptor distance is
-    // less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
-    if(found_neighs == 1 && neigh_sqr_dists[0] < desc_dist_thresh) {
-      pcl::Correspondence corr(neigh_indices[0], static_cast<int>(i), neigh_sqr_dists[0]);
-      correspondences->push_back(corr);
-    }
-  }
-  ROS_DEBUG_STREAM("Correspondences found: " << correspondences->size());
-  return correspondences;
-}
 
 FeaturesMatching::ThreadResult FeaturesMatching::FindBestAlignment(const std::vector<FeaturesMatching::ThreadResult>& results) {
   int block_nr = 0;

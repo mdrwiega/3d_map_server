@@ -4,7 +4,7 @@
 #include <pcl/point_types.h>
 
 #include <utils.h>
-#include <feature_cloud.h>
+#include <feature_matching/feature_cloud.h>
 
 namespace octomap_tools {
 
