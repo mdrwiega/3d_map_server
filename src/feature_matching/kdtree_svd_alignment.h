@@ -54,12 +54,9 @@ class KdTreeBasedAlignment : public AlignmentMethod {
 
     AlignmentValidator<Point> validator;
     validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
-    result.fitness_score = validator.calcFitnessScore1();
-
-    std::cout << "\nCorrespondences : " << features_correspondences->size();
-    std::cout << "\nFitnessScore1 : " << result.fitness_score << "\n";
-    std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
-    std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
+    result.fitness_score1 = validator.calcFitnessScore1();
+    result.fitness_score2 = validator.calcFitnessScore2();
+    result.fitness_score3 = validator.calcFitnessScore3();
 
     return result;
   }
@@ -80,8 +77,7 @@ class KdTreeBasedAlignment : public AlignmentMethod {
     pcl::KdTreeFLANN<FeatureCloud::DescriptorType> match_search;
     match_search.setInputCloud(model_descriptors);
 
-    //  For each scene keypoint descriptor, find nearest neighbor
-    //  into the model keypoints descriptor cloud and add it to the correspondences vector.
+    //  For each scene keypoint descriptor, find nearest neighbor in model keypoints descriptor
     for (size_t i = 0; i < scene_descriptors->size (); ++i) {
       std::vector<int> neigh_indices(1);
       std::vector<float> neigh_sqr_dists(1);

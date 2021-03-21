@@ -17,7 +17,6 @@ class SampleConsensusInitialAlignmentMod : public
   using PointCloudSource = pcl::PointCloud<PointSource>;
   using Matrix4 = Eigen::Matrix<float, 4, 4>;
   typedef typename pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::HuberPenalty HuberPenalty;
-  typedef typename pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::TruncatedError TruncatedError;
   typedef typename pcl::SampleConsensusInitialAlignment<PointSource, PointTarget, FeatureT>::ErrorFunctor ErrorFunctor;
 
 bool findSimilarFeaturesMod (
@@ -62,7 +61,7 @@ bool findSimilarFeaturesMod (
   return true;
 }
 
-float computeErrorMetric (const PointCloudSource &cloud, float)
+float computeErrorMetric(const PointCloudSource &cloud, float)
 {
   std::vector<int> nn_index (1);
   std::vector<float> nn_distance (1);
@@ -125,7 +124,7 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
   this->final_transformation_ = guess;
   int i_iter = 0;
   this->converged_ = false;
-  if (!guess.isApprox (Eigen::Matrix4f::Identity (), 0.01f)) 
+  if (!guess.isApprox (Eigen::Matrix4f::Identity (), 0.01f))
   {
     // If guess is not the Identity matrix we check it.
     transformPointCloud (*this->input_, input_transformed, this->final_transformation_);
@@ -257,7 +256,7 @@ void computeTransformationMod (PointCloudSource &output, const Eigen::Matrix4f& 
 
       // Find its nearest neighbor in the target
       int k = this->tree_->nearestKSearch(input_transformed.points[i], 1, nn_indices, nn_dists);
-      if(k >= 1 && nn_dists[0] <= 0.25) {
+      if(k == 1 && nn_dists[0]) {
         pcl::Correspondence corr(nn_indices[0], static_cast<int>(i), nn_dists[0]);
         correspondences->push_back(corr);
       }
@@ -299,7 +298,7 @@ class SampleConsensusAlignment : public AlignmentMethod {
     PointCloud dummy_output;
     sac.alignMod(dummy_output);
 
-    std::cout << "Converged?: " << sac.hasConverged();
+    // std::cout << "Converged?: " << sac.hasConverged();
 
     AlignmentMethod::Result result;
     result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
@@ -310,11 +309,6 @@ class SampleConsensusAlignment : public AlignmentMethod {
     result.fitness_score1 = validator.calcFitnessScore1();
     result.fitness_score2 = validator.calcFitnessScore2();
     result.fitness_score3 = validator.calcFitnessScore3();
-
-    // std::cout << "\nFitnessScore  : " << result.fitness_score << "\n";
-    // std::cout << "\nFitnessScore1 : " << validator.calcFitnessScore1() << "\n";
-    // std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
-    // std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
 
     return result;
   }
