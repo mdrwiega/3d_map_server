@@ -14,6 +14,7 @@
 #include <feature_matching/alignment_method.h>
 #include <feature_matching/kdtree_svd_alignment.h>
 #include <feature_matching/sample_consensus_alignment.h>
+#include <feature_matching/geometry_clustering_alignment.h>
 
 namespace octomap_tools {
 
@@ -28,11 +29,10 @@ class FeaturesMatching {
 
     bool divide_model{true};
 
-    // Kd Tree + SVD method
-    KdTreeBasedAlignment::Config kdts;
 
-    // Sample Consensus method
-    SampleConsensusAlignment::Config sac;
+    KdTreeBasedAlignment::Config kdts;        // Kd Tree + SVD method
+    SampleConsensusAlignment::Config sac;     // Sample Consensus method
+    GeometryClusteringAlignment::Config gc;  // Geometry Clustering method
 
     float cell_size_x;
     float cell_size_y;

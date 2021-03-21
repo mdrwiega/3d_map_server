@@ -164,36 +164,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     aligner.reset(new SampleConsensusAlignment(cfg.sac));
   }
   else if (cfg.method == AlignmentMethodType::GeometryConsistencyClustering) {
-    float cg_size(0.01f);
-    float cg_thresh(5.0f);
-
-    // Find correspondences with KdTree
-    // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-
-    // Clustering
-    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
-    std::vector<pcl::Correspondences> clustered_corrs;
-
-    pcl::GeometricConsistencyGrouping<Point, Point> gc_clusterer;
-    gc_clusterer.setGCSize(cg_size);
-    gc_clusterer.setGCThreshold (cg_thresh);
-
-    gc_clusterer.setInputCloud(model->GetKeypoints());
-    gc_clusterer.setSceneCloud(scene->GetKeypoints());
-    gc_clusterer.setModelSceneCorrespondences (features_correspondences);
-
-    //gc_clusterer.cluster (clustered_corrs);
-    gc_clusterer.recognize(rototranslations, clustered_corrs);
-
-    result.fitness_score1 = 0;
-    if (rototranslations.size() == 1) {
-      result.transformation = rototranslations[0];
-    }
-    std::cout << "Model instances found: " << rototranslations.size () << std::endl;
-    for (size_t i = 0; i < rototranslations.size (); ++i) {
-      std::cout << "\n    Instance " << i + 1 << ":" << std::endl;
-      std::cout << "        Correspondences belonging to this instance: " << clustered_corrs[i].size () << std::endl;
-    }
+    aligner.reset(new GeometryClusteringAlignment(cfg.gc));
   }
   else if (cfg.method == AlignmentMethodType::Hough3DClustering) {
     float rf_rad(0.015f);
@@ -283,7 +254,9 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   return result;
 }
 
-FeaturesMatching::ThreadResult FeaturesMatching::FindBestAlignment(const std::vector<FeaturesMatching::ThreadResult>& results) {
+FeaturesMatching::ThreadResult FeaturesMatching::FindBestAlignment(
+    const std::vector<FeaturesMatching::ThreadResult>& results) {
+
   float lowest_score = std::numeric_limits<float>::infinity();
   size_t best_result_index = 0;
 

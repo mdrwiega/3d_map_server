@@ -43,7 +43,7 @@ class FeatureMatchingTest : public ::testing::Test {
     // Sample Consensus
     cfg.sac.min_sample_distance = 0.2;
     cfg.sac.max_correspondence_distance = 100.0;
-    cfg.sac.nr_iterations = 500;
+    cfg.sac.nr_iterations = 800;
     cfg.sac.fitness_score_dist = 1.0;
     cfg.sac.samples_num = 5;
     cfg.sac.nn_for_each_sample_num = 10;
@@ -57,7 +57,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.keypoints_thresh_ = 150;
     cfg.divide_model = true;
 
-    cfg.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
+    cfg.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
 
     cfg.show_visualizer = false;
   }
@@ -89,18 +89,17 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   std::cout << "\nModel size: " << fc_model->GetPointCloud()->size() << std::endl;
   fc_model->ComputeDescriptors();
 
-  // Standard SAC
+  // Modified SAC
   FeaturesMatching matcher(cfg, scene_cloud, model_cloud);
   FeaturesMatching::Result result = matcher.Align(0, cfg, fc_model, fc_scene);
 
-  // Modified SAC
-  cfg.sac.modified_version = false;
-  FeaturesMatching matcher2(cfg, scene_cloud, model_cloud);
-  FeaturesMatching::Result result1 = matcher2.Align(0, cfg, fc_model, fc_scene);
+  // Standard SAC
+  // cfg.sac.modified_version = false;
+  // FeaturesMatching matcher2(cfg, scene_cloud, model_cloud);
+  // FeaturesMatching::Result result1 = matcher2.Align(0, cfg, fc_model, fc_scene);
 
   PrintMatchingResult(T, result.transformation, result.fitness_score1);
-
-  PrintMatchingResult(T, result1.transformation, result1.fitness_score1);
+  // PrintMatchingResult(T, result1.transformation, result1.fitness_score1);
 
   EXPECT_LE(result.fitness_score1, 0.3);
 }
