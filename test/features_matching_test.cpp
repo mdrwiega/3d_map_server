@@ -37,13 +37,13 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.feature_cloud.iss_num_of_threads = 2;
 
     // KDTS
-    cfg.kdts.desc_dist_thresh = 0.15;
+    cfg.kdts.desc_dist_thresh = 0.25;
 
     // Sample Consensus
-    cfg.sac.nr_iterations = 2000;
+    cfg.sac.nr_iterations = 1000;
     cfg.sac.min_sample_distance = 0.2;
     cfg.sac.max_correspondence_distance = 100.0;
-    cfg.sac.fitness_score_dist = 0.5;
+    cfg.sac.fitness_score_dist = 1.0;
 
     cfg.cell_size_x = 3;
     cfg.cell_size_y = 3;
@@ -51,7 +51,7 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.keypoints_thresh_ = 150;
     cfg.divide_model = true;
 
-    cfg.method = FeaturesMatching::AlignmentMethodType::KdTreeSearch;
+    cfg.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
 
     cfg.show_visualizer = true;
   }
@@ -64,7 +64,7 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   PrintOcTreeInfo(*original_tree, "original_tree");
 
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(2, 10, 2.0));
 
   // Transform model
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));

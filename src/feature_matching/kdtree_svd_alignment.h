@@ -50,15 +50,14 @@ class KdTreeBasedAlignment : public AlignmentMethod {
 
     AlignmentMethod::Result result;
     result.features_correspondences = features_correspondences;
-    result.fitness_score = calcFitnessScore1(features_correspondences);
     result.transformation = transformation_matrix;
 
     AlignmentValidator<Point> validator;
     validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+    result.fitness_score = validator.calcFitnessScore1();
 
     std::cout << "\nCorrespondences : " << features_correspondences->size();
-    std::cout << "\nFitnessScore  : " << result.fitness_score << "\n";
-    std::cout << "\nFitnessScore1 : " << validator.calcFitnessScore1() << "\n";
+    std::cout << "\nFitnessScore1 : " << result.fitness_score << "\n";
     std::cout << "\nFitnessScore2 : " << validator.calcFitnessScore2() << "\n";
     std::cout << "\nFitnessScore3 : " << validator.calcFitnessScore3() << "\n";
 

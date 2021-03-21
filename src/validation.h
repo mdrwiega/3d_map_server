@@ -15,6 +15,8 @@ class AlignmentValidator {
 
   void calculateCorrespondences(const PointCloudPtr& model, const PointCloudPtr& scene,
       const Eigen::Matrix4f& transformation) {
+
+    auto start = std::chrono::high_resolution_clock::now();
     correspondences.reset(new pcl::Correspondences);
 
     // Transform the model
@@ -34,6 +36,9 @@ class AlignmentValidator {
         correspondences->push_back(corr);
       }
     }
+    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now() - start);
+    std::cout << "\nCorrespondences calculated in " << diff.count() << " ms" << std::endl;
   }
 
   pcl::CorrespondencesPtr getCorrespondences() { return correspondences; }

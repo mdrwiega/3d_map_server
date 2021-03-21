@@ -304,22 +304,20 @@ class SampleConsensusAlignment : public AlignmentMethod {
 
     std::cout << "Converged?: " << sac.hasConverged()
       << std::setprecision(6) << std::fixed
-      << "\nFitness score distance: " << cfg.fitness_score_dist << "\n"
-      << "Standard fitness score: " << fs << "\n";
+      << "\nStandard fitness score: " << fs << "\n";
 
-    pcl::registration::TransformationValidationEuclidean<Point, Point> validator;
-    validator.setMaxRange(0.10);
+    pcl::registration::TransformationValidationEuclidean<Point, Point> validator1;
+    validator1.setMaxRange(0.10);
 
-    double score = validator.validateTransformation(model->GetKeypoints(), scene->GetKeypoints(),
+    double score = validator1.validateTransformation(model->GetPointCloud(), scene->GetPointCloud(),
                                           sac.getFinalTransformation());
 
-    ROS_DEBUG_STREAM("Score: " << score);
+    std::cout << "Score: " << score;
     AlignmentMethod::Result result;
     result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac.getFinalTransformation();
 
     // features_correspondences = FindFeaturesCorrespondencesWithKdTree(model->GetDescriptors(), scene->GetDescriptors());
-    pcl::CorrespondencesPtr correspondences2 = sac.getCorrespondences();
 
     AlignmentValidator<Point> validator;
     validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
