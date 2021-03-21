@@ -77,27 +77,26 @@ class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSour
     return error;
   }
 
-  void computeTransformationMod(PointCloudSource &output, const Eigen::Matrix4f& guess)
-  {
+  void computeTransformationMod(const Eigen::Matrix4f& guess) {
     if (!this->input_features_) {
-      PCL_ERROR ("[computeTransformationMod]: No source features were given\n");
+      PCL_ERROR("[computeTransformationMod]: No source features were given\n");
       return;
     }
     if (!this->target_features_) {
-      PCL_ERROR ("[computeTransformationMod]: No target features were given\n");
+      PCL_ERROR("[computeTransformationMod]: No target features were given\n");
       return;
     }
 
     if (this->input_->size () != this->input_features_->size ()) {
-      PCL_ERROR ("[computeTransformation] ");
-      PCL_ERROR ("The source points and source feature points should be the same size! Sizes: %ld vs %ld.\n",
+      PCL_ERROR("[computeTransformation] ");
+      PCL_ERROR("The source points and source feature points should be the same size! Sizes: %ld vs %ld.\n",
                 this->input_->size (), this->input_features_->size ());
       return;
     }
 
     if (this->target_->size () != this->target_features_->size ()) {
-      PCL_ERROR ("[computeTransformation] ");
-      PCL_ERROR ("The target points and target feature points should be the same size! Sizes: %ld vs %ld.\n",
+      PCL_ERROR("[computeTransformation] ");
+      PCL_ERROR("The target points and target feature points should be the same size! Sizes: %ld vs %ld.\n",
                 this->target_->size (), this->target_features_->size ());
       return;
     }
@@ -121,12 +120,9 @@ class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSour
       iter = 1;
     }
 
-    std::cout << "\n";
-
     int bad_features = 0;
 
-    for (; iter < this->max_iterations_; ++iter)
-    {
+    for (; iter < this->max_iterations_; ++iter) {
       // Draw nr_samples_ random samples
       this->selectSamples(*this->input_, this->nr_samples_, this->min_sample_distance_, sample_indices);
 
@@ -167,62 +163,28 @@ class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSour
       if (iter == 0 || error < lowest_error) {
         lowest_error = error;
         this->final_transformation_ = this->transformation_;
-        this->converged_=true;
+        this->converged_ = true;
       }
     }
 
     PCL_DEBUG("Bad features: %d, bad_features/iterations: %.2f\n",
-      bad_features, (float)bad_features/this->max_iterations_);
-
-    // Apply the final transformation
-    transformPointCloud (*this->input_, output, this->final_transformation_);
+      bad_features, static_cast<float>(bad_features)/this->max_iterations_);
   }
 
 
-  inline void alignMod(PointCloudSource &output) {
+  inline void alignMod() {
     auto guess = Matrix4::Identity();
 
-    if (!this->initCompute ())
+    if (!this->initCompute())
       return;
-
-    // Resize the output dataset
-    if (output.points.size () != this->indices_->size ())
-      output.points.resize (this->indices_->size ());
-    // Copy the header
-    output.header   = this->input_->header;
-    // Check if the output will be computed for all points or only a subset
-    if (this->indices_->size () != this->input_->points.size ())
-    {
-      output.width    = static_cast<uint32_t> (this->indices_->size ());
-      output.height   = 1;
-    }
-    else
-    {
-      output.width    = static_cast<uint32_t> (this->input_->width);
-      output.height   = this->input_->height;
-    }
-    output.is_dense = this->input_->is_dense;
-
-    // Copy the point data to output
-    for (size_t i = 0; i < this->indices_->size (); ++i)
-      output.points[i] = this->input_->points[(*this->indices_)[i]];
-
-    // Set the internal point representation of choice unless otherwise noted
-    // if (this->point_representation_ && !this->force_no_recompute_)
-    //   this->tree_->setPointRepresentation (this->point_representation_);
 
     // Perform the actual transformation computation
     this->converged_ = false;
-    this->final_transformation_ = this->transformation_ = this->previous_transformation_ = Matrix4::Identity ();
+    this->final_transformation_ = this->transformation_ = this->previous_transformation_ = Matrix4::Identity();
 
-    // Right before we estimate the transformation, we set all the point.data[3] values to 1 to aid the rigid 
-    // transformation
-    for (size_t i = 0; i < this->indices_->size (); ++i)
-      output.points[i].data[3] = 1.0;
+    computeTransformationMod(guess);
 
-    computeTransformationMod (output, guess);
-
-    this->deinitCompute ();
+    this->deinitCompute();
   }
 
   pcl::CorrespondencesPtr getCorrespondences() {
@@ -281,11 +243,11 @@ class SampleConsensusAlignment : public AlignmentMethod {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    PointCloud dummy_output;
     if (cfg.modified_version) {
-      sac.alignMod(dummy_output);
+      sac.alignMod();
     }
     else {
+      PointCloud dummy_output;
       sac.align(dummy_output);
     }
 
