@@ -41,11 +41,13 @@ class FeatureMatchingTest : public ::testing::Test {
     cfg.kdts.desc_dist_thresh = 0.25;
 
     // Sample Consensus
-    cfg.sac.nr_iterations = 1000;
+    cfg.sac.modified_version = true;
     cfg.sac.min_sample_distance = 0.2;
     cfg.sac.max_correspondence_distance = 100.0;
+    cfg.sac.nr_iterations = 500;
     cfg.sac.fitness_score_dist = 1.0;
-    cfg.sac.modified_version = true;
+    cfg.sac.samples_num = 5;
+    cfg.sac.nn_for_each_sample_num = 10;
 
     cfg.cell_size_x = 3;
     cfg.cell_size_y = 3;
@@ -55,7 +57,7 @@ class FeatureMatchingTest : public ::testing::Test {
 
     cfg.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
 
-    cfg.show_visualizer = true;
+    cfg.show_visualizer = false;
   }
 
   FeaturesMatching::Config cfg;
@@ -88,7 +90,14 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   FeaturesMatching matcher(cfg, scene_cloud, model_cloud);
   FeaturesMatching::Result result = matcher.Align(0, cfg, fc_model, fc_scene);
 
+  cfg.sac.modified_version = false;
+  FeaturesMatching matcher2(cfg, scene_cloud, model_cloud);
+  FeaturesMatching::Result result1 = matcher2.Align(0, cfg, fc_model, fc_scene);
+
   PrintMatchingResult(T, result.transformation, result.fitness_score);
+
+  PrintMatchingResult(T, result1.transformation, result1.fitness_score);
+
 
   if (result.fitness_score < 0.1) {
     std::cout << "\nOK!! \n";

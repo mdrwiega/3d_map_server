@@ -96,10 +96,6 @@ inline std::string transformationMatrixToString(const Eigen::Matrix4f& Mat) {
   return ss.str();
 }
 
-inline double transformationsError(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
-  return (t1 * t2 - Eigen::Matrix4f::Identity()).norm();
-}
-
 inline Eigen::Vector3f rotMatrixToRPY(const Eigen::Matrix3f& rot) {
   return rot.eulerAngles(0, 1, 2).transpose();
 }
@@ -113,6 +109,12 @@ inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& transf, con
   ss << line_prefix << "xyz: [" << transl(0) << ", " << transl(1) << ", " <<  transl(2) << "]\n";
   ss << line_prefix << "rpy: [" <<  rot(0) << ", " <<  rot(1) << ", " <<  rot(2) << "]\n";
   return ss.str();
+}
+
+inline double transformationsError(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
+  std::cout << "\ntransformationsError:\n";
+  std::cout << transfMatrixToXyzRpyString(t1 * t2);
+  return (t1 * t2 - Eigen::Matrix4f::Identity()).norm();
 }
 
 template<typename T>
