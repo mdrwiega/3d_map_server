@@ -63,15 +63,15 @@ class GeometryClusteringAlignment : public AlignmentMethod {
 
     AlignmentMethod::Result result;
     result.features_correspondences = features_correspondences;
-    result.transformation = transformations[best_result_index];
-
-    AlignmentValidator<Point> validator;
-    validator.calculateCorrespondences(
-      model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
-    result.fitness_score1 = validator.calcFitnessScore1();
-    result.fitness_score2 = validator.calcFitnessScore2();
-    result.fitness_score3 = validator.calcFitnessScore3();
-
+    if (transformations.size() > best_result_index) {
+      result.transformation = transformations[best_result_index];
+      AlignmentValidator<Point> validator;
+      validator.calculateCorrespondences(
+        model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+      result.fitness_score1 = validator.calcFitnessScore1();
+      result.fitness_score2 = validator.calcFitnessScore2();
+      result.fitness_score3 = validator.calcFitnessScore3();
+    }
     return result;
   }
 
