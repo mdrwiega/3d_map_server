@@ -81,8 +81,50 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
   std::vector<FeaturesMatching::ThreadResult> results;
   for (auto& it: thread_futures) {
     it.wait();
-    results.emplace_back(it.get());
+    auto result = it.get();
+    results.emplace_back(result);
+    // if (result.result.fitness_score1 < 0.15) {
+    //   PCL_ERROR("\nModel matched. Stop processing.\n");
+    //   break;
+    // }
   }
+
+
+  // thread_pool::ThreadPool thread_pool;
+  // size_t threads_num = std::thread::hardware_concurrency();
+  // unsigned tasks_num = blocks.size();
+  // unsigned tasks_allocated = 0;
+  // std::vector<FeaturesMatching::ThreadResult> results;
+
+  // while (tasks_allocated < tasks_num) {
+  //   std::vector<std::future<FeaturesMatching::ThreadResult>> thread_futures;
+  //   for (size_t i = 0; i < threads_num; ++i) {
+  //     if (tasks_allocated < tasks_num) {
+  //       thread_futures.emplace_back(thread_pool.Submit(
+  //           AlignmentThread, tasks_allocated, std::ref(model_cloud_), std::ref(blocks[tasks_allocated]), std::ref(scene), std::ref(cfg_)));
+  //       tasks_allocated++;
+  //     }
+  //     else {
+  //       break;
+  //     }
+  //   }
+
+  //   // Wait till all workers finish
+  //   for (auto& it: thread_futures) {
+  //     it.wait();
+  //     auto result = it.get();
+  //     results.emplace_back(result);
+  //     PCL_INFO("\nModel fitness score: %.2f\n", result.result.fitness_score1);
+  //     if (result.result.fitness_score1 < 0.1) {
+  //       PCL_ERROR("\nModel matched. Stop processing.\n");
+  //       tasks_allocated = tasks_num;
+  //       break;
+  //     }
+  //   }
+
+
+  // }
+
 
   // Find best result from all threads results
   ThreadResult t_result = FindBestAlignment(results);
