@@ -28,8 +28,8 @@ class MapsIntegratorTest : public ::testing::Test
 
   void Configure() {
     cfg.template_alignment.divide_model = true;
-    cfg.template_alignment.cell_size_x = 3;
-    cfg.template_alignment.cell_size_y = 3;
+    cfg.template_alignment.cell_size_x = 4;
+    cfg.template_alignment.cell_size_y = 4;
     cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
 
    // Feature matching
@@ -71,6 +71,7 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.icp.scene_inflation_dist = 2.5;
     cfg.icp.visualize = false;
     cfg.icp.output_dir = date_and_time_ + "_";
+    cfg.icp.crop_scene = true;
 
     // Other
   }

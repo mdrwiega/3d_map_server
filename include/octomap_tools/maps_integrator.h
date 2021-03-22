@@ -40,7 +40,7 @@ class MapsIntegrator {
   };
 
   struct Result {
-    float fitness_score{0};
+    float fitness_score1{0};
     float fitness_score2{0};
     float fitness_score3{0};
     Point model_min{};

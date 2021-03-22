@@ -74,8 +74,6 @@ class GeometryClusteringAlignment : public AlignmentMethod {
     }
     return result;
   }
-
- private:
 };
 
 } // namespace octomap_tools

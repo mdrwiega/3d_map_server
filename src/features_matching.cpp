@@ -83,10 +83,10 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
     it.wait();
     auto result = it.get();
     results.emplace_back(result);
-    // if (result.result.fitness_score1 < 0.15) {
-    //   PCL_ERROR("\nModel matched. Stop processing.\n");
-    //   break;
-    // }
+    if (result.result.fitness_score1 < 0.1) {
+      PCL_ERROR("\nModel matched. Stop processing.\n");
+      break;
+    }
   }
 
 

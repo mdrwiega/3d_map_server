@@ -61,14 +61,20 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // ICP correction
   if (cfg_.icp_correction) {
-    PointCloud::Ptr icp_model(new PointCloud);
-    pcl::transformPointCloud(*best_model, *icp_model, result_.ia.transformation);
-    ICP icp(scene_, icp_model, cfg_.icp);
-    result_.icp = icp.Align();
+    try {
+      PointCloud::Ptr icp_model(new PointCloud);
+      pcl::transformPointCloud(*best_model, *icp_model, result_.ia.transformation);
 
-    if (result_.icp.fitness_score < result_.ia.fitness_score1) {
-      result_.ia.fitness_score1 = result_.icp.fitness_score;
-      result_.ia.transformation = result_.icp.transformation * result_.ia.transformation;
+      ICP icp(scene_, icp_model, cfg_.icp);
+      result_.icp = icp.Align();
+
+      if (result_.icp.fitness_score < result_.ia.fitness_score1) {
+        result_.fitness_score1 = result_.icp.fitness_score;
+        result_.transformation = result_.icp.transformation * result_.ia.transformation;
+      }
+    }
+    catch (std::exception& e) {
+      PCL_ERROR("\nICP exception: %s", e.what());
     }
 
     PCL_INFO("\nICP fitness score: %.3f", result_.icp.fitness_score);
@@ -78,7 +84,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // Create result
   result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
-  result_.fitness_score = result_.ia.fitness_score1;
+  result_.fitness_score1 = result_.ia.fitness_score1;
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
   result_.transformation = result_.ia.transformation;
 
@@ -171,7 +177,7 @@ std::string MapsIntegrator::Result::toString() {
   ss << "  fitness_score: " << icp.fitness_score << "\n";
   ss << "final:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(transformation, "    ");
-  ss << "  fitness_score1: " << fitness_score << "\n";
+  ss << "  fitness_score1: " << fitness_score1 << "\n";
   ss << "  fitness_score2: " << fitness_score2 << "\n";
   ss << "  fitness_score3: " << fitness_score3 << "\n";
   return ss.str();
@@ -180,7 +186,7 @@ std::string MapsIntegrator::Result::toString() {
 void MapsIntegrator::Result::PrintResult() {
   std::cout << "Final result:" << std::fixed << std::setprecision(1) << std::endl;
   std::cout << "Total time: " << (transf_estimation_time_ms + octree_transformation_time_ms + octrees_merge_time_ms) / 1000.0 << " s." << std::endl;
-  std::cout << "Fitness score: " << std::setprecision(6) << fitness_score << std::endl;
+  std::cout << "Fitness score: " << std::setprecision(6) << fitness_score1 << std::endl;
   std::cout << "Transformation: " << transfMatrixToXyzRpyString(transformation) << std::endl;
 }
 

@@ -23,7 +23,7 @@ namespace octomap_tools {
 class ICP {
  public:
   struct Config {
-    int max_iter = 100;     // Max number of iterations (ICP)
+    int max_iter = 100;          // Max number of iterations (ICP)
     float max_nn_dist = 0.3;     // Max correspondence distance (NN)
     float fitness_eps = 0.05;    // Euclidean fitness epsilon (ICP)
     float fitness_score_dist = 0.5;
@@ -35,9 +35,9 @@ class ICP {
   };
 
   struct Result {
-    double fitness_score;
-    Eigen::Matrix4f transformation;
-    double processing_time_ms;
+    double fitness_score = std::numeric_limits<float>::max();
+    Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+    double processing_time_ms = 0;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   };
 
@@ -50,18 +50,22 @@ class ICP {
   Result Align() {
     auto start = high_resolution_clock::now();
 
-    PointCloudPtr scene (new PointCloud);
+    if (model_->empty()) {
+      throw std::runtime_error("ICP: Empty model");
+    }
+    if (scene_->empty()) {
+      throw std::runtime_error("ICP: Empty scene");
+    }
+
+    PointCloudPtr scene(new PointCloud);
     if (cfg_.crop_scene) {
       cropSceneToInflatedModel(scene);
     } else {
       scene = scene_;
     }
 
-    if (model_->empty()) {
-      throw std::runtime_error("ICP: Empty model");
-    }
-    if (scene_->empty()) {
-      throw std::runtime_error("ICP: Empty scene");
+    if (scene->empty()) {
+      throw std::runtime_error("ICP: Empty cropped scene");
     }
 
     pcl::IterativeClosestPoint <Point, Point> icp;
