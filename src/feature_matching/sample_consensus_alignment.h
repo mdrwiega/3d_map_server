@@ -269,7 +269,6 @@ class SampleConsensusAlignment : public AlignmentMethod {
     PCL_DEBUG("SAC Aligned in %d ms, converged: %d", diff.count(), sac.hasConverged());
 
     AlignmentMethod::Result result;
-    result.fitness_score = static_cast<float>(sac.getFitnessScore(cfg.fitness_score_dist));
     result.transformation = sac.getFinalTransformation();
     result.processing_time_ms = diff.count();
 

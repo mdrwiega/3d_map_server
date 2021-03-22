@@ -68,18 +68,18 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
       ICP icp(scene_, icp_model, cfg_.icp);
       result_.icp = icp.Align();
 
-      if (result_.icp.fitness_score < result_.ia.fitness_score1) {
-        result_.fitness_score1 = result_.icp.fitness_score;
+      if (result_.icp.fitness_score1 < result_.ia.fitness_score1) {
+        result_.fitness_score1 = result_.icp.fitness_score1;
         result_.transformation = result_.icp.transformation * result_.ia.transformation;
       }
+
+      PCL_INFO("\nICP fitness score: %.3f", result_.icp.fitness_score1);
+      PCL_INFO("\nICP time: %.1f ms", result_.icp.processing_time_ms);
+      PCL_INFO("\nICP transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "  ").c_str());
     }
     catch (std::exception& e) {
       PCL_ERROR("\nICP exception: %s", e.what());
     }
-
-    PCL_INFO("\nICP fitness score: %.3f", result_.icp.fitness_score);
-    PCL_INFO("\nICP time: %.1f ms", result_.icp.processing_time_ms);
-    PCL_INFO("\nICP transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "  ").c_str());
   }
 
   // Create result
@@ -174,7 +174,7 @@ std::string MapsIntegrator::Result::toString() {
   // ss << "  correspondences_num: " << ia.correspondences.size() << "\n";
   ss << "icp:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "    ");
-  ss << "  fitness_score: " << icp.fitness_score << "\n";
+  ss << "  fitness_score: " << icp.fitness_score1 << "\n";
   ss << "final:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(transformation, "    ");
   ss << "  fitness_score1: " << fitness_score1 << "\n";

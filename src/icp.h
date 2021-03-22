@@ -12,6 +12,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <octomap_tools/maps_integrator_visualizer.h>
+#include <validation.h>
 
 using std::chrono::high_resolution_clock;
 
@@ -35,7 +36,9 @@ class ICP {
   };
 
   struct Result {
-    double fitness_score = std::numeric_limits<float>::max();
+    double fitness_score1 = std::numeric_limits<float>::max();
+    double fitness_score2 = std::numeric_limits<float>::max();
+    double fitness_score3 = std::numeric_limits<float>::max();
     Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
     double processing_time_ms = 0;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -86,10 +89,15 @@ class ICP {
       visualizer.VisualizeICP(scene, model_, icp.getFinalTransformation());
     }
 
-    // Prepare result
     Result result;
-    result.fitness_score = icp.getFitnessScore(cfg_.fitness_score_dist);
     result.transformation = icp.getFinalTransformation();
+
+    AlignmentValidator<Point> validator;
+    validator.calculateCorrespondences(model_, scene, result.transformation);
+    result.fitness_score1 = validator.calcFitnessScore1();
+    result.fitness_score2 = validator.calcFitnessScore2();
+    result.fitness_score3 = validator.calcFitnessScore3();
+
     result.processing_time_ms = static_cast<double>(dt.count());
     return result;
   }

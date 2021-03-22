@@ -10,7 +10,6 @@ namespace octomap_tools {
 class AlignmentMethod {
  public:
   struct Result {
-    float fitness_score {std::numeric_limits<float>::max()};
     float fitness_score1 {std::numeric_limits<float>::max()};
     float fitness_score2 {std::numeric_limits<float>::max()};
     float fitness_score3 {std::numeric_limits<float>::max()};
