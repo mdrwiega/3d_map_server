@@ -55,9 +55,9 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
     best_model = model_;
   }
 
-  ROS_DEBUG_STREAM(std::setprecision(6) << "IA fitness score: " << result_.ia.fitness_score1);
-  ROS_DEBUG_STREAM(std::setprecision(1) << "IA time: " << result_.ia.processing_time_ms << " ms");
-  ROS_DEBUG_STREAM("IA transformation:" << transfMatrixToXyzRpyString(result_.ia.transformation));
+  PCL_INFO("\nIA fitness score: %.3f", result_.ia.fitness_score1);
+  PCL_INFO("\nIA time: %.1f ms", result_.ia.processing_time_ms);
+  PCL_INFO("\nIA transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "  ").c_str());
 
   // ICP correction
   if (cfg_.icp_correction) {
@@ -71,9 +71,9 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
       result_.ia.transformation = result_.icp.transformation * result_.ia.transformation;
     }
 
-    ROS_DEBUG_STREAM(std::setprecision(6) << "ICP fitness score: " << result_.icp.fitness_score);
-    ROS_DEBUG_STREAM(std::setprecision(1) << "ICP time: " << result_.icp.processing_time_ms << " ms");
-    ROS_DEBUG_STREAM("ICP transformation:" << transfMatrixToXyzRpyString(result_.ia.transformation));
+    PCL_INFO("\nICP fitness score: %.3f", result_.icp.fitness_score);
+    PCL_INFO("\nICP time: %.1f ms", result_.icp.processing_time_ms);
+    PCL_INFO("\nICP transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "  ").c_str());
   }
 
   // Create result
