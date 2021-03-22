@@ -1,8 +1,3 @@
-/******************************************************************************
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include <fstream>
@@ -32,9 +27,10 @@ class MapsIntegratorTest : public ::testing::Test
   }
 
   void Configure() {
-    cfg.template_alignment.divide_model = true;
+    cfg.template_alignment.divide_model = false;
     cfg.template_alignment.cell_size_x = 3;
     cfg.template_alignment.cell_size_y = 3;
+    cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
 
    // Feature matching
     cfg.template_alignment.model_size_thresh_ = 400;
@@ -47,10 +43,15 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.feature_cloud.debug = true;
 
     // Sample Consensus
-    cfg.template_alignment.sac.nr_iterations = 1000;
     cfg.template_alignment.sac.min_sample_distance = 0.2;
     cfg.template_alignment.sac.max_correspondence_distance = 100.0;
-    cfg.template_alignment.sac.fitness_score_dist = 0.5;
+    cfg.template_alignment.sac.nr_iterations = 800;
+    cfg.template_alignment.sac.fitness_score_dist = 1.0;
+    cfg.template_alignment.sac.samples_num = 5;
+    cfg.template_alignment.sac.nn_for_each_sample_num = 10;
+    cfg.template_alignment.sac.modified_version = false;
+    cfg.template_alignment.sac.mod_feature_max_dist = 0.7;
+    cfg.template_alignment.sac.mod_feature_max_dist_diff = 0.1;
 
     // ISS 3D
     cfg.template_alignment.feature_cloud.iss_salient_radius = 0.12;
@@ -97,7 +98,7 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   PrintOcTreeInfo(*original_tree, "original_tree");
 
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(10, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(3, 10, 2.0));
 
   // Transform model
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));

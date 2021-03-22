@@ -25,7 +25,7 @@ class FeaturesMatching {
 
   struct Config {
     FeatureCloud::Config feature_cloud;
-    AlignmentMethodType method = AlignmentMethodType::SampleConsensus;
+    AlignmentMethodType method;
 
     bool divide_model{true};
 
@@ -64,6 +64,8 @@ class FeaturesMatching {
   FeaturesMatching(const Config& config, PointCloudPtr& scene, PointCloudPtr& model);
 
   Result DivideModelAndAlign(PointCloud& best_model);
+
+  Result align();
 
   /**
    * Align model feature cloud to scene feature cloud and return estimated transformation.

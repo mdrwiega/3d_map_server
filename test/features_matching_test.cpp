@@ -101,6 +101,11 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   PrintMatchingResult(T, result.transformation, result.fitness_score1);
   // PrintMatchingResult(T, result1.transformation, result1.fitness_score1);
 
+
+  std::cout << "\nFitnessScore1 : " << result.fitness_score1 << "\n";
+  std::cout << "\nFitnessScore2 : " << result.fitness_score2 << "\n";
+  std::cout << "\nFitnessScore3 : " << result.fitness_score3 << "\n";
+
   EXPECT_LE(result.fitness_score1, 0.3);
 }
 

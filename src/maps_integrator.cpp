@@ -51,7 +51,8 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
     result_.ia = features_matching.DivideModelAndAlign(*best_model);
   }
   else {
-    result_.ia = features_matching.DivideModelAndAlign(*best_model);
+    result_.ia = features_matching.align();
+    best_model = model_;
   }
 
   ROS_DEBUG_STREAM(std::setprecision(6) << "IA fitness score: " << result_.ia.fitness_score1);

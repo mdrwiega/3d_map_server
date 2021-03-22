@@ -23,8 +23,6 @@
 #include <validation.h>
 #include <model_decomposition.h>
 
-
-
 using namespace pcl;
 using namespace pcl::registration;
 
@@ -34,6 +32,26 @@ FeaturesMatching::FeaturesMatching(const Config& config, PointCloudPtr& scene, P
   scene_cloud_(scene),
   model_cloud_(model),
   cfg_(config) {
+}
+
+FeaturesMatching::Result FeaturesMatching::align() {
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Calculate scene descriptors
+  auto scene = std::make_shared<FeatureCloud>(scene_cloud_, cfg_.feature_cloud);
+  scene->ProcessInput();
+
+  // Calculate model descriptors
+  auto model = std::make_shared<FeatureCloud>(model_cloud_, cfg_.feature_cloud);
+  model->ProcessInput();
+
+  auto result = FeaturesMatching::Align(0, cfg_, model, scene);
+
+  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::high_resolution_clock::now() - start);
+  result.processing_time_ms = static_cast<float>(diff.count());
+
+  return result;
 }
 
 FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_model) {
@@ -172,10 +190,6 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     result.fitness_score2 = res.fitness_score2;
     result.fitness_score3 = res.fitness_score3;
     result.features_correspondences = res.features_correspondences;
-
-    std::cout << "\nFitnessScore1 : " << res.fitness_score1 << "\n";
-    std::cout << "\nFitnessScore2 : " << res.fitness_score2 << "\n";
-    std::cout << "\nFitnessScore3 : " << res.fitness_score3 << "\n";
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
