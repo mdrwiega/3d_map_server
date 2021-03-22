@@ -48,7 +48,7 @@ class GeometryClusteringAlignment : public AlignmentMethod {
     float lowest_score = std::numeric_limits<float>::infinity();
     size_t best_result_index = 0;
 
-    PCL_INFO("Model instances found: %d", transformations.size());
+    PCL_DEBUG("\nModel instances found: %d\n", transformations.size());
     for (size_t i = 0; i < transformations.size (); ++i) {
       AlignmentValidator<Point> validator;
       validator.calculateCorrespondences(
@@ -58,7 +58,7 @@ class GeometryClusteringAlignment : public AlignmentMethod {
         lowest_score = fs1;
         best_result_index = i;
       }
-      PCL_INFO("  Instance %d: correspondences num: %d, fs1: %.2f\n", i + 1, clustered_corrs[i].size(), fs1);
+      PCL_DEBUG("  Instance %d: correspondences num: %d, fs1: %.2f\n", i + 1, clustered_corrs[i].size(), fs1);
     }
 
     AlignmentMethod::Result result;
