@@ -67,7 +67,7 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
   std::vector<Rectangle> blocks = RectangularModelDecomposition(
     map_min, map_max, cfg_.cell_size_x, cfg_.cell_size_y);
 
-  PCL_DEBUG("Starting features matching alignment. There are %d blocks.", blocks.size());
+  PCL_INFO("\nStarting features matching alignment. There are %d blocks\n", blocks.size());
 
   // Initialize thread pool and start workers
   thread_pool::ThreadPool thread_pool;
@@ -124,7 +124,7 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
   box_filter.filter(*filtered_model);
 
   if (filtered_model->size() < cfg.model_size_thresh_) {
-    ROS_WARN_STREAM("T" << nr << ": Model is too small (size: " << filtered_model->size() << ")");
+    PCL_WARN("\nT%d: Model is too small (size: %d)", nr, filtered_model->size());
     return FeaturesMatching::ThreadResult();
   }
 
@@ -150,7 +150,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  const FeatureCloudPtr& scene) {
   Point ppmin, ppmax;
   pcl::getMinMax3D(*(model->GetPointCloud()), ppmin, ppmax);
-  std::cout << "Task " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
+  std::cout << "\nTask " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
             << std::setprecision(2) << std::fixed
             << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
             << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
@@ -164,23 +164,25 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
             << "\n";
 
   auto start = std::chrono::high_resolution_clock::now();
-  FeaturesMatching::Result result;
-  pcl::CorrespondencesPtr features_correspondences (new pcl::Correspondences);
 
   std::shared_ptr<AlignmentMethod> aligner;
 
-  if (cfg.method == AlignmentMethodType::KdTreeSearch) {
-    aligner.reset(new KdTreeBasedAlignment(cfg.kdts));
+  switch(cfg.method) {
+    case AlignmentMethodType::KdTreeSearch:
+      aligner.reset(new KdTreeBasedAlignment(cfg.kdts));
+      break;
+    case AlignmentMethodType::SampleConsensus:
+      aligner.reset(new SampleConsensusAlignment(cfg.sac));
+      break;
+    case AlignmentMethodType::GeometryConsistencyClustering:
+      aligner.reset(new GeometryClusteringAlignment(cfg.gc));
+      break;
+    case AlignmentMethodType::Hough3DClustering:
+      aligner.reset(new Hough3dClusteringAlignment(cfg.hough));
+      break;
   }
-  else if (cfg.method == AlignmentMethodType::SampleConsensus) {
-    aligner.reset(new SampleConsensusAlignment(cfg.sac));
-  }
-  else if (cfg.method == AlignmentMethodType::GeometryConsistencyClustering) {
-    aligner.reset(new GeometryClusteringAlignment(cfg.gc));
-  }
-  else if (cfg.method == AlignmentMethodType::Hough3DClustering) {
-    aligner.reset(new Hough3dClusteringAlignment(cfg.hough));
-  }
+
+  FeaturesMatching::Result result;
 
   if (aligner) {
     auto res = aligner->align(model, scene);
@@ -189,15 +191,15 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
     result.fitness_score1 = res.fitness_score1;
     result.fitness_score2 = res.fitness_score2;
     result.fitness_score3 = res.fitness_score3;
-    result.features_correspondences = res.features_correspondences;
+    if (res.features_correspondences) {
+      result.features_correspondences = res.features_correspondences;
+    }
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  ROS_DEBUG_STREAM("Task " << nr <<  ": Clouds aligned with score: "
+  ROS_DEBUG_STREAM("Task " << nr <<  ": aligned with score: "
     << result.fitness_score1 << " in " << diff.count() << " ms." << std::endl);
-
-  result.correspondences = features_correspondences;
 
   if (cfg.show_visualizer || cfg.output_to_file) {
     MapsIntegratorVisualizer visualizer(
@@ -207,7 +209,8 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
       result.features_correspondences = FindFeaturesCorrespondencesWithKdTree(
         model->GetDescriptors(), scene->GetDescriptors(), 1.0);
     }
-    visualizer.VisualizeFeatureMatching(scene, model, result.transformation, result.features_correspondences);
+    visualizer.VisualizeFeatureMatching(
+      scene, model, result.transformation, result.features_correspondences);
   }
 
   return result;

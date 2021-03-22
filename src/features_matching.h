@@ -40,7 +40,7 @@ class FeaturesMatching {
     int keypoints_thresh_;
 
     bool show_visualizer{false};
-    bool output_to_file{true};
+    bool output_to_file{false};
     std::string output_dir;
   };
 

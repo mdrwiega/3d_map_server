@@ -112,8 +112,6 @@ inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& transf, con
 }
 
 inline double transformationsError(const Eigen::Matrix4f& t1, const Eigen::Matrix4f& t2) {
-  std::cout << "\ntransformationsError:\n";
-  std::cout << transfMatrixToXyzRpyString(t1 * t2);
   return (t1 * t2 - Eigen::Matrix4f::Identity()).norm();
 }
 

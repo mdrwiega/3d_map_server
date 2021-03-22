@@ -3,8 +3,6 @@
 #include <chrono>
 #include <thread>
 
-#include <ros/console.h>
-
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
@@ -35,6 +33,15 @@ void MapsIntegratorVisualizer::VisualizeFeatureMatching(const FeatureCloudPtr& s
   auto model_cloud = model->GetPointCloud();
   auto scene_keypoints = model->GetKeypoints();
   auto model_keypoints = scene->GetKeypoints();
+
+  if (!scene_cloud || !model_cloud) {
+    PCL_ERROR("\nVisualizer: Missing scene or model cloud\n");
+    return;
+  }
+  if (!scene_keypoints || !model_keypoints) {
+    PCL_ERROR("\nVisualizer: Missing scene or model keypoints cloud\n");
+    return;
+  }
 
   // Transform model
   PointCloud::Ptr transformed_model(new PointCloud());
@@ -136,7 +143,7 @@ void MapsIntegratorVisualizer::Visualize(
   if (cfg_.save_to_file && !cfg_.filename.empty()) {
     viewer.spinOnce(100);
     viewer.saveScreenshot(cfg_.filename);
-    ROS_INFO_STREAM("Screenshot has been saved to file: " << cfg_.filename << "\n");
+    PCL_INFO("\nScreenshot has been saved to file: %s\n", cfg_.filename.c_str());
   }
 
   if (!cfg_.screen_mode) {

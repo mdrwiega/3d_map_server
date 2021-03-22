@@ -27,7 +27,7 @@ class MapsIntegratorTest : public ::testing::Test
   }
 
   void Configure() {
-    cfg.template_alignment.divide_model = false;
+    cfg.template_alignment.divide_model = true;
     cfg.template_alignment.cell_size_x = 3;
     cfg.template_alignment.cell_size_y = 3;
     cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
@@ -62,7 +62,7 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.feature_cloud.iss_num_of_threads = 2;
 
     // ICP
-    cfg.icp_correction = true;
+    cfg.icp_correction = false;
     cfg.icp.max_iter = 500;
     cfg.icp.max_nn_dist = 0.5;
     cfg.icp.fitness_eps = 0.0005;
@@ -98,7 +98,7 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   PrintOcTreeInfo(*original_tree, "original_tree");
 
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(3, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(15, 10, 2.0));
 
   // Transform model
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
