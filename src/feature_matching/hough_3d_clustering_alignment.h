@@ -60,12 +60,14 @@ class Hough3dClusteringAlignment : public AlignmentMethod {
     rf_est.setSearchSurface(scene->GetPointCloud());
     rf_est.compute (*scene_rf);
 
+    PCL_INFO("Clustering");
+
     //  Clustering
     pcl::Hough3DGrouping<Point, Point, RFType, RFType> clusterer;
-    clusterer.setHoughBinSize (cg_size);
-    clusterer.setHoughThreshold (cg_thresh);
-    clusterer.setUseInterpolation (true);
-    clusterer.setUseDistanceWeight (false);
+    clusterer.setHoughBinSize(cg_size);
+    clusterer.setHoughThreshold(cg_thresh);
+    clusterer.setUseInterpolation(true);
+    clusterer.setUseDistanceWeight(false);
 
     clusterer.setInputCloud (model->GetKeypoints());
     clusterer.setInputRf(model_rf);

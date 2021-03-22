@@ -70,7 +70,7 @@ TEST_F(FeatureMatchingTest, Test_fr) {
   PrintOcTreeInfo(*original_tree, "original_tree");
 
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
-  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(6, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-2, -10, 0.0), Vector3f(3, 10, 2.0));
 
   // Transform model
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
