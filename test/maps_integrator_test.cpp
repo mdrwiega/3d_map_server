@@ -28,8 +28,8 @@ class MapsIntegratorTest : public ::testing::Test
 
   void Configure() {
     cfg.template_alignment.divide_model = true;
-    cfg.template_alignment.cell_size_x = 4;
-    cfg.template_alignment.cell_size_y = 4;
+    cfg.template_alignment.cell_size_x = 3;
+    cfg.template_alignment.cell_size_y = 3;
     cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
 
    // Feature matching

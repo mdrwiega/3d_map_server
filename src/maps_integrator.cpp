@@ -43,7 +43,7 @@ MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& mod
 MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   auto start = high_resolution_clock::now();
 
-  // Features based initial alignment
+  // Global alignment
   PointCloud::Ptr best_model(new PointCloud);
   FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
 
@@ -55,9 +55,10 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
     best_model = model_;
   }
 
-  PCL_INFO("\nIA fitness score: %.3f", result_.ia.fitness_score1);
-  PCL_INFO("\nIA time: %.1f ms", result_.ia.processing_time_ms);
-  PCL_INFO("\nIA transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "  ").c_str());
+  PCL_INFO("\nIA:");
+  PCL_INFO("\n  fitness score: %.3f", result_.ia.fitness_score1);
+  PCL_INFO("\n  time: %.1f ms", result_.ia.processing_time_ms);
+  PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "    ").c_str());
 
   // ICP correction
   if (cfg_.icp_correction) {
@@ -73,9 +74,10 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
         result_.transformation = result_.icp.transformation * result_.ia.transformation;
       }
 
-      PCL_INFO("\nICP fitness score: %.3f", result_.icp.fitness_score1);
-      PCL_INFO("\nICP time: %.1f ms", result_.icp.processing_time_ms);
-      PCL_INFO("\nICP transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "  ").c_str());
+      PCL_INFO("\nICP");
+      PCL_INFO("\n  fitness score: %.3f", result_.icp.fitness_score1);
+      PCL_INFO("\n  time: %.1f ms", result_.icp.processing_time_ms);
+      PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "    ").c_str());
     }
     catch (std::exception& e) {
       PCL_ERROR("\nICP exception: %s", e.what());
@@ -88,7 +90,10 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
   result_.transformation = result_.ia.transformation;
 
-  result_.PrintResult();
+  PCL_INFO("\nFinal result:");
+  PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
+  PCL_INFO("\n  time: %.1f s", result_.transf_estimation_time_ms / 1000.0);
+  PCL_INFO("\n  transformation:\n%s\n", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
 
   if (cfg_.output_to_file) {
     DumpConfigAndResultsToFile();
@@ -159,35 +164,32 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filena
 std::string MapsIntegrator::Result::toString() {
   std::stringstream ss;
   // Add octrees size
-  ss << "best_model_limits:\n";
-  ss << "  x: [" << model_min.x << ", " << model_max.x << "]\n";
-  ss << "  y: [" << model_min.y << ", " << model_max.y << "]\n";
-  ss << "processing_time_ms:\n";
-  ss << "  transf_estimation: " << transf_estimation_time_ms << "\n";
-  ss << "  octree_transformation: " << octree_transformation_time_ms << "\n";
-  ss << "  octrees_merge: " << octrees_merge_time_ms << "\n";
-  ss << "  icp: " << icp.processing_time_ms << "\n";
-  ss << "  ia: " << ia.processing_time_ms << "\n";
-  ss << "initial_alignment:\n";
+  ss << "maps_integration:\n";
+  ss << "  transf_estimation_time_ms: " << transf_estimation_time_ms << "\n";
+  ss << "  octree_transformation_time_ms: " << octree_transformation_time_ms << "\n";
+  ss << "  octrees_merge_time_ms: " << octrees_merge_time_ms << "\n";
+  ss << "global_alignment:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "    ");
-  ss << "  fitness_score: " << ia.fitness_score1 << "\n";
+  ss << "  fitness_score1: " << ia.fitness_score1 << "\n";
+  ss << "  fitness_score2: " << ia.fitness_score2 << "\n";
+  ss << "  fitness_score3: " << ia.fitness_score3 << "\n";
+  ss << "  time_ms: " << ia.processing_time_ms << "\n";
+  ss << "  best_model_limits:\n";
+  ss << "    x: [" << model_min.x << ", " << model_max.x << "]\n";
+  ss << "    y: [" << model_min.y << ", " << model_max.y << "]\n";
   // ss << "  correspondences_num: " << ia.correspondences.size() << "\n";
-  ss << "icp:\n";
+  ss << "local_alignement:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "    ");
   ss << "  fitness_score: " << icp.fitness_score1 << "\n";
+  ss << "  fitness_score2: " << icp.fitness_score2 << "\n";
+  ss << "  fitness_score3: " << icp.fitness_score3 << "\n";
+  ss << "  time_ms: " << icp.processing_time_ms << "\n";
   ss << "final:\n";
   ss << "  transformation:\n" << transfMatrixToXyzRpyString(transformation, "    ");
   ss << "  fitness_score1: " << fitness_score1 << "\n";
   ss << "  fitness_score2: " << fitness_score2 << "\n";
   ss << "  fitness_score3: " << fitness_score3 << "\n";
   return ss.str();
-}
-
-void MapsIntegrator::Result::PrintResult() {
-  std::cout << "Final result:" << std::fixed << std::setprecision(1) << std::endl;
-  std::cout << "Total time: " << (transf_estimation_time_ms + octree_transformation_time_ms + octrees_merge_time_ms) / 1000.0 << " s." << std::endl;
-  std::cout << "Fitness score: " << std::setprecision(6) << fitness_score1 << std::endl;
-  std::cout << "Transformation: " << transfMatrixToXyzRpyString(transformation) << std::endl;
 }
 
 std::string MapsIntegrator::Config::toString() {
