@@ -59,6 +59,8 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   PCL_INFO("\n  fitness score: %.3f", result_.ia.fitness_score1);
   PCL_INFO("\n  time: %.1f ms", result_.ia.processing_time_ms);
   PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "    ").c_str());
+  result_.fitness_score1 = result_.ia.fitness_score1;
+  result_.transformation = result_.ia.transformation;
 
   // ICP correction
   if (cfg_.icp_correction) {
@@ -74,7 +76,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
         result_.transformation = result_.icp.transformation * result_.ia.transformation;
       }
 
-      PCL_INFO("\nICP");
+      PCL_INFO("\nICP:");
       PCL_INFO("\n  fitness score: %.3f", result_.icp.fitness_score1);
       PCL_INFO("\n  time: %.1f ms", result_.icp.processing_time_ms);
       PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "    ").c_str());
@@ -86,9 +88,7 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // Create result
   result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
-  result_.fitness_score1 = result_.ia.fitness_score1;
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
-  result_.transformation = result_.ia.transformation;
 
   PCL_INFO("\nFinal result:");
   PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
