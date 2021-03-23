@@ -109,12 +109,12 @@ if (CATKIN_ENABLE_TESTING)
 
     set(TESTS_SRC
         test/conversions_test.cpp
-        # test/feature_cloud_test.cpp
+        test/feature_cloud_test.cpp
         test/features_matching_test.cpp
         test/maps_integrator_test.cpp
         # test/test_octomap_tools.cpp
         test/transformations_test.cpp
-        # test/icp_matching_test.cpp
+        test/icp_matching_test.cpp
         test/thread_pool_test.cpp
         test/main.cpp
     )

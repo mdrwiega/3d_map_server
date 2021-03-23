@@ -51,6 +51,6 @@ TEST_F(IcpMatchingTest, Test_fr) {
   ICP matcher(scene_cloud, model_cloud, cfg_);
   auto result = matcher.Align();
 
-  PrintMatchingResult(T, result.transformation.inverse(), result.fitness_score);
+  PrintMatchingResult(T, result.transformation.inverse(), result.fitness_score1);
 }
 

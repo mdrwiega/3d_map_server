@@ -31,11 +31,9 @@ class FeatureCloudTest : public ::testing::Test {
     cfg_.descriptors_radius = 0.5;
     cfg_.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
     cfg_.iss_min_neighbours = 10;
-    cfg_.iss_model_resolution = 0.05;
     cfg_.iss_num_of_threads = 8;
     cfg_.iss_threshold21 = 0.975;
     cfg_.iss_threshold32 = 0.975;
-    cfg_.debug = true;
   }
 
   void PrepareOcTree(const std::string& octomap_packed_file,
