@@ -5,6 +5,8 @@
 #include <ros/console.h>
 
 #include <pcl/keypoints/iss_3d.h>
+#include <pcl/keypoints/harris_3d.h>
+
 
 #include <pcl/keypoints/narf_keypoint.h>
 #include <pcl/keypoints/sift_keypoint.h>
@@ -88,6 +90,20 @@ void FeatureCloud::ExtractKeypoints() {
     iss_detector.setNumberOfThreads(cfg_.iss_num_of_threads);
     iss_detector.setInputCloud(cloud_);
     iss_detector.compute(*keypoints_);
+
+    // Harris3D
+    // pcl::PointCloud<pcl::PointXYZI>::Ptr keypoints_temp(
+		// 		new pcl::PointCloud<pcl::PointXYZI>());
+    // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+    // pcl::HarrisKeypoint3D<pcl::PointXYZ, pcl::PointXYZI, NormalType> detector;
+    // detector.setSearchMethod(tree);
+    // detector.setRadiusSearch(0.01);
+    // detector.setRadius(0.3);
+    // detector.setInputCloud(cloud_);
+    // detector.setNumberOfThreads(4);
+    // detector.compute(*keypoints_temp);
+    // pcl::copyPointCloud(*keypoints_temp, *keypoints_);
+
   }
 
   FilterOutNaNs(keypoints_, cfg_.debug);
@@ -109,7 +125,7 @@ void FeatureCloud::ComputeDescriptors() {
   auto start = high_resolution_clock::now();
   descriptors_ = Descriptors::Ptr(new Descriptors);
   pcl::SHOTEstimationOMP<Point, NormalType, DescriptorType> descr_est;
-  //    pcl::FPFHEstimation<Point, NormalType, DescriptorType> descr_est;
+    //  pcl::FPFHEstimationOMP<Point, NormalType, DescriptorType> descr_est;
 
   descr_est.setRadiusSearch (cfg_.descriptors_radius);
   descr_est.setInputCloud (keypoints_);

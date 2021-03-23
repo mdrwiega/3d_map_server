@@ -81,9 +81,9 @@ class KdTreeBasedAlignment : public AlignmentMethod {
     for (size_t i = 0; i < scene_descriptors->size (); ++i) {
       std::vector<int> neigh_indices(1);
       std::vector<float> neigh_sqr_dists(1);
-      if (!std::isfinite (scene_descriptors->at (i).descriptor[0])) { //skipping NaNs
-        continue;
-      }
+      // if (!std::isfinite (scene_descriptors->at (i).descriptor[0])) { //skipping NaNs
+      //   continue;
+      // }
 
       int found_neighs = match_search.nearestKSearch(scene_descriptors->at (i), 1, neigh_indices, neigh_sqr_dists);
 

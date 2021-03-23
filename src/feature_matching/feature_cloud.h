@@ -3,6 +3,7 @@
 #include <pcl/common/common.h>
 #include <pcl/features/shot_omp.h>
 #include <pcl/features/normal_3d_omp.h>
+#include <pcl/features/fpfh_omp.h>
 
 #include <utils.h>
 
@@ -12,7 +13,7 @@ class FeatureCloud {
  public:
   using NormalType = pcl::Normal;
   using SurfaceNormals = pcl::PointCloud<pcl::Normal>;
-  using DescriptorType =  pcl::SHOT352; // pcl::FPFHSignature33;
+  using DescriptorType = pcl::SHOT352; //pcl::FPFHSignature33;
   using Descriptors = pcl::PointCloud<DescriptorType>;
   using RFType = pcl::ReferenceFrame;
 
