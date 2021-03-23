@@ -44,21 +44,6 @@ In gdb:
 ## Running maps merging tool with ROS
 `roslaunch octomap_tools merge_maps.launch map1:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
 
-## Batch processing
-### Pipeline
-- generate params sets
-- start tests
-- analyse
-
-### Generate parameters sets
-```
-rosrun octomap_tools params_generator.py \
-  -i /home/mdrwiega/ros_ws/src/3d_map_server/config/params_generator_cfg.yaml \
-  -o /home/mdrwiega/ros_ws/temp/params
-```
-
-### Process params sets
-`rosrun octomap_tools tests.py`
 
 ## Other
 - Add to maps_integrator node
