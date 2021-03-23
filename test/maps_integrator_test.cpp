@@ -30,10 +30,10 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.divide_model = true;
     cfg.template_alignment.cell_size_x = 3;
     cfg.template_alignment.cell_size_y = 3;
-    cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
+    cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
 
    // Feature matching
-    cfg.template_alignment.model_size_thresh_ = 400;
+    cfg.template_alignment.model_size_thresh_ = 100;
     cfg.template_alignment.keypoints_thresh_ = 40;
 
     cfg.template_alignment.feature_cloud.normal_radius = 10.0;
@@ -230,188 +230,61 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4) {
   DumpTestInfoToFile(original_tree, T, res.transformation);
 }
 
-// TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
-// {
-//   std::string octomap_name = "pwr_d20_f5_m3";
-//   transformation_ = createTransformationMatrix(14, 6, 0.5, ToRad(5), ToRad(5), ToRad(30));
-
-//   orig_tree_ = unpackAndGetOctomap(octomap_name);
-//   PrintOcTreeInfo(*orig_tree_, "orig_tree");
-
-//   Vector3f map1_min = {-17.0, 12, 0};
-//   Vector3f map1_max = {6.0, 20, 2};
-
-//   Vector3f map2_min = {2.0, 6, 0};
-//   Vector3f map2_max = {20.0, 20, 2};
-
-//   tree_l_ = CropOcTree(*orig_tree_, map1_min, map1_max);
-//   auto tree_r_tmp = CropOcTree(*orig_tree_, map2_min, map2_max);
-//   tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
-//   PrintOcTreeInfo(*tree_l_, "tree_l");
-//   PrintOcTreeInfo(*tree_r_, "tree_r");
-
-//   cfg.show_visualization_ = true;
-//   cfg.show_two_pointclouds = true;
-
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
-//   auto res = maps_integrator.EstimateTransformation();
-//   result_transf_ = res.transformation;
-// }
-
-// TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
-// {
-//   std::string octomap_name = "pwr_d20_f5_m3";
-//   transformation_ = createTransformationMatrix(18, 4, 0.5, ToRad(5), ToRad(5), ToRad(30));
-
-//   orig_tree_ = unpackAndGetOctomap(octomap_name);
-//   PrintOcTreeInfo(*orig_tree_, "orig_tree");
-
-//   Vector3f map1_min = {-17.0, 6, 0};
-//   Vector3f map1_max = {20.0, 20, 2};
-
-//   Vector3f map2p1_min = {-18.0, -17, 0};
-//   Vector3f map2p1_max = {7.0, 4, 2};
-
-//   Vector3f map2p2_min = {-10.0, -17, 0};
-//   Vector3f map2p2_max = {0.0, 20, 2};
-
-//   auto tree2_p1 = CropOcTree(*orig_tree_, map2p1_min, map2p1_max);
-//   auto tree2_p2 = CropOcTree(*orig_tree_, map2p2_min, map2p2_max);
-//   auto tree_r_tmp = FastSumOctrees(*tree2_p1, *tree2_p2);
-
-//   tree_l_ = CropOcTree(*orig_tree_, map1_min, map1_max);
-//   tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
-//   PrintOcTreeInfo(*tree_l_, "tree_l");
-//   PrintOcTreeInfo(*tree_r_, "tree_r");
-
-//   cfg.template_alignment.cell_size_x = 4.5;
-//   cfg.template_alignment.cell_size_y = 4.5;
-//   cfg.show_visualization_ = true;
-//   cfg.show_two_pointclouds = true;
-
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
-//   auto res = maps_integrator.EstimateTransformation();
-//   result_transf_ = res.transformation;
-// }
-
-
-// TEST_F(MapsIntegratorTest, Test_pwr_d20_m4_t2)
-// {
-//   std::string octomap_name = "pwr_d20_f5_m4";
-//   transformation_ = createTransformationMatrix(20, 6, 0.3, ToRad(5), ToRad(5), ToRad(15));
-//   x_common_ = 5;
-//   PrepareSceneAndModelWithXDivision(octomap_name);
-
-//   cfg.show_visualization_ = true;
-//   cfg.show_two_pointclouds = true;
-
-//   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
-//   maps_integrator.EstimateTransformation();
-// }
-
-/*TEST_F(MapsIntegratorTest, Test_multi_fr)
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
 {
-  std::string octomap_name = "fr_079";
-  auto cloud_min = Vector4f(-10, -10, -0.5, 1.0);
-  auto cloud_max = Vector4f(7, 7, 2.0, 1.0);
-  transformation_ = createTransformationMatrix(8.5, 1.5, 0.1, ToRadians(3), ToRadians(2), ToRadians(25));
-  x_common_ = 4;
-  PrepareSceneAndModelWithXDivision(octomap_name, cloud_min, cloud_max);
+  std::string octomap_name = "pwr_d20_f5_m3";
+  auto T = createTransformationMatrix(14, 6, 0.5, ToRad(5), ToRad(5), ToRad(30));
 
-  std::vector<float> max_correspondence_distance_vec = {0.5, 1.0, 2.0, 5.0, 10.0, 20.0};
-  std::vector<float> min_sample_distance_vec = {0.05, 0.1, 0.2, 0.5, 1.0};
-  std::vector<float> descriptors_radius_vec = {0.5, 1.5, 2.0, 3.0};
-  std::vector<float> downsampling_radius_vec = {0.1, 0.15, 0.2, 0.3};
-  std::vector<float> normal_radius_vec = {2.0, 5.0, 10.0, 20.0};
-  std::vector<float> cell_size_vec = {1, 2, 2.5, 3};
-  std::vector<float> icp_max_nn_dist_vec = {0.1, 0.2, 0.5, 0.};
+  auto original_tree = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*original_tree, "orig_tree");
 
-  for (auto icp_max_nn_dist : icp_max_nn_dist_vec) {
-    cfg.icp.max_nn_dist = icp_max_nn_dist;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  Vector3f map1_min = {-17.0, 12, 0};
+  Vector3f map1_max = {6.0, 20, 2};
 
-  configure();
-  for (auto cell_size : cell_size_vec) {
-    cfg.cell_size_x_ = cell_size;
-    cfg.cell_size_y_ = cell_size;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  Vector3f map2_min = {2.0, 6, 0};
+  Vector3f map2_max = {20.0, 20, 2};
 
-  configure();
-  for (auto normal_radius : normal_radius_vec) {
-    cfg.feature_cloud.normal_radius = normal_radius;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  auto tree_l_ = CropOcTree(*original_tree, map1_min, map1_max);
+  auto tree_r_tmp = CropOcTree(*original_tree, map2_min, map2_max);
+  auto tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
 
-  configure();
-  for (auto downsampling_radius : downsampling_radius_vec) {
-    cfg.feature_cloud.downsampling_radius = downsampling_radius;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
+  auto res = maps_integrator.EstimateTransformation();
+  DumpTestInfoToFile(original_tree, T, res.transformation);
+}
 
-  configure();
-  for (auto descriptors_radius : descriptors_radius_vec) {
-    cfg.feature_cloud.descriptors_radius = descriptors_radius;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
+{
+  std::string octomap_name = "pwr_d20_f5_m3";
+  auto T = createTransformationMatrix(18, 4, 0.5, ToRad(5), ToRad(5), ToRad(30));
 
-  configure();
-  for (auto min_sample_distance : min_sample_distance_vec) {
-    cfg.template_alignment.min_sample_distance = min_sample_distance;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  auto original_tree = unpackAndGetOctomap(octomap_name);
+  PrintOcTreeInfo(*original_tree, "orig_tree");
 
-  configure();
-  for (auto max_correspondence_distance : max_correspondence_distance_vec) {
-    cfg.template_alignment.max_correspondence_distance = max_correspondence_distance;
-    MapsIntegrator maps_integrator(cfg);
-    maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-  }
+  Vector3f map1_min = {-17.0, 6, 0};
+  Vector3f map1_max = {20.0, 20, 2};
 
-//  for (auto max_correspondence_distance : max_correspondence_distance_vec) {
-//    cfg.template_alignment.max_correspondence_distance = max_correspondence_distance;
-//    for (auto min_sample_distance : min_sample_distance_vec) {
-//      cfg.template_alignment.min_sample_distance = min_sample_distance;
-//      for (auto descriptors_radius : descriptors_radius_vec) {
-//        cfg.feature_cloud.descriptors_radius = descriptors_radius;
-//        for (auto downsampling_radius : downsampling_radius_vec) {
-//          cfg.feature_cloud.downsampling_radius = downsampling_radius;
-//          for (auto normal_radius : normal_radius_vec) {
-//            cfg.feature_cloud.normal_radius = normal_radius;
-//            for (auto cell_size : cell_size_vec) {
-//              cfg.cell_size_x_ = cell_size;
-//              cfg.cell_size_y_ = cell_size;
-//              for (auto icp_max_nn_dist : icp_max_nn_dist_vec) {
-//                cfg.icp.max_nn_dist = icp_max_nn_dist_vec;
-//
-//                MapsIntegrator maps_integrator(cfg);
-//                maps_integrator.EstimateTransformationWithModelDivision(cloud_l, cloud_r);
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-}*/
+  Vector3f map2p1_min = {-18.0, -17, 0};
+  Vector3f map2p1_max = {7.0, 4, 2};
 
-// TEST(SpiralTest, GenerateSpiralTraverse)
-// {
-//   Eigen::Vector2f rectangle_min (-4, -2);
-//   Eigen::Vector2f rectangle_max (2, 3);
-//   Eigen::Vector2f step_xy (1, 2);
+  Vector3f map2p2_min = {-10.0, -17, 0};
+  Vector3f map2p2_max = {0.0, 20, 2};
 
-//   auto cells_seq = generateBlocksInSpiralOrder(rectangle_min, rectangle_max, step_xy);
+  auto tree2_p1 = CropOcTree(*original_tree, map2p1_min, map2p1_max);
+  auto tree2_p2 = CropOcTree(*original_tree, map2p2_min, map2p2_max);
+  auto tree_r_tmp = FastSumOctrees(*tree2_p1, *tree2_p2);
 
-//   for (size_t i = 0; i < cells_seq.size(); ++i) {
-//     auto cell = cells_seq[i];
-//     std::cout << "Block nr: " << i << "  min: (" << cell.min(0) << ", " << cell.min(1) << ")  max: (" << cell.max(0) << ", " << cell.max(1) << ")\n";
-//   }
-// }
+  auto tree_l_ = CropOcTree(*original_tree, map1_min, map1_max);
+  auto tree_r_ = FastOcTreeTransform(*tree_r_tmp, transformation_);
+  PrintOcTreeInfo(*tree_l_, "tree_l");
+  PrintOcTreeInfo(*tree_r_, "tree_r");
+
+  cfg.template_alignment.cell_size_x = 4.5;
+  cfg.template_alignment.cell_size_y = 4.5;
+
+  MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
+  auto res = maps_integrator.EstimateTransformation();
+  DumpTestInfoToFile(original_tree, T, res.transformation);
+}
