@@ -3,10 +3,10 @@
 
 #include <Eigen/Dense>
 
-#include <octomap_tools/utils.h>
+#include <utils.h>
 #include <octomap_tools/octomap_io.h>
 
-#include <octomap_tools/transformations.h>
+#include <transformations.h>
 
 using namespace octomap_tools;
 

@@ -1,10 +1,3 @@
-/******************************************************************************
- * Software License Agreement (BSD License)
- *
- * Copyright (c) 2019, Michal Drwiega (drwiega.michal@gmail.com)
- * All rights reserved.
- *****************************************************************************/
-
 /**
  * This tool filters octree (.ot)
  * The plane of split is determined by three points:
@@ -22,10 +15,10 @@
 
 #include <Eigen/Dense>
 
-#include <octomap_tools/utils.h>
+#include <utils.h>
 #include <octomap_tools/octomap_io.h>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include "../../include/octomap_tools/conversions.h"
+#include <conversions.h>
 
 using namespace octomap_tools;
 using namespace Eigen;

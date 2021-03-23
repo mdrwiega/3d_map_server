@@ -3,10 +3,10 @@
 
 #include <Eigen/Dense>
 
-#include <octomap_tools/utils.h>
+#include <utils.h>
 #include <octomap_tools/octomap_io.h>
 #include <pcl/filters/radius_outlier_removal.h>
-#include "../../include/octomap_tools/conversions.h"
+#include <conversions.h>
 
 using namespace octomap_tools;
 using namespace Eigen;

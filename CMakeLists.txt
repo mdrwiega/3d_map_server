@@ -94,7 +94,6 @@ target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES}
 
 # Install
 catkin_install_python(PROGRAMS
-  scripts/tests.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
