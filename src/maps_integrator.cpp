@@ -60,6 +60,8 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   PCL_INFO("\n  time: %.1f ms", result_.ia.processing_time_ms);
   PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "    ").c_str());
   result_.fitness_score1 = result_.ia.fitness_score1;
+  result_.fitness_score2 = result_.ia.fitness_score2;
+  result_.fitness_score3 = result_.ia.fitness_score3;
   result_.transformation = result_.ia.transformation;
 
   // ICP correction
@@ -73,6 +75,8 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
       if (result_.icp.fitness_score1 < result_.ia.fitness_score1) {
         result_.fitness_score1 = result_.icp.fitness_score1;
+        result_.fitness_score2 = result_.icp.fitness_score2;
+        result_.fitness_score3 = result_.icp.fitness_score3;
         result_.transformation = result_.icp.transformation * result_.ia.transformation;
       }
 

@@ -105,9 +105,6 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
   auto model = FastOcTreeTransform(*init_model, T);
 
-  // SaveOcTreeToFile(*scene, "fr_scene.ot");
-  // SaveOcTreeToFile(*model, "fr_model.ot");
-
   cfg.output_dir = getCurrentDateAndTime() + '_';
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
