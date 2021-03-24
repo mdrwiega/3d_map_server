@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 build/
 bin/
 lib/
@@ -43,9 +42,3 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
-=======
-.autotools
-.cproject
-.project
-.settings/
->>>>>>> 3f66802... Add gitignore
