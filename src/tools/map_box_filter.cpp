@@ -27,14 +27,18 @@ int main(int argc, char** argv) {
   const std::string out_filepath = argv[2];
 
   const float x_min = std::strtof(argv[3], nullptr);
-  const float x_max = std::strtof(argv[4], nullptr);
-  const float y_min = std::strtof(argv[5], nullptr);
-  const float y_max = std::strtof(argv[6], nullptr);
-  const float z_min = std::strtof(argv[7], nullptr);
+  const float y_min = std::strtof(argv[4], nullptr);
+  const float z_min = std::strtof(argv[5], nullptr);
+  const float x_max = std::strtof(argv[6], nullptr);
+  const float y_max = std::strtof(argv[7], nullptr);
   const float z_max = std::strtof(argv[8], nullptr);
 
   auto min = Eigen::Vector3f(x_min, y_min, z_min);
   auto max = Eigen::Vector3f(x_max, y_max, z_max);
+
+  std::cout << "\nBox Filter";
+  std::cout << "\nmin: [" << min[0] << "," << min[1] << "," << min[2] << "]";
+  std::cout << "\nmax: [" << max[0] << "," << max[1] << "," << max[2] << "]\n";
 
   auto in_tree = LoadOcTreeFromFile(in_filepath);
   auto out_tree = CropOcTree(*in_tree, min, max);
