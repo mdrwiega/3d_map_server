@@ -243,17 +243,17 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
   ROS_DEBUG_STREAM("Task " << nr <<  ": aligned with score: "
     << result.fitness_score1 << " in " << diff.count() << " ms." << std::endl);
 
-  if (cfg.show_visualizer || cfg.output_to_file) {
-    MapsIntegratorVisualizer visualizer(
-      { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
+  // if (cfg.show_visualizer || cfg.output_to_file) {
+  //   MapsIntegratorVisualizer visualizer(
+  //     { cfg.show_visualizer, cfg.output_to_file, cfg.output_dir + "feature_matching.png" });
 
-    if (!result.features_correspondences) {
-      result.features_correspondences = FindFeaturesCorrespondencesWithKdTree(
-        model->GetDescriptors(), scene->GetDescriptors(), 1.0);
-    }
-    visualizer.VisualizeFeatureMatching(
-      scene, model, result.transformation, result.features_correspondences);
-  }
+  //   if (!result.features_correspondences) {
+  //     result.features_correspondences = FindFeaturesCorrespondencesWithKdTree(
+  //       model->GetDescriptors(), scene->GetDescriptors(), 1.0);
+  //   }
+  //   visualizer.VisualizeFeatureMatching(
+  //     scene, model, result.transformation, result.features_correspondences);
+  // }
 
   return result;
 }

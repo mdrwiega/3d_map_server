@@ -84,10 +84,10 @@ class ICP {
 
     auto dt = std::chrono::duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - start);
 
-    if (cfg_.visualize) {
-      MapsIntegratorVisualizer visualizer({ false, true, cfg_.output_dir + "icp.png" });
-      visualizer.VisualizeICP(scene, model_, icp.getFinalTransformation());
-    }
+    // if (cfg_.visualize) {
+    //   MapsIntegratorVisualizer visualizer({ false, true, cfg_.output_dir + "icp.png" });
+    //   visualizer.VisualizeICP(scene, model_, icp.getFinalTransformation());
+    // }
 
     Result result;
     result.transformation = icp.getFinalTransformation();

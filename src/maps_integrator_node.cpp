@@ -18,7 +18,7 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   std::string output_dir;
   nh_.param<std::string>("output_dir", output_dir, "");
   bool output_to_file;
-  nh_.param<bool>("output_to_file", output_to_file, true);
+  nh_.param<bool>("output_to_file", output_to_file, false);
   bool show_visualizer;
   nh_.param<bool>("show_visualizer", show_visualizer, false);
 
@@ -90,6 +90,8 @@ void MapsIntegratorNode::IntegrateMaps(const std::string& map1_filepath, const s
 
   MapsIntegrator maps_integrator(map1, map2, config);
   maps_integrator.EstimateTransformation();
+
+  ROS_INFO("Maps transformation estimation finished");
 }
 
 }

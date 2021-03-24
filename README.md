@@ -48,4 +48,5 @@ In gdb:
 ## Other
 - Add to maps_integrator node
 <!--     launch-prefix = "valgrind --leak-check=full" -->
+          <!-- launch-prefix="gdb -ex run --args" -->
 
