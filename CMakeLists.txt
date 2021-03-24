@@ -77,6 +77,10 @@ add_executable(map_box_filter src/tools/map_box_filter.cpp)
 target_link_libraries(map_box_filter
   ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
+add_executable(transform_octomap src/tools/transform_octomap.cpp)
+target_link_libraries(transform_octomap
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+
 add_executable(octomap_statistical_filter
 	src/tools/octomap_statistical_filter.cpp
 )
