@@ -36,6 +36,10 @@ int main(int argc, char** argv) {
   const float p = std::strtof(argv[7], nullptr);
   const float yaw = std::strtof(argv[8], nullptr);
 
+  std::cout << "\nTransform octomap";
+  std::cout << "\nxyz: [" << x << "," << y << "," << z << "]";
+  std::cout << "\nrpy: [" << r << "," << p << "," << yaw << "]\n";
+
   auto in_tree = LoadOcTreeFromFile(in_filepath);
 
   auto T = createTransformationMatrix(x, y, z, ToRad(r), ToRad(p), ToRad(yaw));
