@@ -106,8 +106,7 @@ inline int getNumberOfOccupiedNodes(const OcTree& input_tree) {
 inline std::string OcTreeInfoToString(const OcTree& tree, const std::string& name,
                                       const std::string& line_prefix = {}) {
   std::stringstream ss;
-  ss << line_prefix << "octree:\n";
-  ss << line_prefix << "  name: " << name << "\n";
+  ss << line_prefix << name << ":\n";
   ss << line_prefix << "  size: " << tree.size() << "\n";
   ss << line_prefix << "  resolution: " << tree.getResolution() << "\n";
 

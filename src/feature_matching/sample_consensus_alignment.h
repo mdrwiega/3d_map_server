@@ -222,15 +222,15 @@ class SampleConsensusAlignment : public AlignmentMethod {
  public:
 
   struct Config {
-    float min_sample_distance;
-    float max_correspondence_distance;
-    int nr_iterations;
-    float fitness_score_dist;
-    unsigned samples_num;
-    unsigned nn_for_each_sample_num;
-    bool modified_version; // use modified version of algorithm
-    float mod_feature_max_dist; // if dist between point and its NN is bigger then the correspondence is rejected
-    float mod_feature_max_dist_diff; // max dist between first and second NN
+    float min_sample_distance = 0.2;
+    float max_correspondence_distance = 100.0;
+    int nr_iterations = 1000;
+    float fitness_score_dist = 1.0;
+    unsigned samples_num = 5;
+    unsigned nn_for_each_sample_num = 10;
+    bool modified_version = true; // use modified version of algorithm
+    float mod_feature_max_dist = 0.7; // if dist between point and its NN is bigger then the correspondence is rejected
+    float mod_feature_max_dist_diff = 0.1; // max dist between first and second NN
                                      // big value means that a feature is distinctive enough
   };
 

@@ -159,8 +159,8 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filena
 
   std::string result_file = basename + "_result.txt";
   std::ofstream file(result_file, std::ios_base::app);
-  file << OcTreeInfoToString(*scene_tree_, "map1_scene");
-  file << OcTreeInfoToString(*model_tree_, "map2_model");
+  file << OcTreeInfoToString(*scene_tree_, "scene_octree");
+  file << OcTreeInfoToString(*model_tree_, "model_octree");
   file << result_.toString();
   return basename;
 }

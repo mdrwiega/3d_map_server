@@ -25,7 +25,6 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   // Main parameters
   cfg.show_visualizer = show_visualizer;
 
-  // nh_.param<std::string>("global_alignment/method", cfg.method, "feature_matching");
   nh_.param<bool>("global_alignment/divide_model",cfg.template_alignment.divide_model, true);
   nh_.param<float>("global_alignment/cell_size_x", cfg.template_alignment.cell_size_x, 3.0);
   nh_.param<float>("global_alignment/cell_size_y", cfg.template_alignment.cell_size_y, 3.0);
@@ -38,6 +37,16 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   nh_.param<float>(fm_ns + "normal_radius", fm.feature_cloud.normal_radius, 10.0);
   nh_.param<float>(fm_ns + "downsampling_radius", fm.feature_cloud.downsampling_radius, 0.15);
   nh_.param<float>(fm_ns + "descriptors_radius", fm.feature_cloud.descriptors_radius, 1.0);
+  std::string alignment_method;
+  nh_.param<std::string>(fm_ns + "alignment_method", alignment_method, "sac");
+  if (alignment_method.compare("sac") == 0)
+    fm.method = FeaturesMatching::AlignmentMethodType::SampleConsensus;
+  else if (alignment_method.compare("kdts") == 0)
+    fm.method = FeaturesMatching::AlignmentMethodType::KdTreeSearch;
+  else if (alignment_method.compare("gcc") == 0)
+    fm.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
+  else if (alignment_method.compare("hough") == 0)
+    fm.method = FeaturesMatching::AlignmentMethodType::Hough3DClustering;
 
   cfg.template_alignment.output_dir = output_dir;
   cfg.template_alignment.show_visualizer = show_visualizer;
@@ -45,12 +54,18 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
 
   // Sample Consensus
   std::string sac_ns = "global_alignment/feature_matching/sample_consensus/";
-  // nh_.param<std::string>("global_alignment/feature_matching/method",
-  //   cfg.template_alignment.method, "sample_consensus");
   nh_.param<int>(sac_ns + "iterations_num", cfg.template_alignment.sac.nr_iterations, 1000);
   nh_.param<float>(sac_ns + "min_sample_distance", cfg.template_alignment.sac.min_sample_distance, 0.2);
   nh_.param<float>(sac_ns + "max_correspondence_distance", cfg.template_alignment.sac.max_correspondence_distance, 100.0);
   nh_.param<float>(sac_ns + "fitness_score_distance", cfg.template_alignment.sac.fitness_score_dist, 0.5);
+
+  // Keypoints extraction method
+  std::string keypoints_method;
+  nh_.param<std::string>(fm_ns + "global_alignment/feature_matching/keypoints_method", keypoints_method, "iss3d");
+  if (keypoints_method.compare("iss3d") == 0)
+    cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
+  else if (keypoints_method.compare("uniform") == 0)
+    cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Uniform;
 
   // ISS 3D
   std::string iss3d_ns = "global_alignment/feature_matching/iss3d/";

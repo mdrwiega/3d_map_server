@@ -40,7 +40,6 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.feature_cloud.downsampling_radius = 0.15;
     cfg.template_alignment.feature_cloud.descriptors_radius = 1.0;
     cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
-    cfg.template_alignment.feature_cloud.debug = true;
     cfg.template_alignment.show_visualizer = false;
 
     // Sample Consensus
