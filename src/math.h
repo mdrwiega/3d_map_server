@@ -53,9 +53,9 @@ class Cuboid {
 inline Eigen::Matrix3f rotationMatrixFromRPY(float roll, float pitch, float yaw) {
   using namespace Eigen;
   Matrix3f m;
-  m = AngleAxisf(roll,  Vector3f::UnitX())
-    * AngleAxisf(pitch, Vector3f::UnitY())
-    * AngleAxisf(yaw,   Vector3f::UnitZ());
+  m = AngleAxisf(yaw,  Vector3f::UnitZ())
+    * AngleAxisf(roll, Vector3f::UnitY())
+    * AngleAxisf(pitch,   Vector3f::UnitX());
   return m;
 }
 
@@ -96,8 +96,8 @@ inline std::string transformationMatrixToString(const Eigen::Matrix4f& Mat) {
   return ss.str();
 }
 
-inline Eigen::Vector3f rotMatrixToRPY(const Eigen::Matrix3f& rot) {
-  return rot.eulerAngles(0, 1, 2).transpose();
+inline Eigen::Vector3f rotMatrixToRPY(const Eigen::Matrix3f& R) {
+  return R.eulerAngles(0, 1, 2);
 }
 
 inline std::string transfMatrixToXyzRpyString(const Eigen::Matrix4f& transf, const std::string line_prefix = {}) {
