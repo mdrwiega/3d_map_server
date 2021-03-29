@@ -81,20 +81,19 @@ add_executable(transform_octomap src/tools/transform_octomap.cpp)
 target_link_libraries(transform_octomap
   ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(octomap_statistical_filter
-	src/tools/octomap_statistical_filter.cpp
-)
-target_link_libraries(octomap_statistical_filter ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(octomap_statistical_filter src/tools/octomap_statistical_filter.cpp)
+target_link_libraries(octomap_statistical_filter
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(octomap_info
-	src/tools/octomap_info.cpp
-)
-target_link_libraries(octomap_info ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(octomap_info src/tools/octomap_info.cpp)
+target_link_libraries(octomap_info ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable(radius_outlier_removal
-	src/tools/radius_outlier_removal.cpp
-)
-target_link_libraries(radius_outlier_removal ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
+add_executable(octomap_visualizer src/tools/octomap_visualizer.cpp)
+target_link_libraries(octomap_visualizer ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable(radius_outlier_removal src/tools/radius_outlier_removal.cpp)
+target_link_libraries(radius_outlier_removal
+  ${PROJECT_NAME} ${catkin_LIBRARIES} ${OCTOMAP_LIBRARIES} ${EIGEN3_LIBRARIES} ${PCL_LIBRARIES})
 
 # Install
 catkin_install_python(PROGRAMS

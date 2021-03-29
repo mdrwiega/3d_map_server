@@ -50,3 +50,6 @@ In gdb:
 <!--     launch-prefix = "valgrind --leak-check=full" -->
           <!-- launch-prefix="gdb -ex run --args" -->
 
+## Info
+
+Used datasets are from http://ais.informatik.uni-freiburg.de/projects/datasets/octomap/
