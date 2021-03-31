@@ -66,7 +66,7 @@ class AlignmentValidator {
     return std::numeric_limits<double>::max();
   }
 
-  double calcFitnessScore3(double dist_threshold = 0.2, unsigned min_pairs_num = 100) {
+  double calcFitnessScore3(double dist_threshold = 0.3, unsigned min_pairs_num = 100) {
     double fitness_score = 0.0;
     int cnt = 0;
     double mean_dist = 0;

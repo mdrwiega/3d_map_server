@@ -83,7 +83,7 @@ FeaturesMatching::Result FeaturesMatching::DivideModelAndAlign(PointCloud& best_
     it.wait();
     auto result = it.get();
     results.emplace_back(result);
-    if (result.result.fitness_score1 < 0.1) {
+    if (result.result.fitness_score1 < 0.05) {
       PCL_ERROR("\nModel matched. Stop processing.\n");
       break;
     }
@@ -173,7 +173,7 @@ FeaturesMatching::ThreadResult FeaturesMatching::AlignmentThread(int nr,
   auto model = std::make_shared<FeatureCloud>(filtered_model, cfg.feature_cloud);
   model->ExtractKeypoints();
   if (model->GetKeypoints()->size() < cfg.keypoints_thresh_) {
-    ROS_WARN_STREAM("T" << nr << ": Not enough keypoints: " << model->GetKeypoints()->size());
+    PCL_WARN("\nT%d: Not enough keypoints: %d", nr, model->GetKeypoints()->size());
     return FeaturesMatching::ThreadResult();
   }
   model->ComputeSurfaceNormals();
@@ -192,18 +192,18 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
                                                  const FeatureCloudPtr& scene) {
   Point ppmin, ppmax;
   pcl::getMinMax3D(*(model->GetPointCloud()), ppmin, ppmax);
-  std::cout << "\nTask " << nr << ": Align template with " << model->GetKeypoints()->size() << " keypoints, "
-            << std::setprecision(2) << std::fixed
-            << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
-            << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
-            << "  Scene size: " << scene->GetPointCloud()->size()
-            << " keypoints: " << scene->GetKeypoints()->size()
-            << " descriptors: " << scene->GetDescriptors()->size()
-            << "\n"
-            << "  Model size: " << model->GetPointCloud()->size()
-            << " keypoints: " << model->GetKeypoints()->size()
-            << " descriptors: " << model->GetDescriptors()->size()
-            << "\n";
+  std::cout << "\nTask " << nr << ": Align model with " << model->GetKeypoints()->size() << " keypoints";//, "
+            // << std::setprecision(2) << std::fixed
+            // << "Pmin: (" << ppmin.x << ", " << ppmin.y << ", " << ppmin.z << ")  "
+            // << "Pmax: (" << ppmax.x << ", " << ppmax.y << ", " << ppmax.z << ")\n"
+            // << "  Scene size: " << scene->GetPointCloud()->size()
+            // << " keypoints: " << scene->GetKeypoints()->size()
+            // << " descriptors: " << scene->GetDescriptors()->size()
+            // << "\n"
+            // << "  Model size: " << model->GetPointCloud()->size()
+            // << " keypoints: " << model->GetKeypoints()->size()
+            // << " descriptors: " << model->GetDescriptors()->size()
+            // << "\n";
 
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -240,8 +240,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::high_resolution_clock::now() - start);
-  ROS_DEBUG_STREAM("Task " << nr <<  ": aligned with score: "
-    << result.fitness_score1 << " in " << diff.count() << " ms." << std::endl);
+      std::cout <<"\nTask " << nr <<  ": aligned with fs2: " << result.fitness_score2 << " in " << diff.count() << " ms.";
 
   // if (cfg.show_visualizer || cfg.output_to_file) {
   //   MapsIntegratorVisualizer visualizer(
@@ -266,8 +265,8 @@ FeaturesMatching::ThreadResult FeaturesMatching::FindBestAlignment(
 
   for (size_t i = 0; i < results.size(); ++i) {
     if (results[i].valid) {
-      if (results[i].result.fitness_score1 < lowest_score) {
-        lowest_score = results[i].result.fitness_score1;
+      if (results[i].result.fitness_score2 < lowest_score) {
+        lowest_score = results[i].result.fitness_score2;
         best_result_index = i;
       }
     }

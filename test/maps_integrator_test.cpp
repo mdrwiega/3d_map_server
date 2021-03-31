@@ -28,27 +28,27 @@ class MapsIntegratorTest : public ::testing::Test
 
   void Configure() {
     cfg.template_alignment.divide_model = true;
-    cfg.template_alignment.cell_size_x = 3;
-    cfg.template_alignment.cell_size_y = 3;
+    cfg.template_alignment.cell_size_x = 4;
+    cfg.template_alignment.cell_size_y = 4;
     cfg.template_alignment.method = FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering;
 
    // Feature matching
     cfg.template_alignment.model_size_thresh_ = 100;
-    cfg.template_alignment.keypoints_thresh_ = 40;
+    cfg.template_alignment.keypoints_thresh_ = 50;
 
     cfg.template_alignment.feature_cloud.normal_radius = 10.0;
-    cfg.template_alignment.feature_cloud.downsampling_radius = 0.15;
+    cfg.template_alignment.feature_cloud.downsampling_radius = 0.1;
     cfg.template_alignment.feature_cloud.descriptors_radius = 1.0;
     cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
     cfg.template_alignment.show_visualizer = false;
 
     // Sample Consensus
-    cfg.template_alignment.sac.min_sample_distance = 0.2;
+    cfg.template_alignment.sac.min_sample_distance = 0.05;
     cfg.template_alignment.sac.max_correspondence_distance = 100.0;
-    cfg.template_alignment.sac.nr_iterations = 800;
+    cfg.template_alignment.sac.nr_iterations = 2200;
     cfg.template_alignment.sac.fitness_score_dist = 1.0;
-    cfg.template_alignment.sac.samples_num = 5;
-    cfg.template_alignment.sac.nn_for_each_sample_num = 10;
+    cfg.template_alignment.sac.samples_num = 4;
+    cfg.template_alignment.sac.nn_for_each_sample_num = 4;
     cfg.template_alignment.sac.modified_version = false;
     cfg.template_alignment.sac.mod_feature_max_dist = 0.7;
     cfg.template_alignment.sac.mod_feature_max_dist_diff = 0.1;
@@ -64,7 +64,7 @@ class MapsIntegratorTest : public ::testing::Test
     // ICP
     cfg.icp_correction = true;
     cfg.icp.max_iter = 500;
-    cfg.icp.max_nn_dist = 0.5;
+    cfg.icp.max_nn_dist = 1.0;
     cfg.icp.fitness_eps = 0.0005;
     cfg.icp.fitness_score_dist = 0.5;
     cfg.icp.transf_eps = 0.0001;

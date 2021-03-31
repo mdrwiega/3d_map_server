@@ -155,7 +155,8 @@ std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filena
   }
 
   std::string params_file = basename + "_params.yaml";
-  std::system(("rosparam dump " + params_file).c_str());
+  std::ofstream params(params_file, std::ios_base::app);
+  params << cfg_.toString();
 
   std::string result_file = basename + "_result.txt";
   std::ofstream file(result_file, std::ios_base::app);
@@ -197,34 +198,58 @@ std::string MapsIntegrator::Result::toString() {
 }
 
 std::string MapsIntegrator::Config::toString() {
-  std::stringstream stream;
-  auto header = getHeader();
-  for (const auto& i : header) {
-    if (&i != &header.back())
-      stream << i << "; ";
-    else
-      stream << i << std::endl;
-  }
+  std::stringstream ss;
+  // Global alignment
+  ss << "enable_global_alignment: " << "1" << "\n";
+  ss << "global_alignment: " << "\n";
+  ss << "  method: ";
+  if (template_alignment.method == FeaturesMatching::AlignmentMethodType::SampleConsensus)
+    ss << "sac\n";
+  if (template_alignment.method == FeaturesMatching::AlignmentMethodType::GeometryConsistencyClustering)
+    ss << "gcc\n";
 
-  stream << template_alignment.model_size_thresh_ << "; "
-         << fitness_score_thresh << "; "
-         << template_alignment.keypoints_thresh_ << "; " << template_alignment.cell_size_x << "; " << template_alignment.cell_size_y << "; "
-      << icp.max_iter << "; " << icp.max_nn_dist << "; " << icp.fitness_eps << "; "
-      << icp.transf_eps << "; " << icp.scene_inflation_dist << "; "
-      << template_alignment.feature_cloud.normal_radius << "; "
-      << template_alignment.feature_cloud.downsampling_radius << "; "
-      << template_alignment.feature_cloud.descriptors_radius << "; "
-      << template_alignment.sac.min_sample_distance << "; "
-      << template_alignment.sac.max_correspondence_distance << "; "
-      << template_alignment.sac.nr_iterations << std::endl;
-  return stream.str();
-}
+  ss << "  feature_cloud:\n";
+  ss << "    descriptors_radius: "  << template_alignment.feature_cloud.descriptors_radius << "\n";
+  ss << "    downsampling_radius: " << template_alignment.feature_cloud.downsampling_radius << "\n";
+  ss << "    normal_radius: "       << template_alignment.feature_cloud.normal_radius << "\n";
+  ss << "    keypoints_method: ";
+  if (template_alignment.feature_cloud.keypoints_method == FeatureCloud::KeypointsExtractionMethod::Iss3d)
+    ss << "iss3d\n";
+  if (template_alignment.feature_cloud.keypoints_method == FeatureCloud::KeypointsExtractionMethod::Uniform)
+    ss << "uniform\n";
 
-std::vector<std::string> MapsIntegrator::Config::getHeader() {
-  return  { "model_size_thresh", "fitness_score_thresh", "keypoints_thresh", "cell_size_x", "cell_size_y",
-            "icp.max_iter", "icp.max_nn_dist", "icp.fitness_eps", "icp.transf_eps", "icp.scene_infl_dist",
-            "fc.normal_radius", "fc.downsampling_radius", "fc.descriptors_radius", "ta.min_sample_dist", "ta.max_corr_dist",
-            "ta.nr_iter" };
+  ss << "    iss3d:\n";
+  ss << "      min_neighbours: " << template_alignment.feature_cloud.iss_min_neighbours << "\n";
+  ss << "      iss_salient_radius: " << template_alignment.feature_cloud.iss_salient_radius << "\n";
+  ss << "      iss_non_max_radius: " << template_alignment.feature_cloud.iss_non_max_radius << "\n";
+  ss << "      iss_num_of_threads: " << template_alignment.feature_cloud.iss_num_of_threads << "\n";
+
+  ss << "  divide_model: " << template_alignment.divide_model << "\n";
+  ss << "  block_size: " << template_alignment.cell_size_x << "\n";
+  ss << "  min_model_size: " << template_alignment.model_size_thresh_ << "\n";
+  ss << "  min_keypoints_num: " << template_alignment.keypoints_thresh_ << "\n";
+
+  ss << "  sample_consensus:\n";
+  ss << "    fitness_score_distance: " << template_alignment.sac.fitness_score_dist << "\n";
+  ss << "    iterations_num: " << template_alignment.sac.nr_iterations << "\n";
+  ss << "    max_corr_dist: " << template_alignment.sac.max_correspondence_distance << "\n";
+  ss << "    min_sample_dist: " << template_alignment.sac.min_sample_distance << "\n";
+  ss << "    modified_version: " << template_alignment.sac.modified_version << "\n";
+
+
+  // Local alignment
+  ss << "enable_local_alignment: " << icp_correction << "\n";
+  ss << "local_alignment:\n";
+  ss << "  scene_inflation_dist: " << icp.scene_inflation_dist << "\n";
+  ss << "  icp:\n";
+  ss << "    max_iter: " << icp.max_iter << "\n";
+  ss << "    max_nn_dist: " << icp.max_nn_dist << "\n";
+  ss << "    fitness_eps: " << icp.fitness_eps << "\n";
+  ss << "    fitness_score_dist: " << icp.fitness_score_dist << "\n";
+  ss << "    transf_eps: " << icp.transf_eps << "\n";
+  ss << "    crop_scene: " << icp.crop_scene << "\n";
+
+  return ss.str();
 }
 
 }
