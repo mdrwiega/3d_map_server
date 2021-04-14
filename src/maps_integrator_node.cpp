@@ -61,7 +61,7 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
 
   // Keypoints extraction method
   std::string keypoints_method;
-  nh_.param<std::string>(fm_ns + "global_alignment/feature_matching/keypoints_method", keypoints_method, "iss3d");
+  nh_.param<std::string>("global_alignment/feature_matching/keypoints_method", keypoints_method, "iss3d");
   if (keypoints_method.compare("iss3d") == 0)
     cfg.template_alignment.feature_cloud.keypoints_method = FeatureCloud::KeypointsExtractionMethod::Iss3d;
   else if (keypoints_method.compare("uniform") == 0)
