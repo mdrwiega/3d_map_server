@@ -13,6 +13,7 @@
 
 #include <transformations.h>
 #include <features_matching.h>
+#include <ndt_alignment.h>
 #include <conversions.h>
 #include <math.h>
 #include <octomap_tools/octomap_io.h>
@@ -45,14 +46,24 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
 
   // Global alignment
   PointCloud::Ptr best_model(new PointCloud);
-  FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
 
-  if (cfg_.template_alignment.divide_model) {
-    result_.ia = features_matching.DivideModelAndAlign(*best_model);
+  if (cfg_.global_alignment_method == GlobalAlignment::Method::FeatureMatching) {
+    PCL_INFO("\nUsed Feature Matching Method\n");
+
+    FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
+
+    if (cfg_.template_alignment.divide_model) {
+      result_.ia = features_matching.DivideModelAndAlign(*best_model);
+    }
+    else {
+      result_.ia = features_matching.align();
+      best_model = model_;
+    }
   }
-  else {
-    result_.ia = features_matching.align();
-    best_model = model_;
+  else if (cfg_.global_alignment_method == GlobalAlignment::Method::NDT) {
+    PCL_INFO("\nUsed NDT Method\n");
+    NdtAlignment ndt(cfg_.ndt_alignment, scene_, model_);
+    auto result = ndt.Align();
   }
 
   PCL_INFO("\nIA:");

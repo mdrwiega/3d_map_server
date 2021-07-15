@@ -14,6 +14,8 @@
 #include <features_matching.h>
 #include <icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
+#include <global_alignment.h>
+#include <ndt_alignment.h>
 
 namespace octomap_tools {
 
@@ -33,6 +35,9 @@ class MapsIntegrator {
     bool icp_correction{true};
     std::string output_dir;
     ICP::Config icp;
+
+    GlobalAlignment::Method global_alignment_method;
+    NdtAlignment::Config ndt_alignment;
     FeaturesMatching::Config template_alignment;
 
     std::string toString();

@@ -25,6 +25,13 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   // Main parameters
   cfg.show_visualizer = show_visualizer;
 
+  std::string global_alignment_method;
+  nh_.param<std::string>("global_alignment/method", global_alignment_method, "feature_matching");
+  if (global_alignment_method.compare("feature_matching") == 0)
+    cfg.global_alignment_method = GlobalAlignment::Method::FeatureMatching;
+  else if (global_alignment_method.compare("ndt") == 0)
+    cfg.global_alignment_method = GlobalAlignment::Method::NDT;
+
   nh_.param<bool>("global_alignment/divide_model",cfg.template_alignment.divide_model, true);
   nh_.param<float>("global_alignment/block_size", cfg.template_alignment.cell_size_x, 3.0);
   nh_.param<float>("global_alignment/block_size", cfg.template_alignment.cell_size_y, 3.0);

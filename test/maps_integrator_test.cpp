@@ -27,6 +27,7 @@ class MapsIntegratorTest : public ::testing::Test
   }
 
   void Configure() {
+    cfg.global_alignment_method = GlobalAlignment::Method::FeatureMatching;
     cfg.template_alignment.divide_model = true;
     cfg.template_alignment.cell_size_x = 4;
     cfg.template_alignment.cell_size_y = 4;
