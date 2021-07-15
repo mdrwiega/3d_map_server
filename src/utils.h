@@ -29,7 +29,7 @@ inline bool exists(const std::string& file_path) {
 inline OcTreePtr unpackAndGetOctomap(
     const std::string& map_name, const std::string& ext = "ot") {
   const std::string tmp_path = "tmp/";
-  const std::string ds_path = ros::package::getPath("octomap_tools") + "/octomaps_dataset/";
+  const std::string ds_path = ros::package::getPath("3d_map_server") + "/octomaps_dataset/";
   const std::string map_path = tmp_path + map_name + "." + ext;
 
   std::system(("rm -rf " + tmp_path).c_str());

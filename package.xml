@@ -1,5 +1,5 @@
 <package format="2">
-  <name>octomap_tools</name>
+  <name>3d_map_server</name>
   <version>1.0.0</version>
   <description>The package contains tools to process octomaps.</description>
   <author>Michał Drwięga</author>

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.0)
-project(octomap_tools CXX)
+project(3d_map_server CXX)
 
 set(CATKIN_ENABLE_TESTING 1)
 

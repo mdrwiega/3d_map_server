@@ -23,24 +23,24 @@ It's still on an early stage of the development.
   `catkin_make tests`
 
 - Compile and run all tests
-  `catkin_make run_tests octomap_tools`
+  `catkin_make run_tests 3d_map_server`
 
 - Run merge octomaps test - fr079
-  `~/ros_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.Test_fr`
+  `~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_fr`
 
 - Run merge octomaps test - pwr d20
-  `~/ros_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m4_t2`
+  `~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m4_t2`
 
 ## Rostests
 
-- `rostest octomap_tools octomaps_integrator.test --text`
+- `rostest 3d_map_server octomaps_integrator.test --text`
 
 ## How to debug
 
 - In CMakeLists.txt change `CMAKE_BUILD_TYPE` from `RELEASE` to `RELWITHDEBINFO`.
 
 - Then to run specific test
-  `gdb --args ~/ros_ws/devel/lib/octomap_tools/octomap_tools_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m1`
+  `gdb --args ~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m1`
 
 - In gdb:
   - `run`
@@ -48,7 +48,7 @@ It's still on an early stage of the development.
 
 ## Running maps merging tool with ROS
 
-- `roslaunch octomap_tools merge_maps.launch map1:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
+- `roslaunch 3d_map_server merge_maps.launch map1:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
 
 
 ## Other
