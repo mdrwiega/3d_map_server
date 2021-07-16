@@ -59,21 +59,25 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
       result_.ia = features_matching.align();
       best_model = model_;
     }
+    result_.fitness_score1 = result_.ia.fitness_score1;
+    result_.fitness_score2 = result_.ia.fitness_score2;
+    result_.fitness_score3 = result_.ia.fitness_score3;
+    result_.transformation = result_.ia.transformation;
+    result_.transf_estimation_time_ms = result_.ia.processing_time_ms;
   }
   else if (cfg_.global_alignment_method == GlobalAlignment::Method::NDT) {
     PCL_INFO("\nUsed NDT Method\n");
     NdtAlignment ndt(cfg_.ndt_alignment, scene_, model_);
     auto result = ndt.Align();
+    best_model = model_;
+    result_.transformation = result.transformation;
+    result_.transf_estimation_time_ms = result.processing_time_ms;
   }
 
   PCL_INFO("\nIA:");
-  PCL_INFO("\n  fitness score: %.3f", result_.ia.fitness_score1);
-  PCL_INFO("\n  time: %.1f ms", result_.ia.processing_time_ms);
-  PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.ia.transformation, "    ").c_str());
-  result_.fitness_score1 = result_.ia.fitness_score1;
-  result_.fitness_score2 = result_.ia.fitness_score2;
-  result_.fitness_score3 = result_.ia.fitness_score3;
-  result_.transformation = result_.ia.transformation;
+  PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
+  PCL_INFO("\n  time: %.1f ms", result_.transf_estimation_time_ms);
+  PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
 
   // ICP correction
   if (cfg_.icp_correction) {

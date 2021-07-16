@@ -112,6 +112,25 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   DumpTestInfoToFile(original_tree, T, res.transformation);
 }
 
+TEST_F(MapsIntegratorTest, Test_fr_ndt) {
+  auto original_tree = unpackAndGetOctomap("fr_079");
+  auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(4, 10, 2.0));
+  auto init_model = CropOcTree(*original_tree, Vector3f(-6, -10, 0.0), Vector3f(10, 10, 2.0));
+
+  // Transform model
+  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+  auto model = FastOcTreeTransform(*init_model, T);
+
+  cfg.global_alignment_method = GlobalAlignment::Method::NDT;
+  cfg.icp_correction = false;
+
+  MapsIntegrator maps_integrator(scene, model, cfg);
+  auto res = maps_integrator.EstimateTransformation();
+
+  DumpTestInfoToFile(original_tree, T, res.transformation);
+}
+
+
 TEST_F(MapsIntegratorTest, CheckOverlap) {
   auto original_tree = unpackAndGetOctomap("fr_079");
   auto scene = CropOcTree(*original_tree, Vector3f(-10, -10, 0.0), Vector3f(2, 10, 2.0));
