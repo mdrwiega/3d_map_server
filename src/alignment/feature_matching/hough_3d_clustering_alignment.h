@@ -14,7 +14,7 @@
 
 namespace octomap_tools {
 
-class Hough3dClusteringAlignment : public AlignmentMethod {
+class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
  public:
 
   typedef pcl::ReferenceFrame RFType;

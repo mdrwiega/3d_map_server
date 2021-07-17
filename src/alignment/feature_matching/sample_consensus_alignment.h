@@ -218,7 +218,7 @@ class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSour
   float feature_max_dist_diff_;
 };
 
-class SampleConsensusAlignment : public AlignmentMethod {
+class SampleConsensusAlignment : public FeatureAlignmentMethod {
  public:
 
   struct Config {

@@ -11,14 +11,13 @@
 
 namespace octomap_tools {
 
-class GeometryClusteringAlignment : public AlignmentMethod {
+class GeometryClusteringAlignment : public FeatureAlignmentMethod {
  public:
 
   struct Config {
   };
 
-  GeometryClusteringAlignment(const Config& cfg) {
-  }
+  GeometryClusteringAlignment(const Config& cfg) { }
 
   AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
     float cg_size(0.01f);

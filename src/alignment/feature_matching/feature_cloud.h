@@ -5,8 +5,6 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/fpfh_omp.h>
 
-#include <common/utils.h>
-
 namespace octomap_tools {
 
 class FeatureCloud {

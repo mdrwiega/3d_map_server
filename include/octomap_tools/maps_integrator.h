@@ -1,19 +1,14 @@
 #pragma once
 
-#include <iostream>
-#include <algorithm>
-
 #include <Eigen/Dense>
 #include <octomap/octomap.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 
-#include <common/utils.h>
-#include <common/conversions.h>
+#include <octomap_tools/maps_integrator_visualizer.h>
 #include <alignment/feature_matching/feature_cloud.h>
 #include <alignment/features_matching.h>
 #include <alignment/icp.h>
-#include <octomap_tools/maps_integrator_visualizer.h>
 #include <alignment/global_alignment.h>
 #include <alignment/ndt_alignment.h>
 

@@ -15,7 +15,7 @@ pcl::CorrespondencesPtr FindFeaturesCorrespondencesWithKdTree(
       const FeatureCloud::Descriptors::Ptr& model_descriptors,
       const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh);
 
-class KdTreeBasedAlignment : public AlignmentMethod {
+class KdTreeBasedAlignment : public FeatureAlignmentMethod {
  public:
 
   struct Config {

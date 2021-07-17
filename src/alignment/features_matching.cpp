@@ -207,7 +207,7 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  std::shared_ptr<AlignmentMethod> aligner;
+  std::shared_ptr<FeatureAlignmentMethod> aligner;
 
   switch(cfg.method) {
     case AlignmentMethodType::KdTreeSearch:
