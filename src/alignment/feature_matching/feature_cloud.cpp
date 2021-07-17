@@ -13,6 +13,8 @@
 #include <pcl/keypoints/impl/sift_keypoint.hpp>
 #include <pcl/filters/uniform_sampling.h>
 
+#include <common/utils.h>
+
 using namespace std::chrono;
 
 namespace octomap_tools {
