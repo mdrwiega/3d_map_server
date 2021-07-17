@@ -10,6 +10,11 @@ Main features of the 3D map server:
 
 It's still on an early stage of the development.
 
+## Design
+
+![Class Diagram](design/class_diagram.png)
+Not fully implemented design.
+
 ## Compilation
 
 - Clone repository to the ROS workspace (e.g. ros_ws/src)

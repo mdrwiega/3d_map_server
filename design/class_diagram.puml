@@ -1,15 +1,14 @@
 @startuml
 
 class FeatureCloud {
-  computeSufraceNormals()
   ExtractKeypoints()
-  computeDescriptors()
+  ComputeDescriptors()
 }
 
 class FeatureMatching {
-  initialAlignment()
-  divideFullModelIntoBlocks()
-  findBestAlignment()
+  Align()
+  DivideFullModelIntoBlocks()
+  FindBestAlignment()
 }
 
 class ICP {
@@ -39,21 +38,15 @@ class TransformationEstimator {
 class MapsIntegrator {
   Merge()
   EstimateTransformation()
-  DumpConfigAndResultsToFile()
-  GetConfigurationFromRosParams()
 }
 
 class 3DMapsVisualizer {
 	Visualize()
-	' VisualizeICP()
-	' VisualizeFeatureMatching()
-	' VisualizeFeatureMatchingWithDividedModel()
-	' VisualizeClouds()
 }
 
 ' Connections
 
-MapServerNode o-- MapServer
+MapServerNode *-- MapServer
 
 MapServer -.> MapsIntegrator
 MapServer *-- Graph
@@ -61,11 +54,11 @@ MapServer *-- Graph
 Graph o-- Pose
 Graph o-- Map
 
-MapsIntegrator -- TransformationEstimator
+MapsIntegrator --> TransformationEstimator
 MapsIntegrator o-- 3DMapsVisualizer
 
-TransformationEstimator o-- GlobalAlignment
-TransformationEstimator o-- LocalAlignment
+TransformationEstimator --> GlobalAlignment
+TransformationEstimator --> LocalAlignment
 
 AlignmentMethod <|-- GlobalAlignment
 AlignmentMethod <|-- LocalAlignment
@@ -75,10 +68,8 @@ LocalAlignment <|-- ICP
 GlobalAlignment <|-- FeatureMatching
 GlobalAlignment <|-- NDT
 
-FeatureMatching o-- FeatureCloud
-FeatureCloud -- PointCloud
-
-
+FeatureMatching --> FeatureCloud
+FeatureCloud o-- PointCloud
 
 Map o-- Octomap
 Map o-- PointCloud
