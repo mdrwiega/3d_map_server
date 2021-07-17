@@ -5,8 +5,8 @@
 #include <pcl/kdtree/impl/kdtree_flann.hpp>
 #include <pcl/registration/transformation_estimation_svd.h>
 
-#include <feature_matching/alignment_method.h>
-#include <feature_matching/feature_cloud.h>
+#include <alignment/alignment_method.h>
+#include <alignment/feature_matching/feature_cloud.h>
 #include <validation.h>
 
 namespace octomap_tools {

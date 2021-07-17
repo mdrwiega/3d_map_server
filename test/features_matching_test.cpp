@@ -7,7 +7,7 @@
 #include <common/transformations.h>
 #include <common/utils.h>
 #include <common/math.h>
-#include <features_matching.h>
+#include <alignment/features_matching.h>
 #include <common/conversions.h>
 
 #include "test_utils.h"

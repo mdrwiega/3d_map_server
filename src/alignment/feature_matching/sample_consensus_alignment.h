@@ -5,7 +5,7 @@
 #include <pcl/registration/ia_ransac.h>
 #include <pcl/registration/transformation_validation_euclidean.h>
 
-#include <feature_matching/alignment_method.h>
+#include <alignment/alignment_method.h>
 #include <validation.h>
 
 namespace octomap_tools {

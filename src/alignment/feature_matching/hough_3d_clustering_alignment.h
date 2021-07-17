@@ -6,9 +6,9 @@
 #include <pcl/features/board.h>
 #include <pcl/point_types.h>
 
-#include <feature_matching/alignment_method.h>
-#include <feature_matching/feature_cloud.h>
-#include <feature_matching/kdtree_svd_alignment.h>
+#include <alignment/alignment_method.h>
+#include <alignment/feature_matching/feature_cloud.h>
+#include <alignment/feature_matching/kdtree_svd_alignment.h>
 #include <validation.h>
 #include <octomap_tools/types.h>
 

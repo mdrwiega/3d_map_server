@@ -56,8 +56,8 @@ add_definitions(${EIGEN3_DEFINITIONS})
 add_definitions(${PCL_DEFINITIONS})
 
 add_library(${PROJECT_NAME}
-  src/feature_matching/feature_cloud.cpp
-	src/features_matching.cpp
+  src/alignment/feature_matching/feature_cloud.cpp
+	src/alignment/features_matching.cpp
 	src/maps_integrator_visualizer.cpp
 	src/maps_integrator.cpp
 	src/maps_integrator_node.cpp

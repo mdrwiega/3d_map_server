@@ -1,4 +1,4 @@
-#include <features_matching.h>
+#include <alignment/features_matching.h>
 
 #include <chrono>
 #include <memory>
@@ -21,7 +21,7 @@
 #include <common/thread_pool.h>
 #include <common/conversions.h>
 #include <validation.h>
-#include <model_decomposition.h>
+#include <alignment/model_decomposition.h>
 
 using namespace pcl;
 using namespace pcl::registration;

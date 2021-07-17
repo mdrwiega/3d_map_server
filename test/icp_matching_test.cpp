@@ -6,7 +6,7 @@
 #include <common/transformations.h>
 #include <common/utils.h>
 #include <common/math.h>
-#include <icp.h>
+#include <alignment/icp.h>
 #include <common/conversions.h>
 
 #include "test_utils.h"

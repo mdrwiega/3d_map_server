@@ -1,4 +1,4 @@
-#include "feature_cloud.h"
+#include <alignment/feature_matching/feature_cloud.h>
 
 #include <chrono>
 

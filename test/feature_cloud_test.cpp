@@ -12,7 +12,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <common/utils.h>
-#include <feature_matching/feature_cloud.h>
+#include <alignment/feature_matching/feature_cloud.h>
 #include <common/conversions.h>
 #include "test_utils.h"
 

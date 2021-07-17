@@ -12,8 +12,8 @@
 #include <pcl/point_cloud.h>
 
 #include <common/transformations.h>
-#include <features_matching.h>
-#include <ndt_alignment.h>
+#include <alignment/features_matching.h>
+#include <alignment/ndt_alignment.h>
 #include <common/conversions.h>
 #include <common/math.h>
 #include <octomap_tools/octomap_io.h>

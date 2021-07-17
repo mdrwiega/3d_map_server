@@ -10,12 +10,12 @@
 
 #include <common/utils.h>
 #include <common/conversions.h>
-#include <feature_matching/feature_cloud.h>
-#include <features_matching.h>
-#include <icp.h>
+#include <alignment/feature_matching/feature_cloud.h>
+#include <alignment/features_matching.h>
+#include <alignment/icp.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
-#include <global_alignment.h>
-#include <ndt_alignment.h>
+#include <alignment/global_alignment.h>
+#include <alignment/ndt_alignment.h>
 
 namespace octomap_tools {
 

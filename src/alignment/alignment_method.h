@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <pcl/correspondence.h>
 
-#include <feature_matching/feature_cloud.h>
+#include <alignment/feature_matching/feature_cloud.h>
 
 namespace octomap_tools {
 

@@ -7,14 +7,14 @@
 #include <pcl/point_types.h>
 #include <pcl/correspondence.h>
 
-#include <feature_matching/feature_cloud.h>
+#include <alignment/feature_matching/feature_cloud.h>
 #include <octomap_tools/types.h>
 
-#include <feature_matching/alignment_method.h>
-#include <feature_matching/kdtree_svd_alignment.h>
-#include <feature_matching/sample_consensus_alignment.h>
-#include <feature_matching/geometry_clustering_alignment.h>
-#include <feature_matching/hough_3d_clustering_alignment.h>
+#include <alignment/alignment_method.h>
+#include <alignment/feature_matching/kdtree_svd_alignment.h>
+#include <alignment/feature_matching/sample_consensus_alignment.h>
+#include <alignment/feature_matching/geometry_clustering_alignment.h>
+#include <alignment/feature_matching/hough_3d_clustering_alignment.h>
 
 namespace octomap_tools {
 
