@@ -16,6 +16,26 @@ class ICP {
   Align()
 }
 
+class NDT {
+  Align()
+}
+
+class AlignmentMethod {
+  Align()
+}
+
+class GlobalAlignment {
+  Align()
+}
+
+class LocalAlignment {
+  Align()
+}
+
+class TransformationEstimator {
+  EstimateTransformation()
+}
+
 class MapsIntegrator {
   Merge()
   EstimateTransformation()
@@ -25,27 +45,40 @@ class MapsIntegrator {
 
 class 3DMapsVisualizer {
 	Visualize()
-	VisualizeICP()
-	VisualizeFeatureMatching()
-	VisualizeFeatureMatchingWithDividedModel()
-	VisualizeClouds()
+	' VisualizeICP()
+	' VisualizeFeatureMatching()
+	' VisualizeFeatureMatchingWithDividedModel()
+	' VisualizeClouds()
 }
 
 ' Connections
-FeatureMatching o-- FeatureCloud
 
-MapsIntegrator o-- GlobalAlignment
-GlobalAlignment <|-- FeatureMatching
+MapServerNode o-- MapServer
 
-MapsIntegrator o-- LocalAlignment
-LocalAlignment <|-- ICP
-LocalAlignment <|-- OICP
+MapServer -.> MapsIntegrator
+MapServer *-- Graph
 
+Graph o-- Pose
+Graph o-- Map
+
+MapsIntegrator -- TransformationEstimator
 MapsIntegrator o-- 3DMapsVisualizer
 
-MapsServer -.> MapsIntegrator
-MapsServer *-- Graph
-MapsServer o-- Map
+TransformationEstimator o-- GlobalAlignment
+TransformationEstimator o-- LocalAlignment
+
+AlignmentMethod <|-- GlobalAlignment
+AlignmentMethod <|-- LocalAlignment
+
+LocalAlignment <|-- ICP
+
+GlobalAlignment <|-- FeatureMatching
+GlobalAlignment <|-- NDT
+
+FeatureMatching o-- FeatureCloud
+FeatureCloud -- PointCloud
+
+
 
 Map o-- Octomap
 Map o-- PointCloud
