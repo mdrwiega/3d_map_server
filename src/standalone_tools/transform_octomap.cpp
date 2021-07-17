@@ -3,11 +3,12 @@
 
 #include <Eigen/Dense>
 
-#include <utils.h>
+#include <common/utils.h>
+#include <common/math.h>
+#include <common/conversions.h>
 #include <octomap_tools/octomap_io.h>
 
-#include <transformations.h>
-#include <conversions.h>
+#include <common/transformations.h>
 
 using namespace octomap_tools;
 

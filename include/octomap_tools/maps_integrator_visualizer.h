@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <pcl/point_types.h>
 
-#include <utils.h>
+#include <common/utils.h>
 #include <feature_matching/feature_cloud.h>
 
 namespace octomap_tools {

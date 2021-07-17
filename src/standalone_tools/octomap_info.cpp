@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <utils.h>
+#include <common/utils.h>
 #include <octomap_tools/octomap_io.h>
 
 using namespace octomap_tools;

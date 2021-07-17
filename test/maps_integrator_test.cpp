@@ -2,12 +2,12 @@
 #include <iostream>
 #include <fstream>
 
-#include <transformations.h>
-#include <utils.h>
-#include <math.h>
+#include <common/transformations.h>
+#include <common/utils.h>
+#include <common/math.h>
 #include "test_utils.h"
 
-#include <conversions.h>
+#include <common/conversions.h>
 #include <octomap_tools/maps_integrator.h>
 
 using namespace Eigen;
@@ -118,7 +118,7 @@ TEST_F(MapsIntegratorTest, Test_fr_ndt) {
   auto init_model = CropOcTree(*original_tree, Vector3f(-6, -10, 0.0), Vector3f(10, 10, 2.0));
 
   // Transform model
-  auto T = createTransformationMatrix(12, 6, 0.5, ToRad(5.0), ToRad(5.0), ToRad(60.0));
+  auto T = createTransformationMatrix(1, 0, 0.0, ToRad(0.0), ToRad(0.0), ToRad(5.0));
   auto model = FastOcTreeTransform(*init_model, T);
 
   cfg.global_alignment_method = GlobalAlignment::Method::NDT;

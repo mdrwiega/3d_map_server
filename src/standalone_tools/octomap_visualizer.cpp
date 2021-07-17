@@ -1,10 +1,10 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <utils.h>
+#include <common/utils.h>
 #include <octomap_tools/octomap_io.h>
 #include <octomap_tools/maps_integrator_visualizer.h>
-#include <conversions.h>
+#include <common/conversions.h>
 
 using namespace octomap_tools;
 

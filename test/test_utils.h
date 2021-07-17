@@ -12,9 +12,9 @@
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
 
-#include <utils.h>
-#include <transformations.h>
-#include <math.h>
+#include <common/utils.h>
+#include <common/transformations.h>
+#include <common/math.h>
 
 using namespace Eigen;
 using namespace octomap;

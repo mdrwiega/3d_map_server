@@ -11,9 +11,9 @@
 
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include <utils.h>
+#include <common/utils.h>
 #include <feature_matching/feature_cloud.h>
-#include <conversions.h>
+#include <common/conversions.h>
 #include "test_utils.h"
 
 using namespace octomap_tools;

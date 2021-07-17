@@ -8,8 +8,8 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 
-#include <utils.h>
-#include <conversions.h>
+#include <common/utils.h>
+#include <common/conversions.h>
 #include <feature_matching/feature_cloud.h>
 #include <features_matching.h>
 #include <icp.h>

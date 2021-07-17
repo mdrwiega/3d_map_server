@@ -8,8 +8,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 
-#include <utils.h>
-#include <conversions.h>
+#include <common/utils.h>
+#include <common/conversions.h>
 
 namespace octomap_tools {
 

@@ -8,10 +8,10 @@
 #include <chrono>
 #include <thread>
 
-#include <transformations.h>
-#include <utils.h>
-#include <math.h>
-#include <conversions.h>
+#include <common/transformations.h>
+#include <common/utils.h>
+#include <common/math.h>
+#include <common/conversions.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 

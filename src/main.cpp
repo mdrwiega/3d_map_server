@@ -1,7 +1,7 @@
 #include <ros/init.h>
 
 #include <octomap_tools/maps_integrator_node.h>
-#include <utils.h>
+#include <common/utils.h>
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "maps_integrator");

@@ -3,11 +3,11 @@
 
 #include <pcl/point_cloud.h>
 
-#include <transformations.h>
-#include <utils.h>
-#include <math.h>
+#include <common/transformations.h>
+#include <common/utils.h>
+#include <common/math.h>
 #include <icp.h>
-#include <conversions.h>
+#include <common/conversions.h>
 
 #include "test_utils.h"
 

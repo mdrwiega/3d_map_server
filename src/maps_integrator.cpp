@@ -11,13 +11,13 @@
 
 #include <pcl/point_cloud.h>
 
-#include <transformations.h>
+#include <common/transformations.h>
 #include <features_matching.h>
 #include <ndt_alignment.h>
-#include <conversions.h>
-#include <math.h>
+#include <common/conversions.h>
+#include <common/math.h>
 #include <octomap_tools/octomap_io.h>
-#include <utils.h>
+#include <common/utils.h>
 
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;

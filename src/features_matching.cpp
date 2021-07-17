@@ -18,8 +18,8 @@
 
 #include <octomap_tools/maps_integrator_visualizer.h>
 
-#include <thread_pool.h>
-#include <conversions.h>
+#include <common/thread_pool.h>
+#include <common/conversions.h>
 #include <validation.h>
 #include <model_decomposition.h>
 
