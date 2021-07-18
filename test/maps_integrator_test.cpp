@@ -63,7 +63,7 @@ class MapsIntegratorTest : public ::testing::Test
     cfg.template_alignment.feature_cloud.iss_num_of_threads = 2;
 
     // ICP
-    cfg.icp_correction = true;
+    cfg.enable_local_alignment = true;
     cfg.icp.max_iter = 500;
     cfg.icp.max_nn_dist = 1.0;
     cfg.icp.fitness_eps = 0.0005;
@@ -109,7 +109,7 @@ TEST_F(MapsIntegratorTest, Test_fr) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_ndt) {
@@ -121,13 +121,14 @@ TEST_F(MapsIntegratorTest, Test_fr_ndt) {
   auto T = createTransformationMatrix(1, 0, 0.0, ToRad(0.0), ToRad(0.0), ToRad(5.0));
   auto model = FastOcTreeTransform(*init_model, T);
 
-  cfg.global_alignment_method = GlobalAlignment::Method::NDT;
-  cfg.icp_correction = false;
+  cfg.local_alignment_method = LocalAlignment::Method::NDT;
+  cfg.enable_local_alignment = false;
+  cfg.enable_global_alignment = true;
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_icp) {
@@ -141,13 +142,13 @@ TEST_F(MapsIntegratorTest, Test_fr_icp) {
 
   cfg.enable_global_alignment = false;
   cfg.icp.crop_scene = true;
-  cfg.icp_correction = true;
+  cfg.enable_local_alignment = true;
   cfg.icp.max_nn_dist = 2.0;
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, CheckOverlap) {
@@ -163,7 +164,7 @@ TEST_F(MapsIntegratorTest, CheckOverlap) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_step1) {
@@ -178,7 +179,7 @@ TEST_F(MapsIntegratorTest, Test_fr_step1) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_cascade_step2) {
@@ -193,7 +194,7 @@ TEST_F(MapsIntegratorTest, Test_fr_cascade_step2) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_cascade_step3) {
@@ -208,7 +209,7 @@ TEST_F(MapsIntegratorTest, Test_fr_cascade_step3) {
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
 
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_fr_campus) {
@@ -222,7 +223,7 @@ TEST_F(MapsIntegratorTest, Test_fr_campus) {
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
  }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m1) {
@@ -237,7 +238,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m1) {
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3) {
@@ -251,7 +252,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3) {
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m4) {
@@ -265,7 +266,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m4) {
 
   MapsIntegrator maps_integrator(scene, model, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
@@ -290,7 +291,7 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step1)
 
   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }
 
 TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
@@ -324,5 +325,5 @@ TEST_F(MapsIntegratorTest, Test_pwr_d20_m3_step2)
 
   MapsIntegrator maps_integrator(tree_l_, tree_r_, cfg);
   auto res = maps_integrator.EstimateTransformation();
-  DumpTestInfoToFile(original_tree, T, res.transformation);
+  DumpTestInfoToFile(original_tree, T, res.final.transformation);
 }

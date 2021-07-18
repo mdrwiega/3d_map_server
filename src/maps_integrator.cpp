@@ -41,98 +41,95 @@ MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& mod
   }
 }
 
+AlignmentMethod::Result MapsIntegrator::GlobalAlignment(PointCloud::Ptr& best_model) {
+  AlignmentMethod::Result result;
+
+  if (cfg_.global_alignment_method == GlobalAlignment::Method::FeatureMatching)
+  {
+    PCL_INFO("\nUsed Feature Matching Method\n");
+    FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
+
+    if (cfg_.template_alignment.divide_model) {
+      result = features_matching.DivideModelAndAlign(*best_model);
+    }
+    else {
+      result = features_matching.Align();
+      best_model = model_;
+    }
+  }
+
+  PCL_INFO(result.ToString("Global alignment result:").c_str());
+  return result;
+}
+
+AlignmentMethod::Result MapsIntegrator::LocalAlignment(PointCloud::Ptr& scene,
+                                                       PointCloud::Ptr& model) {
+  AlignmentMethod::Result result;
+  std::shared_ptr<AlignmentMethod> aligner;
+
+  try {
+    if (cfg_.local_alignment_method == LocalAlignment::Method::ICP) {
+      PCL_INFO("\nUse ICP method\n");
+      aligner.reset(new ICP(scene, model, cfg_.icp));
+    }
+    else if (cfg_.local_alignment_method == LocalAlignment::Method::NDT) {
+      PCL_INFO("\nUse NDT method\n");
+      aligner.reset(new NdtAlignment(cfg_.ndt_alignment, scene, model));
+    }
+
+    result = aligner->Align();
+    PCL_INFO(result.ToString("Local alignment result:").c_str());
+  }
+  catch (std::exception& e) {
+    PCL_ERROR("\nLocal alignment exception: %s", e.what());
+  }
+
+  return result;
+}
 
 MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
+  if (!cfg_.enable_global_alignment && !cfg_.enable_local_alignment) {
+    throw std::runtime_error("Neither global alignment nor local alignment are enabled");
+  }
+
   auto start = high_resolution_clock::now();
 
-  // Global alignment
   PointCloud::Ptr best_model(new PointCloud);
 
-  if (cfg_.enable_global_alignment)
-  {
-    if (cfg_.global_alignment_method == GlobalAlignment::Method::FeatureMatching)
-    {
-      PCL_INFO("\nUsed Feature Matching Method\n");
+  // Global alignment
+  if (cfg_.enable_global_alignment) {
+    result_.global = GlobalAlignment(best_model);
 
-      FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
-
-      if (cfg_.template_alignment.divide_model) {
-        result_.ia = features_matching.DivideModelAndAlign(*best_model);
-      }
-      else {
-        result_.ia = features_matching.align();
-        best_model = model_;
-      }
-      result_.fitness_score1 = result_.ia.fitness_score1;
-      result_.fitness_score2 = result_.ia.fitness_score2;
-      result_.fitness_score3 = result_.ia.fitness_score3;
-      result_.transformation = result_.ia.transformation;
-      result_.transf_estimation_time_ms = result_.ia.processing_time_ms;
+    // Local alignment - as correction of initial alignment
+    if (cfg_.enable_local_alignment) {
+      PointCloud::Ptr icp_model(new PointCloud);
+      pcl::transformPointCloud(*best_model, *icp_model, result_.global.transformation);
+      result_.local = LocalAlignment(scene_, icp_model);
     }
-    else if (cfg_.global_alignment_method == GlobalAlignment::Method::NDT) {
-      PCL_INFO("\nUsed NDT Method\n");
-      NdtAlignment ndt(cfg_.ndt_alignment, scene_, model_);
-      auto result = ndt.Align();
-      best_model = model_;
-      result_.transformation = result.transformation;
-      result_.transf_estimation_time_ms = result.processing_time_ms;
-    }
+  }
+  else { // Local alignment only
+    best_model = model_;
+    result_.local = LocalAlignment(scene_, best_model);
+  }
 
-    PCL_INFO("\nIA:");
-    PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
-    PCL_INFO("\n  time: %.1f ms", result_.transf_estimation_time_ms);
-    PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
+  // Calculate final result
+  if (cfg_.enable_global_alignment) {
+    if (cfg_.enable_local_alignment) {
+      result_.final = result_.local;
+      result_.final.processing_time_ms = result_.local.processing_time_ms + result_.global.processing_time_ms;
+      result_.final.transformation = result_.local.transformation * result_.global.transformation;
+    }
+    else {
+      result_.final = result_.global;
+    }
   }
   else {
-      best_model = model_;
+    result_.final = result_.local;
   }
-
-  // ICP correction
-  if (cfg_.icp_correction) {
-    try {
-      PointCloud::Ptr icp_model(new PointCloud);
-
-      if (cfg_.enable_global_alignment) {
-        pcl::transformPointCloud(*best_model, *icp_model, result_.ia.transformation);
-
-        ICP icp(scene_, icp_model, cfg_.icp);
-        result_.icp = icp.Align();
-
-        if (result_.icp.fitness_score1 < result_.ia.fitness_score1) {
-          result_.fitness_score1 = result_.icp.fitness_score1;
-          result_.fitness_score2 = result_.icp.fitness_score2;
-          result_.fitness_score3 = result_.icp.fitness_score3;
-          result_.transformation = result_.icp.transformation * result_.ia.transformation;
-        }
-      }
-      else {
-        ICP icp(scene_, model_, cfg_.icp);
-        result_.icp = icp.Align();
-
-        result_.fitness_score1 = result_.icp.fitness_score1;
-        result_.fitness_score2 = result_.icp.fitness_score2;
-        result_.fitness_score3 = result_.icp.fitness_score3;
-        result_.transformation = result_.icp.transformation;
-      }
-
-      PCL_INFO("\nICP:");
-      PCL_INFO("\n  fitness score: %.3f", result_.icp.fitness_score1);
-      PCL_INFO("\n  time: %.1f ms", result_.icp.processing_time_ms);
-      PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.icp.transformation, "    ").c_str());
-    }
-    catch (std::exception& e) {
-      PCL_ERROR("\nICP exception: %s", e.what());
-    }
-  }
-
-  // Create result
   result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
 
-  PCL_INFO("\nFinal result:");
-  PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
-  PCL_INFO("\n  time: %.1f s", result_.transf_estimation_time_ms / 1000.0);
-  PCL_INFO("\n  transformation:\n%s\n", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
+  PCL_INFO(result_.final.ToString("Final result:").c_str());
 
   if (cfg_.output_to_file) {
     DumpConfigAndResultsToFile();
@@ -142,11 +139,11 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
       MapsIntegratorVisualizer visualizer(
         { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching.png" });
       visualizer.VisualizeFeatureMatchingWithDividedModel(
-        scene_, best_model, model_, result_.transformation, spiral_blocks_);
+        scene_, best_model, model_, result_.final.transformation, spiral_blocks_);
     }
     {
-      PointCloudPtr transformed_model (new PointCloud);
-      pcl::transformPointCloud(*model_, *transformed_model, result_.transformation);
+      PointCloudPtr transformed_model(new PointCloud);
+      pcl::transformPointCloud(*model_, *transformed_model, result_.final.transformation);
       MapsIntegratorVisualizer visualizer(
         { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching_2clouds.png" });
       visualizer.VisualizeClouds(scene_, transformed_model);
@@ -180,7 +177,7 @@ OcTreePtr MapsIntegrator::Merge(const Eigen::Matrix4f& transformation, bool save
 
 OcTreePtr MapsIntegrator::Merge(bool save_to_file) {
   EstimateTransformation();
-  return Merge(result_.transformation, save_to_file);
+  return Merge(result_.final.transformation, save_to_file);
 }
 
 std::string MapsIntegrator::DumpConfigAndResultsToFile(const std::string& filename) {
@@ -207,28 +204,13 @@ std::string MapsIntegrator::Result::toString() {
   ss << "maps_integration:\n";
   ss << "  transf_estimation_time_ms: " << transf_estimation_time_ms << "\n";
   ss << "  octree_transformation_time_ms: " << octree_transformation_time_ms << "\n";
-  ss << "  octrees_merge_time_ms: " << octrees_merge_time_ms << "\n";
-  ss << "global_alignment:\n";
-  ss << "  transformation:\n" << transfMatrixToXyzRpyString(ia.transformation, "    ");
-  ss << "  fitness_score1: " << ia.fitness_score1 << "\n";
-  ss << "  fitness_score2: " << ia.fitness_score2 << "\n";
-  ss << "  fitness_score3: " << ia.fitness_score3 << "\n";
-  ss << "  time_ms: " << ia.processing_time_ms << "\n";
+  ss << "  octrees_merge_time_ms: " << octrees_merge_time_ms;
+  ss << global.ToString("global_alignment:");
   ss << "  best_model_limits:\n";
   ss << "    x: [" << model_min.x << ", " << model_max.x << "]\n";
   ss << "    y: [" << model_min.y << ", " << model_max.y << "]\n";
-  // ss << "  correspondences_num: " << ia.correspondences.size() << "\n";
-  ss << "local_alignement:\n";
-  ss << "  transformation:\n" << transfMatrixToXyzRpyString(icp.transformation, "    ");
-  ss << "  fitness_score: " << icp.fitness_score1 << "\n";
-  ss << "  fitness_score2: " << icp.fitness_score2 << "\n";
-  ss << "  fitness_score3: " << icp.fitness_score3 << "\n";
-  ss << "  time_ms: " << icp.processing_time_ms << "\n";
-  ss << "final:\n";
-  ss << "  transformation:\n" << transfMatrixToXyzRpyString(transformation, "    ");
-  ss << "  fitness_score1: " << fitness_score1 << "\n";
-  ss << "  fitness_score2: " << fitness_score2 << "\n";
-  ss << "  fitness_score3: " << fitness_score3 << "\n";
+  ss << local.ToString("local_alignment:");
+  ss << final.ToString("final:");
   return ss.str();
 }
 
@@ -273,8 +255,13 @@ std::string MapsIntegrator::Config::toString() {
 
 
   // Local alignment
-  ss << "enable_local_alignment: " << icp_correction << "\n";
+  ss << "enable_local_alignment: " << enable_local_alignment << "\n";
   ss << "local_alignment:\n";
+  ss << "  method: ";
+  if (local_alignment_method == LocalAlignment::Method::ICP)
+    ss << "icp\n";
+  if (local_alignment_method == LocalAlignment::Method::NDT)
+    ss << "ndt\n";
   ss << "  scene_inflation_dist: " << icp.scene_inflation_dist << "\n";
   ss << "  icp:\n";
   ss << "    max_iter: " << icp.max_iter << "\n";

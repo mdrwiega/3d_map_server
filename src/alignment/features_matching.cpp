@@ -34,7 +34,7 @@ FeaturesMatching::FeaturesMatching(const Config& config, PointCloudPtr& scene, P
   cfg_(config) {
 }
 
-FeaturesMatching::Result FeaturesMatching::align() {
+FeaturesMatching::Result FeaturesMatching::Align() {
   auto start = std::chrono::high_resolution_clock::now();
 
   // Calculate scene descriptors

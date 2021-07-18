@@ -9,7 +9,6 @@
 #include <alignment/feature_matching/feature_cloud.h>
 #include <alignment/features_matching.h>
 #include <alignment/icp.h>
-#include <alignment/global_alignment.h>
 #include <alignment/ndt_alignment.h>
 
 namespace octomap_tools {
@@ -27,12 +26,13 @@ class MapsIntegrator {
     bool output_to_file{true};
 
     float fitness_score_thresh{0.0001};
-    bool icp_correction{true};
     std::string output_dir;
     ICP::Config icp;
 
     bool enable_global_alignment{true};
+    bool enable_local_alignment{true};
     GlobalAlignment::Method global_alignment_method;
+    LocalAlignment::Method local_alignment_method;
     NdtAlignment::Config ndt_alignment;
     FeaturesMatching::Config template_alignment;
 
@@ -41,19 +41,16 @@ class MapsIntegrator {
   };
 
   struct Result {
-    float fitness_score1{0};
-    float fitness_score2{0};
-    float fitness_score3{0};
     Point model_min{};
     Point model_max{};
-    Eigen::Matrix4f transformation{};
 
     float transf_estimation_time_ms{0};
     float octree_transformation_time_ms{0};
     float octrees_merge_time_ms{0};
 
-    FeaturesMatching::Result ia;
-    ICP::Result icp;
+    AlignmentMethod::Result local;
+    AlignmentMethod::Result global;
+    AlignmentMethod::Result final;
 
     std::string toString();
     void PrintResult();
@@ -63,8 +60,17 @@ class MapsIntegrator {
 
   /**
    * Estimate transformation between two maps
+   *
+   * Three modes are possible:
+   * - global alignment + local alignment
+   * - only global_alignment
+   * - only local alignment
    */
   Result EstimateTransformation();
+
+
+  AlignmentMethod::Result GlobalAlignment(PointCloud::Ptr& best_model);
+  AlignmentMethod::Result LocalAlignment(PointCloud::Ptr& scene, PointCloud::Ptr& model);
 
   /**
    * Merge maps based on provided transformation

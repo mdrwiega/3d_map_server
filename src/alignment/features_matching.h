@@ -18,7 +18,7 @@
 
 namespace octomap_tools {
 
-class FeaturesMatching {
+class FeaturesMatching : public AlignmentMethod {
  public:
   enum class AlignmentMethodType {
     SampleConsensus, Hough3DClustering, GeometryConsistencyClustering, KdTreeSearch };
@@ -44,17 +44,6 @@ class FeaturesMatching {
     std::string output_dir;
   };
 
-  struct Result {
-    float fitness_score1{std::numeric_limits<float>::max()};
-    float fitness_score2{std::numeric_limits<float>::max()};
-    float fitness_score3{std::numeric_limits<float>::max()};
-    Eigen::Matrix4f transformation;
-    float processing_time_ms;
-    pcl::CorrespondencesPtr correspondences;
-    pcl::CorrespondencesPtr features_correspondences;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-  };
-
   struct ThreadResult {
     bool valid{false};
     int thread_num{0};
@@ -65,7 +54,7 @@ class FeaturesMatching {
 
   Result DivideModelAndAlign(PointCloud& best_model);
 
-  Result align();
+  Result Align() override;
 
   /**
    * Align model feature cloud to scene feature cloud and return estimated transformation.

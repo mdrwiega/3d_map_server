@@ -13,6 +13,7 @@
 
 #include <octomap_tools/maps_integrator_visualizer.h>
 #include <validation.h>
+#include <alignment/alignment_method.h>
 
 using std::chrono::high_resolution_clock;
 
@@ -21,7 +22,7 @@ namespace octomap_tools {
 /**
  * @brief Calculates transformation with ICP method between two input pointclouds: model and scene
  */
-class ICP {
+class ICP : public AlignmentMethod {
  public:
   struct Config {
     int max_iter = 100;          // Max number of iterations (ICP)
@@ -33,15 +34,6 @@ class ICP {
     bool visualize = false;
     bool crop_scene = true;
     std::string output_dir;
-  };
-
-  struct Result {
-    double fitness_score1 = std::numeric_limits<float>::max();
-    double fitness_score2 = std::numeric_limits<float>::max();
-    double fitness_score3 = std::numeric_limits<float>::max();
-    Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
-    double processing_time_ms = 0;
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   };
 
   ICP(const PointCloudPtr& scene, const PointCloudPtr& model, Config config) :

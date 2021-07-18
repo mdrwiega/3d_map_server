@@ -25,16 +25,25 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   // Main parameters
   cfg.show_visualizer = show_visualizer;
 
+  // Global Alignment
   std::string global_alignment_method;
   nh_.param<std::string>("global_alignment/method", global_alignment_method, "feature_matching");
   if (global_alignment_method.compare("feature_matching") == 0)
     cfg.global_alignment_method = GlobalAlignment::Method::FeatureMatching;
-  else if (global_alignment_method.compare("ndt") == 0)
-    cfg.global_alignment_method = GlobalAlignment::Method::NDT;
 
   nh_.param<bool>("global_alignment/divide_model",cfg.template_alignment.divide_model, true);
   nh_.param<float>("global_alignment/block_size", cfg.template_alignment.cell_size_x, 3.0);
   nh_.param<float>("global_alignment/block_size", cfg.template_alignment.cell_size_y, 3.0);
+
+  // Local Alignment
+  nh_.param<bool>("local_alignment_enable", cfg.enable_local_alignment, false);
+  nh_.param<float>("local_alignment/scene_inflation_dist", cfg.icp.scene_inflation_dist, 2.5);
+  std::string local_alignment_method;
+  nh_.param<std::string>("local_alignment/method", local_alignment_method, "icp");
+  if (global_alignment_method.compare("icp") == 0)
+    cfg.local_alignment_method = LocalAlignment::Method::ICP;
+  else if (local_alignment_method.compare("ndt") == 0)
+    cfg.local_alignment_method = LocalAlignment::Method::NDT;
 
   // Feature matching
   std::string fm_ns = "global_alignment/feature_matching/";
@@ -83,9 +92,6 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   nh_.param<float>(iss3d_ns + "threshold32", iss3d.iss_threshold32, 0.975);
   nh_.param<int>(iss3d_ns + "min_neighbours", iss3d.iss_min_neighbours, 6);
   nh_.param<int>(iss3d_ns + "num_of_threads", iss3d.iss_num_of_threads, 2);
-
-  nh_.param<bool>("local_alignment_enable", cfg.icp_correction, false);
-  nh_.param<float>("local_alignment/scene_inflation_dist", cfg.icp.scene_inflation_dist, 2.5);
 
   // ICP
   std::string icp_ns = "local_alignment/icp/";
