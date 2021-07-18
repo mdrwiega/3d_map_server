@@ -41,58 +41,78 @@ MapsIntegrator::MapsIntegrator(const OcTreePtr& scene_tree, const OcTreePtr& mod
   }
 }
 
+
 MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   auto start = high_resolution_clock::now();
 
   // Global alignment
   PointCloud::Ptr best_model(new PointCloud);
 
-  if (cfg_.global_alignment_method == GlobalAlignment::Method::FeatureMatching) {
-    PCL_INFO("\nUsed Feature Matching Method\n");
+  if (cfg_.enable_global_alignment)
+  {
+    if (cfg_.global_alignment_method == GlobalAlignment::Method::FeatureMatching)
+    {
+      PCL_INFO("\nUsed Feature Matching Method\n");
 
-    FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
+      FeaturesMatching features_matching(cfg_.template_alignment, scene_, model_);
 
-    if (cfg_.template_alignment.divide_model) {
-      result_.ia = features_matching.DivideModelAndAlign(*best_model);
+      if (cfg_.template_alignment.divide_model) {
+        result_.ia = features_matching.DivideModelAndAlign(*best_model);
+      }
+      else {
+        result_.ia = features_matching.align();
+        best_model = model_;
+      }
+      result_.fitness_score1 = result_.ia.fitness_score1;
+      result_.fitness_score2 = result_.ia.fitness_score2;
+      result_.fitness_score3 = result_.ia.fitness_score3;
+      result_.transformation = result_.ia.transformation;
+      result_.transf_estimation_time_ms = result_.ia.processing_time_ms;
     }
-    else {
-      result_.ia = features_matching.align();
+    else if (cfg_.global_alignment_method == GlobalAlignment::Method::NDT) {
+      PCL_INFO("\nUsed NDT Method\n");
+      NdtAlignment ndt(cfg_.ndt_alignment, scene_, model_);
+      auto result = ndt.Align();
       best_model = model_;
+      result_.transformation = result.transformation;
+      result_.transf_estimation_time_ms = result.processing_time_ms;
     }
-    result_.fitness_score1 = result_.ia.fitness_score1;
-    result_.fitness_score2 = result_.ia.fitness_score2;
-    result_.fitness_score3 = result_.ia.fitness_score3;
-    result_.transformation = result_.ia.transformation;
-    result_.transf_estimation_time_ms = result_.ia.processing_time_ms;
-  }
-  else if (cfg_.global_alignment_method == GlobalAlignment::Method::NDT) {
-    PCL_INFO("\nUsed NDT Method\n");
-    NdtAlignment ndt(cfg_.ndt_alignment, scene_, model_);
-    auto result = ndt.Align();
-    best_model = model_;
-    result_.transformation = result.transformation;
-    result_.transf_estimation_time_ms = result.processing_time_ms;
-  }
 
-  PCL_INFO("\nIA:");
-  PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
-  PCL_INFO("\n  time: %.1f ms", result_.transf_estimation_time_ms);
-  PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
+    PCL_INFO("\nIA:");
+    PCL_INFO("\n  fitness score: %.3f", result_.fitness_score1);
+    PCL_INFO("\n  time: %.1f ms", result_.transf_estimation_time_ms);
+    PCL_INFO("\n  transformation:\n%s", transfMatrixToXyzRpyString(result_.transformation, "    ").c_str());
+  }
+  else {
+      best_model = model_;
+  }
 
   // ICP correction
   if (cfg_.icp_correction) {
     try {
       PointCloud::Ptr icp_model(new PointCloud);
-      pcl::transformPointCloud(*best_model, *icp_model, result_.ia.transformation);
 
-      ICP icp(scene_, icp_model, cfg_.icp);
-      result_.icp = icp.Align();
+      if (cfg_.enable_global_alignment) {
+        pcl::transformPointCloud(*best_model, *icp_model, result_.ia.transformation);
 
-      if (result_.icp.fitness_score1 < result_.ia.fitness_score1) {
+        ICP icp(scene_, icp_model, cfg_.icp);
+        result_.icp = icp.Align();
+
+        if (result_.icp.fitness_score1 < result_.ia.fitness_score1) {
+          result_.fitness_score1 = result_.icp.fitness_score1;
+          result_.fitness_score2 = result_.icp.fitness_score2;
+          result_.fitness_score3 = result_.icp.fitness_score3;
+          result_.transformation = result_.icp.transformation * result_.ia.transformation;
+        }
+      }
+      else {
+        ICP icp(scene_, model_, cfg_.icp);
+        result_.icp = icp.Align();
+
         result_.fitness_score1 = result_.icp.fitness_score1;
         result_.fitness_score2 = result_.icp.fitness_score2;
         result_.fitness_score3 = result_.icp.fitness_score3;
-        result_.transformation = result_.icp.transformation * result_.ia.transformation;
+        result_.transformation = result_.icp.transformation;
       }
 
       PCL_INFO("\nICP:");
@@ -122,11 +142,11 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
       MapsIntegratorVisualizer visualizer(
         { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching.png" });
       visualizer.VisualizeFeatureMatchingWithDividedModel(
-        scene_, best_model, model_, result_.ia.transformation, spiral_blocks_);
+        scene_, best_model, model_, result_.transformation, spiral_blocks_);
     }
     {
       PointCloudPtr transformed_model (new PointCloud);
-      pcl::transformPointCloud(*model_, *transformed_model, result_.ia.transformation);
+      pcl::transformPointCloud(*model_, *transformed_model, result_.transformation);
       MapsIntegratorVisualizer visualizer(
         { cfg_.show_visualizer, cfg_.output_to_file, cfg_.output_dir + "matching_2clouds.png" });
       visualizer.VisualizeClouds(scene_, transformed_model);

@@ -31,6 +31,7 @@ class MapsIntegrator {
     std::string output_dir;
     ICP::Config icp;
 
+    bool enable_global_alignment{true};
     GlobalAlignment::Method global_alignment_method;
     NdtAlignment::Config ndt_alignment;
     FeaturesMatching::Config template_alignment;
