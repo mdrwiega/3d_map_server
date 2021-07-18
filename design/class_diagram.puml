@@ -7,8 +7,6 @@ class FeatureCloud {
 
 class FeatureMatching {
   Align()
-  DivideFullModelIntoBlocks()
-  FindBestAlignment()
 }
 
 class ICP {
@@ -25,6 +23,8 @@ class AlignmentMethod {
 
 class GlobalAlignment {
   Align()
+  DivideFullModelIntoBlocks()
+  FindBestAlignment()
 }
 
 class LocalAlignment {
@@ -64,11 +64,15 @@ AlignmentMethod <|-- GlobalAlignment
 AlignmentMethod <|-- LocalAlignment
 
 LocalAlignment <|-- ICP
+LocalAlignment <|-- NDT
 
 GlobalAlignment <|-- FeatureMatching
-GlobalAlignment <|-- NDT
 
+FeatureMatching <|-- GeometryClustering
+FeatureMatching <|-- KdTreeSVD
+FeatureMatching <|-- SampleConsensus
 FeatureMatching --> FeatureCloud
+
 FeatureCloud o-- PointCloud
 
 Map o-- Octomap
