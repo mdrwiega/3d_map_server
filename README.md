@@ -4,7 +4,9 @@ The package contains the 3D map server.
 Currently it supports ROS1 but integration with ROS2 is planned as well.
 
 Main features of the 3D map server:
-- it can merge maps based on overlapping region
+- it can merge maps based on the overlapping region
+
+![Feature base matching example](design/matching_example.png)
 
 ## Status
 

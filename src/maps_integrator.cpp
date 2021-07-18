@@ -128,9 +128,9 @@ MapsIntegrator::Result MapsIntegrator::EstimateTransformation() {
   }
   result_.transf_estimation_time_ms = (duration_cast<milliseconds>(high_resolution_clock::now() - start)).count();
   pcl::getMinMax3D(*best_model, result_.model_min, result_.model_max);
-
   PCL_INFO(result_.final.ToString("Final result:").c_str());
 
+  // Visualize
   if (cfg_.output_to_file) {
     DumpConfigAndResultsToFile();
   }

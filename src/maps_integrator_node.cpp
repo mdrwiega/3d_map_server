@@ -1,13 +1,10 @@
-#include <vector>
-#include <exception>
+#include <octomap_tools/maps_integrator_node.h>
 
 #include <ros/param.h>
 #include <ros/package.h>
 #include <ros/console.h>
 
-
 #include <octomap_tools/octomap_io.h>
-#include <octomap_tools/maps_integrator_node.h>
 
 namespace octomap_tools {
 

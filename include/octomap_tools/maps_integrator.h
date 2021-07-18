@@ -21,6 +21,9 @@ class MapsIntegrator {
   using RFType = FeatureCloud::RFType;
 
  public:
+  /**
+   * Configuration of maps integrator
+   */
   struct Config {
     bool show_visualizer{false};
     bool output_to_file{true};
@@ -67,7 +70,6 @@ class MapsIntegrator {
    * - only local alignment
    */
   Result EstimateTransformation();
-
 
   AlignmentMethod::Result GlobalAlignment(PointCloud::Ptr& best_model);
   AlignmentMethod::Result LocalAlignment(PointCloud::Ptr& scene, PointCloud::Ptr& model);

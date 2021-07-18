@@ -38,7 +38,7 @@ global_alignment:
 enable_local_alignment: true
 local_alignment:
   enable: true
-  method: "icp"
+  method: icp
   scene_inflation_dist: 2.5
   icp:
     max_iterations: 500

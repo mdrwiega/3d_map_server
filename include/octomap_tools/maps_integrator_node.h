@@ -1,7 +1,5 @@
 #pragma once
 
-#include <octomap_tools/maps_integrator.h>
-
 #include <string>
 
 #include <ros/node_handle.h>
@@ -11,13 +9,19 @@
 namespace octomap_tools {
 
 class MapsIntegratorNode {
- private:
-  ros::NodeHandle nh_;
-
- public:
+public:
   MapsIntegrator::Config GetConfigFromRosParams();
 
+  /**
+   * Integrate two octomaps from files
+   *
+   * @param map1_filepath is a file path to the first map
+   * @param map2_filepath is a file path to the second map
+   */
   void IntegrateMaps(const std::string& map1_filepath, const std::string& map2_filepath);
+
+private:
+  ros::NodeHandle nh_;
 
 };
 
