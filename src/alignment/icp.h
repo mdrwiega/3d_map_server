@@ -12,7 +12,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <octomap_tools/maps_integrator_visualizer.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 #include <alignment/alignment_method.h>
 
 using std::chrono::high_resolution_clock;

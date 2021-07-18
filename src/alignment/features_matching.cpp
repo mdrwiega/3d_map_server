@@ -20,7 +20,7 @@
 
 #include <common/thread_pool.h>
 #include <common/conversions.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 #include <alignment/model_decomposition.h>
 
 using namespace pcl;

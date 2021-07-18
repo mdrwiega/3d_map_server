@@ -16,7 +16,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <alignment/alignment_method.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 
 using namespace std::chrono_literals;
 

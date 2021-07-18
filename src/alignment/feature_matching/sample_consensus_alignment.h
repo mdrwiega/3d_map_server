@@ -6,7 +6,7 @@
 #include <pcl/registration/transformation_validation_euclidean.h>
 
 #include <alignment/alignment_method.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 
 namespace octomap_tools {
 

@@ -7,7 +7,7 @@
 
 #include <alignment/alignment_method.h>
 #include <alignment/feature_matching/feature_cloud.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 
 namespace octomap_tools {
 

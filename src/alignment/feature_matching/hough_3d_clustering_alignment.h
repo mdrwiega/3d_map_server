@@ -9,7 +9,7 @@
 #include <alignment/alignment_method.h>
 #include <alignment/feature_matching/feature_cloud.h>
 #include <alignment/feature_matching/kdtree_svd_alignment.h>
-#include <validation.h>
+#include <alignment/alignment_validator.h>
 #include <octomap_tools/types.h>
 
 namespace octomap_tools {
