@@ -218,7 +218,7 @@ class SampleConsensusMod : public pcl::SampleConsensusInitialAlignment<PointSour
   float feature_max_dist_diff_;
 };
 
-class SampleConsensusAlignment : public FeatureAlignmentMethod {
+class SampleConsensusAlignment : public AlignmentMethod {
  public:
 
   struct Config {
@@ -234,11 +234,13 @@ class SampleConsensusAlignment : public FeatureAlignmentMethod {
                                      // big value means that a feature is distinctive enough
   };
 
-  SampleConsensusAlignment(const Config& cfg)
-    : cfg(cfg) {
+  SampleConsensusAlignment(const Config& cfg, const FeatureCloudPtr& scene, const FeatureCloudPtr& model)
+    : cfg(cfg)
+    , scene_(scene)
+    , model_(model) {
   }
 
-  AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+  AlignmentMethod::Result Align() {
 
     SampleConsensusMod<Point, Point, FeatureCloud::DescriptorType> sac;
     sac.setMinSampleDistance(cfg.min_sample_distance);
@@ -249,10 +251,10 @@ class SampleConsensusAlignment : public FeatureAlignmentMethod {
     sac.setFeatureMaxDist(cfg.mod_feature_max_dist);
     sac.setFeatureMaxDistDiff(cfg.mod_feature_max_dist_diff);
 
-    sac.setInputSource(model->GetKeypoints());
-    sac.setSourceFeatures(model->GetDescriptors());
-    sac.setInputTarget(scene->GetKeypoints());
-    sac.setTargetFeatures(scene->GetDescriptors());
+    sac.setInputSource(model_->GetKeypoints());
+    sac.setSourceFeatures(model_->GetDescriptors());
+    sac.setInputTarget(scene_->GetKeypoints());
+    sac.setTargetFeatures(scene_->GetDescriptors());
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -283,6 +285,8 @@ class SampleConsensusAlignment : public FeatureAlignmentMethod {
 
  private:
   Config cfg;
+  FeatureCloudPtr scene_;
+  FeatureCloudPtr model_;
 };
 
 } // namespace octomap_tools

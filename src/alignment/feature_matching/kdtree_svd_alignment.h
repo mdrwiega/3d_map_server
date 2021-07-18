@@ -15,23 +15,26 @@ pcl::CorrespondencesPtr FindFeaturesCorrespondencesWithKdTree(
       const FeatureCloud::Descriptors::Ptr& model_descriptors,
       const FeatureCloud::Descriptors::Ptr& scene_descriptors, float desc_dist_thresh);
 
-class KdTreeBasedAlignment : public FeatureAlignmentMethod {
+class KdTreeBasedAlignment : public AlignmentMethod {
  public:
 
   struct Config {
     float desc_dist_thresh;
   };
 
-  KdTreeBasedAlignment(const Config& cfg)
-    : descriptor_dist_thresh_(cfg.desc_dist_thresh) {
+  KdTreeBasedAlignment(
+      const Config& cfg, const FeatureCloudPtr& scene, const FeatureCloudPtr& model)
+    : scene_(scene)
+    , model_(model)
+    , descriptor_dist_thresh_(cfg.desc_dist_thresh) {
   }
 
-  AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+  AlignmentMethod::Result Align() {
     pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
 
     // Find corresponding features in the target cloud
     features_correspondences = FindFeaturesCorrespondencesWithKdTree(
-      model->GetDescriptors(), scene->GetDescriptors(), descriptor_dist_thresh_);
+      model_->GetDescriptors(), scene_->GetDescriptors(), descriptor_dist_thresh_);
 
     // Get sample indices from correspondences
     std::vector<int> sample_indices(features_correspondences->size());
@@ -45,7 +48,7 @@ class KdTreeBasedAlignment : public FeatureAlignmentMethod {
     pcl::registration::TransformationEstimationSVD<Point, Point> transformation_estimator;
     Eigen::Matrix4f transformation_matrix;
     transformation_estimator.estimateRigidTransformation(
-      *model->GetKeypoints(), sample_indices, *scene->GetKeypoints(),
+      *model_->GetKeypoints(), sample_indices, *scene_->GetKeypoints(),
       corresponding_indices, transformation_matrix);
 
     AlignmentMethod::Result result;
@@ -53,7 +56,7 @@ class KdTreeBasedAlignment : public FeatureAlignmentMethod {
     result.transformation = transformation_matrix;
 
     AlignmentValidator<Point> validator;
-    validator.calculateCorrespondences(model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+    validator.calculateCorrespondences(model_->GetPointCloud(), scene_->GetPointCloud(), result.transformation);
     result.fitness_score1 = validator.calcFitnessScore1();
     result.fitness_score2 = validator.calcFitnessScore2();
     result.fitness_score3 = validator.calcFitnessScore3();
@@ -62,6 +65,9 @@ class KdTreeBasedAlignment : public FeatureAlignmentMethod {
   }
 
  private:
+  FeatureCloudPtr scene_;
+  FeatureCloudPtr model_;
+
   float descriptor_dist_thresh_;
 };
 

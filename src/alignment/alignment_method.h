@@ -53,13 +53,4 @@ public:
   enum class Method { ICP, NDT };
 };
 
-class FeatureAlignmentMethod : public AlignmentMethod {
- public:
-
-  virtual Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) = 0;
-  Result Align() override { return {}; }
-
-  virtual ~FeatureAlignmentMethod() = default;
-};
-
 } // namespace octomap_tools

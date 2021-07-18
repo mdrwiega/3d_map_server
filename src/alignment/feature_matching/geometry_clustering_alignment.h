@@ -11,22 +11,26 @@
 
 namespace octomap_tools {
 
-class GeometryClusteringAlignment : public FeatureAlignmentMethod {
+class GeometryClusteringAlignment : public AlignmentMethod {
  public:
 
   struct Config {
   };
 
-  GeometryClusteringAlignment(const Config& cfg) { }
+  GeometryClusteringAlignment(
+      const Config& cfg, const FeatureCloudPtr& scene, const FeatureCloudPtr& model)
+    : scene_(scene)
+    , model_(model) {
+  }
 
-  AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+  AlignmentMethod::Result Align() {
     float cg_size(0.01f);
     float cg_thresh(5.0f);
     pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
 
     // Find correspondences with KdTree
     features_correspondences = FindFeaturesCorrespondencesWithKdTree(
-      model->GetDescriptors(), scene->GetDescriptors(), 1.0);
+      model_->GetDescriptors(), scene_->GetDescriptors(), 1.0);
 
     // Clustering
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transformations;
@@ -36,8 +40,8 @@ class GeometryClusteringAlignment : public FeatureAlignmentMethod {
     gc_clusterer.setGCSize(cg_size);
     gc_clusterer.setGCThreshold (cg_thresh);
 
-    gc_clusterer.setInputCloud(model->GetKeypoints());
-    gc_clusterer.setSceneCloud(scene->GetKeypoints());
+    gc_clusterer.setInputCloud(model_->GetKeypoints());
+    gc_clusterer.setSceneCloud(scene_->GetKeypoints());
     gc_clusterer.setModelSceneCorrespondences(features_correspondences);
 
     gc_clusterer.cluster(clustered_corrs);
@@ -51,7 +55,7 @@ class GeometryClusteringAlignment : public FeatureAlignmentMethod {
     for (size_t i = 0; i < transformations.size (); ++i) {
       AlignmentValidator<Point> validator;
       validator.calculateCorrespondences(
-        model->GetPointCloud(), scene->GetPointCloud(), transformations[i]);
+        model_->GetPointCloud(), scene_->GetPointCloud(), transformations[i]);
       float fs1 = validator.calcFitnessScore1();
       if (fs1 < lowest_score) {
         lowest_score = fs1;
@@ -66,13 +70,17 @@ class GeometryClusteringAlignment : public FeatureAlignmentMethod {
       result.transformation = transformations[best_result_index];
       AlignmentValidator<Point> validator;
       validator.calculateCorrespondences(
-        model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+        model_->GetPointCloud(), scene_->GetPointCloud(), result.transformation);
       result.fitness_score1 = validator.calcFitnessScore1();
       result.fitness_score2 = validator.calcFitnessScore2();
       result.fitness_score3 = validator.calcFitnessScore3();
     }
     return result;
   }
+
+private:
+  FeatureCloudPtr scene_;
+  FeatureCloudPtr model_;
 };
 
 } // namespace octomap_tools

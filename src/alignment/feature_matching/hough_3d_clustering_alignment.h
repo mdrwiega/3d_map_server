@@ -14,7 +14,7 @@
 
 namespace octomap_tools {
 
-class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
+class Hough3dClusteringAlignment : public AlignmentMethod {
  public:
 
   typedef pcl::ReferenceFrame RFType;
@@ -24,10 +24,13 @@ class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
   struct Config {
   };
 
-  Hough3dClusteringAlignment(const Config& cfg) {
+  Hough3dClusteringAlignment(
+      const Config& cfg, const FeatureCloudPtr& scene, const FeatureCloudPtr& model)
+    : scene_(scene)
+    , model_(model) {
   }
 
-  AlignmentMethod::Result align(const FeatureCloudPtr& model, const FeatureCloudPtr& scene) {
+  AlignmentMethod::Result Align() {
 
     float rf_rad(0.015f);
     float cg_size(0.01f);
@@ -36,29 +39,29 @@ class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
     // Find correspondences with KdTree
     pcl::CorrespondencesPtr features_correspondences(new pcl::Correspondences);
     features_correspondences = FindFeaturesCorrespondencesWithKdTree(
-      model->GetDescriptors(), scene->GetDescriptors(), 1.0);
+      model_->GetDescriptors(), scene_->GetDescriptors(), 1.0);
 
     // Clustering
     std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > transformations;
     std::vector<pcl::Correspondences> clustered_corrs;
 
     //  Compute (Keypoints) Reference Frames only for Hough
-    pcl::PointCloud<RFType>::Ptr model_rf (new pcl::PointCloud<RFType> ());
-    pcl::PointCloud<RFType>::Ptr scene_rf (new pcl::PointCloud<RFType> ());
+    pcl::PointCloud<RFType>::Ptr model__rf (new pcl::PointCloud<RFType> ());
+    pcl::PointCloud<RFType>::Ptr scene__rf (new pcl::PointCloud<RFType> ());
 
     pcl::BOARDLocalReferenceFrameEstimation<Point, NormalType, RFType> rf_est;
     rf_est.setFindHoles(true);
     rf_est.setRadiusSearch(rf_rad);
 
-    rf_est.setInputCloud(model->GetKeypoints());
-    rf_est.setInputNormals(model->GetSurfaceNormals());
-    rf_est.setSearchSurface(model->GetPointCloud());
-    rf_est.compute(*model_rf);
+    rf_est.setInputCloud(model_->GetKeypoints());
+    rf_est.setInputNormals(model_->GetSurfaceNormals());
+    rf_est.setSearchSurface(model_->GetPointCloud());
+    rf_est.compute(*model__rf);
 
-    rf_est.setInputCloud(scene->GetKeypoints());
-    rf_est.setInputNormals(scene->GetSurfaceNormals());
-    rf_est.setSearchSurface(scene->GetPointCloud());
-    rf_est.compute (*scene_rf);
+    rf_est.setInputCloud(scene_->GetKeypoints());
+    rf_est.setInputNormals(scene_->GetSurfaceNormals());
+    rf_est.setSearchSurface(scene_->GetPointCloud());
+    rf_est.compute (*scene__rf);
 
     PCL_INFO("Clustering");
 
@@ -69,24 +72,24 @@ class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
     clusterer.setUseInterpolation(true);
     clusterer.setUseDistanceWeight(false);
 
-    clusterer.setInputCloud (model->GetKeypoints());
-    clusterer.setInputRf(model_rf);
-    clusterer.setSceneCloud (scene->GetKeypoints());
-    clusterer.setSceneRf(scene_rf);
+    clusterer.setInputCloud (model_->GetKeypoints());
+    clusterer.setInputRf(model__rf);
+    clusterer.setSceneCloud (scene_->GetKeypoints());
+    clusterer.setSceneRf(scene__rf);
     clusterer.setModelSceneCorrespondences(features_correspondences);
 
     //clusterer.cluster(clustered_corrs);
     clusterer.recognize(transformations, clustered_corrs);
 
-    // Find best model
+    // Find best model_
     float lowest_score = std::numeric_limits<float>::infinity();
     size_t best_result_index = 0;
 
-    PCL_INFO("Model instances found: %d", transformations.size());
+    PCL_INFO("model_ instances found: %d", transformations.size());
     for (size_t i = 0; i < transformations.size (); ++i) {
       AlignmentValidator<Point> validator;
       validator.calculateCorrespondences(
-        model->GetPointCloud(), scene->GetPointCloud(), transformations[i]);
+        model_->GetPointCloud(), scene_->GetPointCloud(), transformations[i]);
       float fs1 = validator.calcFitnessScore1();
       if (fs1 < lowest_score) {
         lowest_score = fs1;
@@ -101,7 +104,7 @@ class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
 
     AlignmentValidator<Point> validator;
     validator.calculateCorrespondences(
-      model->GetPointCloud(), scene->GetPointCloud(), result.transformation);
+      model_->GetPointCloud(), scene_->GetPointCloud(), result.transformation);
     result.fitness_score1 = validator.calcFitnessScore1();
     result.fitness_score2 = validator.calcFitnessScore2();
     result.fitness_score3 = validator.calcFitnessScore3();
@@ -110,6 +113,8 @@ class Hough3dClusteringAlignment : public FeatureAlignmentMethod {
   }
 
  private:
+  FeatureCloudPtr scene_;
+  FeatureCloudPtr model_;
 };
 
 } // namespace octomap_tools

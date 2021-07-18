@@ -207,35 +207,29 @@ FeaturesMatching::Result FeaturesMatching::Align(int nr,
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  std::shared_ptr<FeatureAlignmentMethod> aligner;
+  std::shared_ptr<AlignmentMethod> aligner;
 
   switch(cfg.method) {
     case AlignmentMethodType::KdTreeSearch:
-      aligner.reset(new KdTreeBasedAlignment(cfg.kdts));
+      aligner.reset(new KdTreeBasedAlignment(cfg.kdts, scene, model));
       break;
     case AlignmentMethodType::SampleConsensus:
-      aligner.reset(new SampleConsensusAlignment(cfg.sac));
+      aligner.reset(new SampleConsensusAlignment(cfg.sac, scene, model));
       break;
     case AlignmentMethodType::GeometryConsistencyClustering:
-      aligner.reset(new GeometryClusteringAlignment(cfg.gc));
+      aligner.reset(new GeometryClusteringAlignment(cfg.gc, scene, model));
       break;
     case AlignmentMethodType::Hough3DClustering:
-      aligner.reset(new Hough3dClusteringAlignment(cfg.hough));
+      aligner.reset(new Hough3dClusteringAlignment(cfg.hough, scene, model));
       break;
+    default:
+      throw std::runtime_error("Feature Alignment: Wrong method selected");
   }
 
-  FeaturesMatching::Result result;
+  AlignmentMethod::Result result;
 
   if (aligner) {
-    auto res = aligner->align(model, scene);
-    result.transformation = res.transformation;
-    result.processing_time_ms = res.processing_time_ms;
-    result.fitness_score1 = res.fitness_score1;
-    result.fitness_score2 = res.fitness_score2;
-    result.fitness_score3 = res.fitness_score3;
-    if (res.features_correspondences) {
-      result.features_correspondences = res.features_correspondences;
-    }
+    result = aligner->Align();
   }
 
   auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
