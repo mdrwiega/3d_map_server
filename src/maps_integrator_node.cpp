@@ -37,7 +37,7 @@ MapsIntegrator::Config MapsIntegratorNode::GetConfigFromRosParams() {
   nh_.param<float>("local_alignment/scene_inflation_dist", cfg.icp.scene_inflation_dist, 2.5);
   std::string local_alignment_method;
   nh_.param<std::string>("local_alignment/method", local_alignment_method, "icp");
-  if (global_alignment_method.compare("icp") == 0)
+  if (local_alignment_method.compare("icp") == 0)
     cfg.local_alignment_method = LocalAlignment::Method::ICP;
   else if (local_alignment_method.compare("ndt") == 0)
     cfg.local_alignment_method = LocalAlignment::Method::NDT;

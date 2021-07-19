@@ -5,15 +5,15 @@
 
   <!-- ROS Logs configuration -->
   <env name="ROSCONSOLE_CONFIG_FILE"
-       value="$(find octomap_tools)/config/logs.conf"/>
+       value="$(find 3d_map_server)/config/logs.conf"/>
   <env name="ROSCONSOLE_FORMAT"
        value="[${severity}][${time}]: ${message}"/>
 
   <group ns="maps_server">
-    <rosparam file="$(find octomap_tools)/config/params.yaml" if="$(arg load_params)"/>
+    <rosparam file="$(find 3d_map_server)/config/params.yaml" if="$(arg load_params)"/>
     <node name     = "maps_integrator"
           type     = "maps_integrator"
-          pkg      = "octomap_tools"
+          pkg      = "3d_map_server"
           args     = "$(arg map1) $(arg map2)"
           output   = "screen"
           required = "True"
