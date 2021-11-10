@@ -22,31 +22,34 @@ Additional documentation is available in the following [publication](https://iee
 ## Build
 
 - Clone repository to the ROS workspace (e.g. ros_ws/src)
+
   `git clone https://gitlab.com/mdrwiega/3d_map_server.git`
+
 - Compile the projects
+
   `catkin_make`
 
 ## Run maps merging tool with ROS
 
-`roslaunch 3d_map_server merge_maps.launch map1:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=/home/mdrwiega/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
+`roslaunch 3d_map_server merge_maps.launch map1:=~/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=~/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
 
 ## Tests
 
 - Compile tests
 
-`catkin_make tests`
+  `catkin_make tests`
 
 - Compile and run all tests
 
-`catkin_make run_tests 3d_map_server`
+  `catkin_make run_tests 3d_map_server`
 
 - Run merge octomaps test - fr079
 
-`~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_fr`
+  `~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_fr`
 
 - Run merge octomaps test - pwr d20
 
-`~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m4_t2`
+  `~/ros_ws/devel/lib/3d_map_server/3d_map_server_test --gtest_filter=MapsIntegratorTest.Test_pwr_d20_m4_t2`
 
 ### Integration tests
 
