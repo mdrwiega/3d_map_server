@@ -1,9 +1,14 @@
 # 3d_map_server
 
-The package contains the 3D map server.
-Currently, it's based on the ROS1 but migration to the ROS2 is planned.
+The package contains a 3D map server that is able to integrate maps received from multiple robots.
 
-The main purpose of the package is to provide a 3D maps merging and maps storage tools.
+Main features:
+
+- The main purpose of the package is to provide a 3D maps integration and maps storage tools.
+- The map server can integrate maps without an initial information about the transformation between maps.\
+  It detects overlapping regions on maps (if exist) and based on that estimates the transformation.
+- It uses multiple methods for maps alignment, for example SAC, GCC, ICP, OICP and NDT.
+- Software is based on the ROS 1 (Noetic) but migration to the ROS 2 is also planned.
 
 ![Feature base matching example](design/matching_example.png)
 
@@ -21,15 +26,15 @@ Additional documentation is available in the following [publication](https://iee
 
 ## Build
 
-- Clone repository to the ROS workspace (e.g. ros_ws/src)
+- Clone the repository to the ROS workspace (e.g. ros_ws/src)
 
   `git clone https://gitlab.com/mdrwiega/3d_map_server.git`
 
-- Compile the projects
+- Build package
 
   `catkin_make`
 
-## Run maps merging tool with ROS
+## Run the maps integration tool with ROS
 
 `roslaunch 3d_map_server merge_maps.launch map1:=~/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/scene.ot map2:=~/ros_ws/src/3d_map_server/octomaps_dataset/fr_079_t1/model.ot`
 
@@ -55,7 +60,7 @@ Additional documentation is available in the following [publication](https://iee
 
 `rostest 3d_map_server octomaps_integrator.test --text`
 
-## Design
+## Design (implementation details)
 
 ![Class Diagram](design/class_diagram.png)
 
@@ -78,4 +83,4 @@ Additional documentation is available in the following [publication](https://iee
 
 ## References
 
-- Used datasets are from http://ais.informatik.uni-freiburg.de/projects/datasets/octomap/
+- Tests use datasets from Freiburg University - [link](http://ais.informatik.uni-freiburg.de/projects/datasets/octomap/)
